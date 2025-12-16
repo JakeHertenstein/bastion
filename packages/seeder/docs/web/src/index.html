@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seed Card - Deterministic Password Generation</title>
+    
+    <!-- PWA Support -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1a1a2e">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SeedCard">
+    
+    <!-- Content Security Policy - No inline scripts required -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; worker-src 'self' blob:;">
+    
+    <link rel="stylesheet" href="spa-styles.css">
+    <link rel="stylesheet" href="threat-analysis.css">
+    <link rel="stylesheet" href="card-compromise.css">
+    <link rel="stylesheet" href="rfc-legend.css">
+    
+    <!-- Seed Validation Module (BIP-39/SLIP-39 validation) -->
+    <script type="module" src="./seed-validation.js"></script>
+</head>
+<body>
+    <!-- Skip Link for Screen Readers -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <header class="generator-header" role="banner">
+        <nav class="navbar">
+                        <div class="nav-container">
+                <!-- Brand/Logo -->
+                <a href="/" class="nav-brand" data-route="/">
+                    <span class="brand-icon" aria-hidden="true">🃏</span>
+                    <span class="brand-text">Seed Card</span>
+                </a>
+                
+                <!-- Navigation menu - content will be dynamically updated based on current page -->
+                <div class="nav-menu">
+                    <ul class="nav-list" id="nav-list">
+                        <!-- Navigation items will be populated by JavaScript based on current route -->
+                    </ul>
+                </div>
+                
+                <!-- Right side actions - help and status -->
+                <div class="nav-actions">
+                    <div class="nav-help-status">
+                        <!-- Status will be shown/hidden based on route -->
+                        <div id="status-container" class="status-indicator">
+                            <span class="status-label">Status:</span>
+                            <span id="status-text" class="status-value">Ready</span>
+                        </div>
+                        
+                        <!-- Help button will be added here by JavaScript -->
+                    </div>
+                </div>
+            </div>
+            </div>
+        </nav>
+    </header>
+
+    <main id="main-content" class="generator-main" role="main">
+        <!-- ARIA Live Regions for Screen Readers -->
+        <div id="status-live-region" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+        <div id="alert-live-region" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
+        
+        <div class="container">
+            
+            <!-- Home View -->
+            <div id="home-view" class="route-view">
+                <!-- Hero Section -->
+                <div class="hero-content">
+                    <div class="hero-text">
+                        <h1>Deterministic Password Generation<br><span class="highlight">Made Simple</span></h1>
+                        <p class="hero-subtitle">
+                            Generate secure, reproducible password matrices from your seed phrases. 
+                            Air-gapped security meets practical password management.
+                        </p>
+                        <div class="hero-buttons">
+                            <a href="/generator" class="btn btn-primary" data-route="/generator">
+                                <span class="btn-icon">▶</span>
+                                Generate Cards
+                            </a>
+                            <a href="#demo" class="btn btn-secondary">
+                                <span class="btn-icon">👁</span>
+                                Try Demo
+                            </a>
+                        </div>
+                    </div>
+                    <div class="hero-visual">
+                        <div class="card-preview">
+                            <div class="matrix-sample">
+                                <table class="password-matrix">
+                                    <thead>
+                                        <tr>
+                                            <th class="matrix-corner-cell"></th>
+                                            <th>0</th>
+                                            <th>1</th>
+                                            <th>2</th>
+                                            <th>3</th>
+                                            <th>4</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="coord">A</td>
+                                            <td class="token-cell"><span class="token-text">J~u3</span></td>
+                                            <td class="token-cell"><span class="token-text">;$|4</span></td>
+                                            <td class="token-cell"><span class="token-text">/j|!</span></td>
+                                            <td class="token-cell"><span class="token-text">*6)G</span></td>
+                                            <td class="token-cell"><span class="token-text">8LtD</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="coord">B</td>
+                                            <td class="token-cell"><span class="token-text">596X</span></td>
+                                            <td class="token-cell"><span class="token-text">KdmX</span></td>
+                                            <td class="token-cell"><span class="token-text">)HS1</span></td>
+                                            <td class="token-cell"><span class="token-text">V~FI</span></td>
+                                            <td class="token-cell"><span class="token-text">n_QK</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="coord">C</td>
+                                            <td class="token-cell"><span class="token-text">{>)q</span></td>
+                                            <td class="token-cell"><span class="token-text">h}/e</span></td>
+                                            <td class="token-cell"><span class="token-text">.VlH</span></td>
+                                            <td class="token-cell"><span class="token-text">~4~x</span></td>
+                                            <td class="token-cell"><span class="token-text">qHyG</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="security-badge">
+                                <span class="btn-icon">🔒</span>
+                                <span>Client-Side Only</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Features Section -->
+                <section id="features" class="features">
+                    <div class="container">
+                        <h2>Why Seed Card?</h2>
+                        <div class="features-grid">
+                            <div class="feature-card">
+                                <div class="feature-icon">
+                                    <span class="btn-icon">🛡️</span>
+                                </div>
+                                <h3>Deterministic Security</h3>
+                                <p>Same seed always produces identical password matrices. No databases, no cloud storage, just pure cryptographic determinism.</p>
+                            </div>
+                            <div class="feature-card">
+                                <div class="feature-icon">
+                                    <span class="btn-icon">📡</span>
+                                </div>
+                                <h3>Air-Gapped Ready</h3>
+                                <p>Generate cards completely offline. Download the page and run locally for maximum security isolation.</p>
+                            </div>
+                            <div class="feature-card">
+                                <div class="feature-icon">
+                                    <span class="btn-icon">⚏</span>
+                                </div>
+                                <h3>Matrix-Based Passwords</h3>
+                                <p>10×10 grids with coordinate-based password selection. Memorable patterns, unlimited combinations.</p>
+                            </div>
+                            <div class="feature-card">
+                                <div class="feature-icon">
+                                    <span class="btn-icon">🔑</span>
+                                </div>
+                                <h3>Multiple Seed Sources</h3>
+                                <p>Support for BIP-39 mnemonics, SLIP-39 shares, and simple SHA-512 seeds for maximum flexibility.</p>
+                            </div>
+                            <div class="feature-card">
+                                <div class="feature-icon">
+                                    <span class="btn-icon">🔍</span>
+                                </div>
+                                <h3>Card Lookup System</h3>
+                                <p>Generate 100 unique cards from one seed. Use card IDs for organized password management.</p>
+                            </div>
+                            <div class="feature-card">
+                                <div class="feature-icon">
+                                    <span class="btn-icon">💻</span>
+                                </div>
+                                <h3>Open Source</h3>
+                                <p>Fully auditable cryptographic implementation. View source, verify algorithms, contribute improvements.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- How It Works Section -->
+                <section id="how-it-works" class="how-it-works">
+                    <div class="container">
+                        <h2>How It Works</h2>
+                        <div class="workflow">
+                            <div class="workflow-step">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <h3>Provide Your Seed</h3>
+                                    <p>Enter a BIP-39 mnemonic, SLIP-39 shares, or simple seed phrase. All processing happens in your browser.</p>
+                                </div>
+                            </div>
+                            <div class="workflow-step">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <h3>Generate Matrix Cards</h3>
+                                    <p>Cryptographic expansion creates 10×10 grids of unique tokens using PBKDF2 and HMAC-SHA512.</p>
+                                </div>
+                            </div>
+                            <div class="workflow-step">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <h3>Select Password Patterns</h3>
+                                    <p>Choose coordinates like A0-B1-C2 to create passwords. Use different patterns for different accounts.</p>
+                                </div>
+                            </div>
+                            <div class="workflow-step">
+                                <div class="step-number">4</div>
+                                <div class="step-content">
+                                    <h3>Lookup & Regenerate</h3>
+                                    <p>Use card IDs to find specific matrices. Same seed + card ID = identical passwords every time.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Security Section -->
+                <section id="security" class="security">
+                    <div class="container">
+                        <h2>Security Model</h2>
+                        <div class="security-content">
+                            <div class="security-text">
+                                <h3>Cryptographic Foundation</h3>
+                                <ul>
+                                    <li><strong>PBKDF2-HMAC-SHA512:</strong> Industry standard key derivation with 2048+ iterations</li>
+                                    <li><strong>Deterministic Expansion:</strong> HMAC-based stream generation for consistent output</li>
+                                    <li><strong>Unbiased Mapping:</strong> Rejection sampling prevents modulo bias in token generation</li>
+                                    <li><strong>Base90 Alphabet:</strong> Maximum entropy while avoiding problematic characters</li>
+                                </ul>
+                                
+                                <h3>Threat Model</h3>
+                                <ul>
+                                    <li><strong>Online Rate Limiting:</strong> Designed for services with lockout protection</li>
+                                    <li><strong>~41-45 bits entropy:</strong> Sufficient for rate-limited online attacks</li>
+                                    <li><strong>2FA Recommended:</strong> Always use multi-factor authentication for critical accounts</li>
+                                    <li><strong>Offline Resistance:</strong> Not suitable for scenarios allowing unlimited attempts</li>
+                                </ul>
+                            </div>
+                            <div class="security-warning">
+                                <div class="warning-box">
+                                    <span class="help-icon">⚠️</span>
+                                    <h4>Security Notice</h4>
+                                    <p>This tool generates passwords for online services with lockout protection. Modern GPUs can test 7+ billion combinations per second in offline attacks. Always use 2FA for sensitive accounts.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Demo Section -->
+                <section id="demo" class="demo">
+                    <div class="container">
+                        <h2>Interactive Demo</h2>
+                        <div class="demo-container">
+                            <div class="demo-input">
+                                <h3>Try With Test Data</h3>
+                                <div class="input-group">
+                                    <label for="demo-seed">Sample Seed Phrase:</label>
+                                    <input type="text" id="demo-seed" value="test phrase" placeholder="Enter your seed phrase...">
+                                    <button id="demo-generate" class="btn btn-primary">Generate Sample</button>
+                                </div>
+                            </div>
+                            <div class="demo-output">
+                                <div id="demo-matrix" class="matrix-display">
+                                    <!-- Matrix will be generated here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Generator View (Full workflow) -->
+            <div id="generator-view" class="route-view" style="display: none;">
+                <!-- Generator Form -->
+                <div class="generator-form" role="region" aria-label="Password matrix generator">
+                    <!-- Seed Material Section -->
+                    <div class="form-section" id="seed-section">
+                        <div class="section-header-nav">
+                            <div class="section-title">
+                                <div class="title-content">
+                                    <h2><span class="section-icon">🔑</span> Seed Material</h2>
+                                    <p>Choose your seed source for deterministic generation</p>
+                                </div>
+                            </div>
+                            <div class="nav-controls">
+                                <button class="nav-btn prev-btn" disabled>
+                                    <span class="nav-icon">←</span> Previous
+                                </button>
+                                <button class="nav-btn next-btn">
+                                    Next <span class="nav-icon">→</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Seed Hash Display (initially shown with sample) -->
+                        <div class="seed-hash-display" id="seed-hash-display">
+                            <div class="hash-info">
+                                <label for="seed-hash-value" class="hash-label">Generated Seed Hash (SHA-512):</label>
+                                <textarea 
+                                    class="hash-value-input" 
+                                    id="seed-hash-value" 
+                                    placeholder="Enter or generate SHA-512 hash..." 
+                                    maxlength="128" 
+                                    rows="3"
+                                    aria-describedby="hash-info-stats"
+                                    aria-label="SHA-512 hash value for password generation">
+                                </textarea>
+                                <div class="hash-info-stats" id="hash-info-stats" role="status" aria-live="polite">
+                                    <div class="hash-stat" id="char-count">Characters: 0</div>
+                                    <div class="hash-stat" id="byte-count">Bytes: 0</div>
+                                    <div class="hash-stat" id="bit-count">Bits: 0</div>
+                                    <div class="hash-stat" id="format-status">Format: Invalid</div>
+                                    <div class="hash-stat" id="seed-entropy">Seed Entropy: 0 bits</div>
+                                </div>
+                                <div class="hash-controls">
+                                    <button class="btn-change-seed" id="change-seed-btn">
+                                        <span class="btn-icon">✏️</span> Change Seed
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Seed Input Options (initially hidden) -->
+                        <div class="seed-options" id="seed-options" style="display: none;">
+                            <div class="seed-type-selector">
+                                <label class="radio-option">
+                                    <input type="radio" name="seedType" value="simple" checked>
+                                    <span class="radio-custom"></span>
+                                    <div class="option-content">
+                                        <strong>Simple Phrase</strong>
+                                        <p>Direct SHA-512 hash of your text</p>
+                                    </div>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="seedType" value="bip39">
+                                    <span class="radio-custom"></span>
+                                    <div class="option-content">
+                                        <strong>BIP-39 Mnemonic</strong>
+                                        <p>12-24 word cryptocurrency seed phrase</p>
+                                    </div>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="seedType" value="slip39">
+                                    <span class="radio-custom"></span>
+                                    <div class="option-content">
+                                        <strong>SLIP-39 Shares</strong>
+                                        <p>Shamir's Secret Sharing reconstruction</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div class="seed-input-container">
+                                <!-- Simple Phrase Input -->
+                                <div id="simple-input" class="seed-input active">
+                                    <label for="simple-phrase">Seed Phrase:</label>
+                                    <input type="text" id="simple-phrase" placeholder="Enter your seed phrase..." autocomplete="off" value="test phrase">
+                                    <div class="input-help">
+                                        <span class="help-icon">ℹ️</span>
+                                        Use any memorable phrase. Same phrase always generates identical cards.
+                                    </div>
+                                </div>
+
+                                <!-- BIP-39 Input -->
+                                <div id="bip39-input" class="seed-input">
+                                    <label for="bip39-mnemonic">BIP-39 Mnemonic (12-24 words):</label>
+                                    <textarea id="bip39-mnemonic" placeholder="abandon abandon ..." rows="3" autocomplete="off">abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about</textarea>
+                                    <div class="bip39-options">
+                                        <div class="input-group">
+                                            <label for="bip39-passphrase">Passphrase (optional):</label>
+                                            <input type="password" id="bip39-passphrase" placeholder="Optional BIP-39 passphrase">
+                                        </div>
+                                        <div class="input-group">
+                                            <label for="bip39-iterations">PBKDF2 Iterations:</label>
+                                            <input type="number" id="bip39-iterations" value="2048" min="1000" max="100000">
+                                        </div>
+                                    </div>
+                                    <div class="input-help">
+                                        <span class="help-icon">ℹ️</span>
+                                        Standard cryptocurrency mnemonic. Enter your own BIP-39 phrase.
+                                    </div>
+                                </div>
+
+                                <!-- SLIP-39 Input -->
+                                <div id="slip39-input" class="seed-input">
+                                    <label>SLIP-39 Shares (minimum 2 required):</label>
+                                    <div class="slip39-shares">
+                                        <textarea class="slip39-share" placeholder="Share 1: real SLIP-39 share" rows="2">listen helpful academic acid crunch junior eyebrow likely taught debris theory glen twice idle coding window pile pulse order bucket</textarea>
+                                        <textarea class="slip39-share" placeholder="Share 2: real SLIP-39 share" rows="2">listen helpful academic agency briefing museum phrase ending damage ting vampire ladybug paid should speak premium webcam satisfy bumpy veteran</textarea>
+                                        <textarea class="slip39-share" placeholder="Share 3: real SLIP-39 share (optional)" rows="2">listen helpful academic always advance remind regular recover knife loyalty saver warmth lizard buyer peaceful finance burning critical hobo wolf</textarea>
+                                    </div>
+                                    <button id="add-slip39-share" class="btn btn-secondary btn-sm">
+                                        <span class="btn-icon">➕</span> Add Share
+                                    </button>
+                                    <div class="input-help">
+                                        <span class="help-icon">ℹ️</span>
+                                        Use test shares from CLI: <code>seeder generate shares --simple "test"</code>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Generate Hash Button -->
+                            <div class="generate-hash-section">
+                                <button class="btn btn-primary" id="generate-hash-btn">
+                                    <span class="btn-icon">🔑</span> Generate Hash
+                                </button>
+                                
+                                <!-- Auto-generation countdown indicator -->
+                                <div id="auto-gen-countdown" class="auto-gen-countdown" style="display: none;">
+                                    <span class="countdown-icon">⏳</span>
+                                    <span class="countdown-text">Auto-generating in </span>
+                                    <span id="countdown-value" class="countdown-value">2s</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Settings Section -->
+                    <div class="form-section" id="domain-section">
+                        <div class="section-header-nav">
+                            <div class="section-title">
+                                <div class="title-content">
+                                    <h2><span class="section-icon">⚙️</span> Settings</h2>
+                                    <p>Configure KDF, card identifier, and token format</p>
+                                </div>
+                            </div>
+                            <div class="nav-controls">
+                                <button class="nav-btn prev-btn">
+                                    <span class="nav-icon">←</span> Previous
+                                </button>
+                                <button class="nav-btn next-btn" id="domain-next-btn" disabled>
+                                    Generate Cards <span class="nav-icon">→</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="domain-config">
+                            <!-- KDF Selection (Argon2id only) -->
+                            <div class="input-group kdf-system-group">
+                                <label>Key Derivation Function (KDF):</label>
+                                <div class="kdf-info">
+                                    <strong>Argon2id</strong> — Memory-hard KDF, resistant to GPU attacks
+                                </div>
+                                <!-- Hidden radio for form compatibility -->
+                                <input type="radio" name="kdfType" value="argon2" checked style="display: none;">
+                            </div>
+                            
+                            <!-- Argon2 Parameters (t, m, p) -->
+                            <div class="input-group argon2-options" id="argon2-time-group">
+                                <label for="argon2-time">Argon2 Iterations (t):</label>
+                                <select id="argon2-time">
+                                    <option value="1">1 iteration (fast)</option>
+                                    <option value="2">2 iterations</option>
+                                    <option value="3" selected>3 iterations (default)</option>
+                                    <option value="4">4 iterations</option>
+                                    <option value="5">5 iterations (slow)</option>
+                                </select>
+                                <div class="input-help">
+                                    <span class="help-icon">⏱️</span>
+                                    More iterations = stronger protection but slower derivation.
+                                </div>
+                            </div>
+                            
+                            <div class="input-group argon2-options" id="argon2-options">
+                                <label for="argon2-memory">Argon2 Memory (m): <span id="memory-probe-status" style="font-size: 0.8em; color: #666;"></span></label>
+                                <select id="argon2-memory">
+                                    <option value="512">512 MB (strong)</option>
+                                    <option value="256">256 MB</option>
+                                    <option value="128">128 MB</option>
+                                    <option value="64" selected>64 MB (default)</option>
+                                    <option value="32">32 MB (minimal)</option>
+                                    <option value="16">16 MB (extreme)</option>
+                                </select>
+                                <div class="input-help">
+                                    <span class="help-icon">🧠</span>
+                                    Higher memory = stronger protection. Browser limits are auto-detected on load.
+                                </div>
+                            </div>
+                            
+                            <div class="input-group argon2-options" id="argon2-parallelism-group">
+                                <label for="argon2-parallelism">Argon2 Lanes (p): <span id="parallelism-status" style="font-size: 0.8em; color: #666;"></span></label>
+                                <select id="argon2-parallelism">
+                                    <option value="1">1 lane</option>
+                                    <option value="2">2 lanes</option>
+                                    <option value="4">4 lanes</option>
+                                    <option value="8" selected>8 lanes (default)</option>
+                                    <option value="12">12 lanes</option>
+                                    <option value="16">16 lanes</option>
+                                </select>
+                                <div class="input-help">
+                                    <span class="help-icon">🔀</span>
+                                    Parallelism lanes affect hash output. Batch generation uses adaptive multi-threading via Web Workers.
+                                </div>
+                            </div>
+                            
+                            <!-- Base System -->
+                            <div class="input-group base-system-group">
+                                <label>Base System:</label>
+                                <div class="base-selector">
+                                    <label class="radio-option">
+                                        <input type="radio" name="baseSystem" value="base90" checked>
+                                        <span class="radio-custom"></span>
+                                        <div class="option-content">
+                                            <strong>Base90</strong>
+                                            <p>Full charset with special chars (~26 bits/token)</p>
+                                        </div>
+                                    </label>
+                                    <label class="radio-option">
+                                        <input type="radio" name="baseSystem" value="base62">
+                                        <span class="radio-custom"></span>
+                                        <div class="option-content">
+                                            <strong>Base62</strong>
+                                            <p>Alphanumeric only (~24 bits/token)</p>
+                                        </div>
+                                    </label>
+                                    <label class="radio-option">
+                                        <input type="radio" name="baseSystem" value="base10">
+                                        <span class="radio-custom"></span>
+                                        <div class="option-content">
+                                            <strong>Base10</strong>
+                                            <p>PIN codes, digits only (~13 bits/token)</p>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="base-info-text">
+                                    <span class="info-icon">ℹ️</span>
+                                    Base10 for PIN codes, Base62 for alphanumeric, Base90 for maximum entropy
+                                </div>
+                            </div>
+                            
+                            <!-- Card Date -->
+                            <div class="input-group">
+                                <label for="card-date">Card Date:</label>
+                                <input type="text" id="card-date" placeholder="YYYY-MM-DD (defaults to today)" value="">
+                                <div class="input-help">
+                                    <div class="help-row">Full date for card tracking</div>
+                                    <div class="help-note">Leave empty to use today's date</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Nonce Field -->
+                            <div class="input-group nonce-group" id="nonce-group">
+                                <label for="card-nonce">Nonce:</label>
+                                <div class="nonce-input-wrapper" style="display: flex; gap: 8px;">
+                                    <input type="text" id="card-nonce" placeholder="Auto-generated (leave empty)" maxlength="12" style="flex: 1;">
+                                    <button type="button" class="btn btn-sm btn-secondary" id="generate-nonce-btn" title="Generate new random nonce" style="padding: 8px 12px;">
+                                        🎲
+                                    </button>
+                                </div>
+                                <div class="input-help">
+                                    <div class="help-row">Unique value for each card derivation (48-bit entropy)</div>
+                                    <div class="help-note">Leave empty to auto-generate, or enter fixed value for reproducibility</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Card ID -->
+                            <div class="input-group">
+                                <label for="card-id">Card ID:</label>
+                                <input type="text" id="card-id" placeholder="e.g., Banking.01, Email.Main, SYS.Work" value="SAMPLE">
+                                <div class="input-help">Unique identifier for this card (combines domain and pattern)</div>
+                            </div>
+                            
+                            <!-- Label Component Entropy -->
+                            <div class="input-group">
+                                <label>Label Component Entropy:</label>
+                                <div class="label-entropy-stats" id="label-entropy-stats">
+                                    <div class="entropy-stat" id="date-entropy">Date: 0 bits</div>
+                                    <div class="entropy-stat" id="card-id-entropy">Card ID: 0 bits</div>
+                                    <div class="entropy-stat" id="label-total-entropy">Total Label: 0 bits</div>
+                                </div>
+                            </div>
+                            
+                            <div class="input-group">
+                                <label>Generated Label:</label>
+                                <div class="label-output" id="label-output">
+                                    <code>v1:TOKEN:SIMPLE-ARGON2ID:t3-m64-p8-N.xxxxxxxx-BASE90:sample.A0:2025-11-30|X</code>
+                                </div>
+                                <div class="input-help">
+                                    <div class="help-row">Complete v1 label used for deterministic derivation</div>
+                                    <div class="help-note">Format: v1:TOKEN:ALGO:PARAMS:IDENT:DATE|CHECK</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Output Options Section -->
+                    <!-- Results Section -->
+                    <!-- Results Section -->
+                    <div class="form-section" id="results" style="display: none;">
+                        <div class="section-header-nav">
+                            <div class="section-title">
+                                <div class="title-content">
+                                    <h2 id="card-section-title"><span class="section-icon">🃏</span> Card</h2>
+                                    <p>Click an index to view the card details</p>
+                                </div>
+                                <div class="results-actions">
+                                    <button id="download-cards" class="btn btn-secondary">
+                                        <span class="btn-icon">📥</span> Download PDF
+                                    </button>
+                                    <button id="print-cards" class="btn btn-secondary">
+                                        <span class="btn-icon">🖨️</span> Print
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="nav-controls">
+                                <button class="nav-btn prev-btn">
+                                    <span class="nav-icon">←</span> Previous
+                                </button>
+                                <button class="nav-btn next-btn">
+                                    Examples <span class="nav-icon">→</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Card Index Grid -->
+                        <div class="card-selection-area">
+                            <div class="card-index-grid" id="card-index-grid">
+                                <!-- Grid will be populated by JavaScript -->
+                            </div>
+                            
+                            <!-- Inline Selected Card Display -->
+                            <div class="selected-card-display" id="selected-card-display" style="display: none;">
+                                <div class="card-header">
+                                    <div class="card-title">
+                                        <span class="selected-card-id clickable-id" title="Click to copy card ID"></span>
+                                    </div>
+                                    <div class="selected-card-hash card-hash clickable-hash" title="Click to copy full hash"></div>
+                                </div>
+                                <div class="matrix-container">
+                                    <table class="password-matrix selected-matrix" id="selected-matrix">
+                                        <!-- Matrix will be populated here -->
+                                    </table>
+                                </div>
+                                
+                                <!-- Matrix Entropy Information -->
+                                <div class="matrix-entropy-info" id="matrix-entropy-info" style="display: none;">
+                                    <h4>Token Matrix Entropy</h4>
+                                    <div class="entropy-stats">
+                                        <div class="entropy-stat" id="token-entropy">Per Token: 26.0 bits</div>
+                                        <div class="entropy-stat" id="single-password-entropy">Single Password (4 tokens): 103.9 bits</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Password Examples Section -->
+                    <div class="form-section" id="password-examples">
+                        <div class="section-header-nav">
+                            <div class="section-title">
+                                <div class="title-content">
+                                    <h3><span class="section-icon">🔐</span> Password Examples</h3>
+                                </div>
+                            </div>
+                            <div class="nav-controls">
+                                <button class="nav-btn prev-btn">
+                                    <span class="nav-icon">←</span> Previous
+                                </button>
+                                <button class="nav-btn next-btn" disabled>
+                                    Next <span class="nav-icon">→</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Base Entropy Summary -->
+                        <div class="entropy-summary" id="password-entropy-summary">
+                            <h4>🔒 Security Analysis</h4>
+                            
+                            <!-- Core Components -->
+                            <div class="entropy-core-components">
+                                <div class="entropy-component">
+                                    <span class="component-label">Seed:</span>
+                                    <span class="component-value" id="seed-entropy-summary">-</span>
+                                </div>
+                                <div class="entropy-component">
+                                    <span class="component-label">Label (ID + Date + Nonce + Index):
+                                        <button class="help-btn" title="Hover for breakdown">?</button>
+                                    </span>
+                                    <span class="component-value" id="label-entropy-summary">-</span>
+                                </div>
+                                <div class="entropy-component">
+                                    <span class="component-label">Nonce (auto-generated):</span>
+                                    <span class="component-value" id="nonce-entropy-summary">48.0 bits</span>
+                                </div>
+                                <div class="entropy-component">
+                                    <span class="component-label">
+                                        Per-Token Selection:
+                                        <button class="help-btn" id="token-entropy-help-btn" title="How is token entropy calculated?">?</button>
+                                    </span>
+                                    <span class="component-value" id="grid-entropy-summary">-</span>
+                                </div>
+                                <div class="entropy-component">
+                                    <span class="component-label">Memorized + Punctuation:</span>
+                                    <span class="component-value" id="memorized-entropy-summary">-</span>
+                                </div>
+                            </div>
+                            
+                            <!-- KDF Attack Resistance (applies to seed brute-force only) -->
+                            <div class="kdf-resistance-section">
+                                <h5>🛡️ KDF Attack Resistance (Seed Brute-Force)</h5>
+                                <p class="kdf-description">
+                                    Argon2id makes guessing your seed expensive. With 10,000 GPUs trying to regenerate your card:
+                                </p>
+                                <div class="kdf-config" id="kdf-resistance-display">
+                                    Argon2id (t3m64p8) — 100,000 hashes/sec
+                                </div>
+                                <div class="resistance-scenarios">
+                                    <div class="resistance-stat full-width">
+                                        <span class="stat-label">Time to crack seed:</span>
+                                        <span class="stat-value" id="full-crack-time">calculating...</span>
+                                    </div>
+                                </div>
+                                <p class="kdf-note">
+                                    <em>Note: KDF resistance only applies when attacker is guessing your seed. 
+                                    If the physical card is stolen, they don't need to crack the KDF.</em>
+                                </p>
+                            </div>
+                            
+                            <!-- Security Scenarios -->
+                            <div class="security-scenarios">
+                                <div class="security-scenario primary">
+                                    <span class="scenario-label">🛡️ Full Security:</span>
+                                    <span class="scenario-desc">All components secret</span>
+                                    <span class="scenario-value" id="complete-password-total">-</span>
+                                </div>
+                                <div class="security-scenario fallback">
+                                    <span class="scenario-label">⚠️ Seed Compromised:</span>
+                                    <span class="scenario-desc">Only user choices remain secret</span>
+                                    <span class="scenario-value" id="memorized-only-total">-</span>
+                                </div>
+                                <div class="security-scenario caution">
+                                    <span class="scenario-label">🔓 Label Compromised:</span>
+                                    <span class="scenario-desc">Card ID/Date known, Seed/Choices secret</span>
+                                    <span class="scenario-value" id="label-compromised-total">-</span>
+                                </div>
+                                <div class="security-scenario warning">
+                                    <span class="scenario-label">🃏 Card Compromised:</span>
+                                    <span class="scenario-desc">Token grid visible (~34 bits remaining)</span>
+                                    <span class="scenario-value" id="card-compromised-total">-</span>
+                                    <button class="help-btn" id="card-compromise-help-btn" title="How is card compromise entropy calculated?">?</button>
+                                </div>
+                            </div>
+                            
+                            <!-- Label Hash Info -->
+                            <div class="entropy-component info">
+                                <span class="component-label">Label Hash (Inventory):</span>
+                                <span class="component-value" id="label-hash-summary">-</span>
+                            </div>
+                        </div>
+
+                        <!-- Password Examples -->
+                        <div class="password-examples-section">
+                            <h4>🔐 Password Examples</h4>
+                            <div class="examples-grid">
+                                <div class="password-example" id="example-password-1" 
+                                     data-password-data='{"label":"2 Tokens Example","pattern":"A0 B1","coordinates":["A0","B1"],"tokens":["tJt3","r7q["],"password":"tJt3r7q[forest!","memorizedEntropy":23.3}'>
+                                    <div class="example-header">
+                                        <span class="example-label">2 Tokens:</span>
+                                        <span class="example-entropy" id="example-1-entropy">~78.5 bits</span>
+                                        <button class="entropy-help-btn" data-example="example-password-1" title="Show detailed entropy breakdown">
+                                            <span class="help-icon">?</span>
+                                        </button>
+                                    </div>
+                                    <div class="example-coordinates">A0 + B1 + forest!</div>
+                                    <div class="example-tokens">tJt3 + r7q[ + forest!</div>
+                                    <div class="example-value">tJt3r7q[forest! (15 characters)</div>
+                                </div>
+                                <div class="password-example" id="example-password-2"
+                                     data-password-data='{"label":"3 Tokens Example","pattern":"A0 B1 C2","coordinates":["A0","B1","C2"],"tokens":["tJt3","r7q[","tH9v"],"password":"tJt3r7q[tH9vforest!","memorizedEntropy":23.3}'>
+                                    <div class="example-header">
+                                        <span class="example-label">3 Tokens:</span>
+                                        <span class="example-entropy" id="example-2-entropy">~104.4 bits</span>
+                                        <button class="entropy-help-btn" data-example="example-password-2" title="Show detailed entropy breakdown">
+                                            <span class="help-icon">?</span>
+                                        </button>
+                                    </div>
+                                    <div class="example-coordinates">A0 + B1 + C2 + forest!</div>
+                                    <div class="example-tokens">tJt3 + r7q[ + tH9v + forest!</div>
+                                    <div class="example-value">tJt3r7q[tH9vforest! (19 characters)</div>
+                                </div>
+                                <div class="password-example" id="example-password-3"
+                                     data-password-data='{"label":"With Numbers Example","pattern":"A0 B1","coordinates":["A0","B1"],"tokens":["tJt3","r7q["],"password":"tJt3r7q[forest123!","memorizedEntropy":38.2}'>
+                                    <div class="example-header">
+                                        <span class="example-label">With Numbers:</span>
+                                        <span class="example-entropy" id="example-3-entropy">~88.4 bits</span>
+                                        <button class="entropy-help-btn" data-example="example-password-3" title="Show detailed entropy breakdown">
+                                            <span class="help-icon">?</span>
+                                        </button>
+                                    </div>
+                                    <div class="example-coordinates">A0 + B1 + forest + 123!</div>
+                                    <div class="example-tokens">tJt3 + r7q[ + forest + 123!</div>
+                                    <div class="example-value">tJt3r7q[forest123! (18 characters)</div>
+                                </div>
+                                <div class="password-example" id="example-password-4"
+                                     data-password-data='{"label":"Complex Mixed Example","pattern":"A0 B1 C2","coordinates":["A0","B1","C2"],"tokens":["tJt3","r7q[","tH9v"],"password":"MyBank#tJt3-r7q[&tH9v$2024","memorizedEntropy":45.8}'>
+                                    <div class="example-header">
+                                        <span class="example-label">Complex Mixed:</span>
+                                        <span class="example-entropy" id="example-4-entropy">~124.2 bits</span>
+                                        <button class="entropy-help-btn" data-example="example-password-4" title="Show detailed entropy breakdown">
+                                            <span class="help-icon">?</span>
+                                        </button>
+                                    </div>
+                                    <div class="example-coordinates">MyBank + A0 + B1 + C2 + 2024 + varied separators</div>
+                                    <div class="example-tokens">MyBank + tJt3 + r7q[ + tH9v + 2024 + #-&$ separators</div>
+                                    <div class="example-value">MyBank#tJt3-r7q[&tH9v$2024 (26 characters)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- RFC 4086 Security Classifications -->
+                        <div class="rfc-security-levels">
+                            <h4>📋 Security Level Legend</h4>
+                            <div class="rfc-legend">
+                                <div class="legend-item insufficient">
+                                    <span class="legend-color"></span>
+                                    <span class="legend-label">INSUFFICIENT (&lt;40 bits)</span>
+                                </div>
+                                <div class="legend-item basic">
+                                    <span class="legend-color"></span>
+                                    <span class="legend-label">BASIC (40-64 bits)</span>
+                                </div>
+                                <div class="legend-item good">
+                                    <span class="legend-color"></span>
+                                    <span class="legend-label">GOOD (65-89 bits)</span>
+                                </div>
+                                <div class="legend-item strong">
+                                    <span class="legend-color"></span>
+                                    <span class="legend-label">STRONG (90-127 bits)</span>
+                                </div>
+                                <div class="legend-item excellent">
+                                    <span class="legend-color"></span>
+                                    <span class="legend-label">EXCELLENT (≥128 bits)</span>
+                                </div>
+                            </div>
+                            <p class="rfc-note">
+                                <strong>Reference:</strong> <a href="https://tools.ietf.org/rfc/rfc4086.txt" target="_blank">RFC 4086</a> - 
+                                Randomness Requirements for Security. Classifications based on computational complexity 
+                                and current cryptographic standards for entropy estimation.
+                            </p>
+                        </div>
+                                
+                                <!-- Interactive Threat Analysis -->
+                                <div class="interactive-threat-analysis">
+                                    <h4>🛡️ Interactive Threat Analysis</h4>
+                                    <div class="threat-scenarios">
+                                        <div class="threat-scenario good">
+                                            <div class="scenario-header">
+                                                <span class="scenario-icon">🔒</span>
+                                                <span class="scenario-title">Normal Operation</span>
+                                                <span class="scenario-security">EXCELLENT</span>
+                                            </div>
+                                            <div class="scenario-details">
+                                                <div class="detail-item">
+                                                    <strong>Entropy:</strong> 80-120+ bits
+                                                </div>
+                                                <div class="detail-item">
+                                                    <strong>Attack Cost:</strong> Computationally infeasible
+                                                </div>
+                                                <div class="detail-item">
+                                                    <strong>Compromise Risk:</strong> Low (air-gapped systems, proper OPSEC)
+                                                </div>
+                                                <div class="detail-item">
+                                                    <strong>Required Knowledge:</strong> None (all components secret)
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="threat-scenario warning">
+                                            <div class="scenario-header">
+                                                <span class="scenario-icon">📱</span>
+                                                <span class="scenario-title">Memorized Words Compromised</span>
+                                                <span class="scenario-security">GOOD</span>
+                                            </div>
+                                            <div class="scenario-details">
+                                                <div class="detail-item">
+                                                    <strong>Entropy:</strong> 45-80+ bits (seed + label + grid selection)
+                                                </div>
+                                                <div class="detail-item">
+                                                    <strong>Attack Cost:</strong> 2⁴⁵ - 2⁸⁰ operations
+                                                </div>
+                                                <div class="detail-item">
+                                                    <strong>Compromise Risk:</strong> Higher for online systems (keyloggers, social engineering)
+                                                </div>
+                                                <div class="detail-item">
+                                                    <strong>Attacker Still Needs:</strong> Seed phrase, label patterns, coordinate habits
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="threat-scenario warning">
+                                            <div class="scenario-header">
+                                                <span class="scenario-icon">⚠️</span>
+                                                <span class="scenario-title">Seed Compromised</span>
+                                                <span class="scenario-security">GOOD</span>
+                                            </div>
+                                            <div class="scenario-details">
+                                                <div class="detail-item">
+                                                    <strong>Entropy:</strong> 40-60+ bits (label + grid + memorized)
+                                                </div>
+                                                <div class="detail-item">
+                                                    <strong>Attack Cost:</strong> 2⁴⁰ - 2⁶⁰ operations (~1 trillion to 1 quintillion)
+                                                </div>
+                                                <div class="detail-item">
+                                                    <strong>Compromise Risk:</strong> Medium (stolen backup, poor storage)
+                                                </div>
+                                                <div class="detail-item">
+                                                    <strong>Attacker Still Needs:</strong> Label patterns, coordinate habits, memorized components
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="threat-scenario critical">
+                                            <div class="scenario-header">
+                                                <span class="scenario-icon">🚨</span>
+                                                <span class="scenario-title">Multiple Compromise</span>
+                                                <span class="scenario-security">BASIC</span>
+                                            </div>
+                                            <div class="scenario-details">
+                                                <div class="detail-item">
+                                                    <strong>Entropy:</strong> 20-30+ bits (memorized only)
+                                                </div>
+                                                <div class="detail-item">
+                                                    <strong>Attack Cost:</strong> 2²⁰ - 2³⁰ operations (~1 million to 1 billion)
+                                                </div>
+                                                <div class="detail-item">
+                                                    <strong>Compromise Risk:</strong> High for predictable users with poor OPSEC
+                                                </div>
+                                                <div class="detail-item">
+                                                    <strong>Compromised:</strong> Seed + label patterns + coordinate habits
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Memorized Word Compromise Analysis -->
+                                    <div class="memorized-compromise-analysis">
+                                        <h5>🧠 Memorized Component Vulnerability Analysis</h5>
+                                        <div class="compromise-scenarios">
+                                            <div class="compromise-vector">
+                                                <div class="vector-header">
+                                                    <span class="vector-icon">⌨️</span>
+                                                    <span class="vector-title">Keylogger Attack</span>
+                                                    <span class="vector-risk high">HIGH RISK</span>
+                                                </div>
+                                                <div class="vector-details">
+                                                    <div class="detail-item">
+                                                        <strong>Environment:</strong> Compromised computers, public terminals
+                                                    </div>
+                                                    <div class="detail-item">
+                                                        <strong>Exposure:</strong> Complete memorized component capture
+                                                    </div>
+                                                    <div class="detail-item">
+                                                        <strong>Mitigation:</strong> Use only trusted devices, virtual keyboards for sensitive entry
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="compromise-vector">
+                                                <div class="vector-header">
+                                                    <span class="vector-icon">👁️</span>
+                                                    <span class="vector-title">Shoulder Surfing</span>
+                                                    <span class="vector-risk medium">MEDIUM RISK</span>
+                                                </div>
+                                                <div class="vector-details">
+                                                    <div class="detail-item">
+                                                        <strong>Environment:</strong> Public spaces, open offices, cameras
+                                                    </div>
+                                                    <div class="detail-item">
+                                                        <strong>Exposure:</strong> Partial to complete visual observation
+                                                    </div>
+                                                    <div class="detail-item">
+                                                        <strong>Mitigation:</strong> Screen privacy, private entry locations
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="compromise-vector">
+                                                <div class="vector-header">
+                                                    <span class="vector-icon">🎭</span>
+                                                    <span class="vector-title">Social Engineering</span>
+                                                    <span class="vector-risk medium">MEDIUM RISK</span>
+                                                </div>
+                                                <div class="vector-details">
+                                                    <div class="detail-item">
+                                                        <strong>Environment:</strong> Targeted attacks, phishing, impersonation
+                                                    </div>
+                                                    <div class="detail-item">
+                                                        <strong>Exposure:</strong> Voluntary disclosure of memorized patterns
+                                                    </div>
+                                                    <div class="detail-item">
+                                                        <strong>Mitigation:</strong> Security awareness, verification protocols
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="compromise-vector">
+                                                <div class="vector-header">
+                                                    <span class="vector-icon">🔍</span>
+                                                    <span class="vector-title">Pattern Analysis</span>
+                                                    <span class="vector-risk low">LOW RISK</span>
+                                                </div>
+                                                <div class="vector-details">
+                                                    <div class="detail-item">
+                                                        <strong>Environment:</strong> Multiple password observations over time
+                                                    </div>
+                                                    <div class="detail-item">
+                                                        <strong>Exposure:</strong> Predictable memorized word patterns
+                                                    </div>
+                                                    <div class="detail-item">
+                                                        <strong>Mitigation:</strong> Vary memorized components, irregular patterns
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="compromise-impact">
+                                            <h6>📊 Impact Assessment</h6>
+                                            <div class="impact-grid">
+                                                <div class="impact-item">
+                                                    <div class="impact-label">If memorized words compromised:</div>
+                                                    <div class="impact-value">Remaining entropy: 45-80+ bits</div>
+                                                    <div class="impact-note">Still requires seed + label + coordinate patterns</div>
+                                                </div>
+                                                <div class="impact-item">
+                                                    <div class="impact-label">Attack complexity increases:</div>
+                                                    <div class="impact-value">2⁴⁵ - 2⁸⁰ operations required</div>
+                                                    <div class="impact-note">Computationally expensive even with memorized component</div>
+                                                </div>
+                                                <div class="impact-item">
+                                                    <div class="impact-label">Defense in depth:</div>
+                                                    <div class="impact-value">Multiple independent components</div>
+                                                    <div class="impact-note">No single point of failure in the system</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="security-recommendations">
+                                        <h5>🎯 Security Recommendations</h5>
+                                        <ul>
+                                            <li><strong>Vary coordinate patterns:</strong> Don't always use the same grid positions</li>
+                                            <li><strong>Strong memorized components:</strong> Use diverse words and punctuation</li>
+                                            <li><strong>Label diversity:</strong> Use varied card IDs and dates for different purposes</li>
+                                            <li><strong>Secure seed storage:</strong> Keep seed phrase in secure, offline storage</li>
+                                            <li><strong>Operational security:</strong> Even seed compromise doesn't require immediate password changes if other components are strong</li>
+                                        </ul>
+                                    </div>
+
+                                    <!-- Usage Strategies Documentation -->
+                                    <div class="usage-strategies">
+                                        <h5>📋 Usage Strategies & Operational Guidelines</h5>
+                                        
+                                        <div class="strategy-section">
+                                            <h6>🗂️ Written Log System</h6>
+                                            <p>Maintain a secure written log to correlate systems with token patterns and password rules:</p>
+                                            <ul>
+                                                <li><strong>System-to-Pattern Mapping:</strong> Record which coordinate patterns (e.g., "A0 B1 C2") are used for each system</li>
+                                                <li><strong>Password Rules Documentation:</strong> Note specific requirements (length, special chars, etc.) for each service</li>
+                                                <li><strong>Memorized Component Variations:</strong> Track which memorized words, PINs, and punctuation patterns are used per system</li>
+                                                <li><strong>Label Format Standards:</strong> Document your card ID and date format conventions</li>
+                                            </ul>
+                                        </div>
+
+                                        <div class="strategy-section">
+                                            <h6>📅 Calendar Rotation System</h6>
+                                            <p>Implement systematic password rotation using calendar-based label updates:</p>
+                                            <ul>
+                                                <li><strong>Quarterly Rotation:</strong> Update card dates every 3 months (2024-01, 2024-04, 2024-07, 2024-10)</li>
+                                                <li><strong>Annual Card IDs:</strong> Use year-based card identifiers (SYS.24.01, SYS.25.01) for major rotations</li>
+                                                <li><strong>Emergency Rotation:</strong> Pre-planned next card ID/date combinations for security incidents</li>
+                                                <li><strong>Staggered Updates:</strong> Rotate different systems on different schedules based on risk level</li>
+                                            </ul>
+                                        </div>
+
+                                        <div class="strategy-section">
+                                            <h6>🎯 Coordinate Pattern Strategies</h6>
+                                            <p>Systematic approaches to coordinate selection for password generation:</p>
+                                            <ul>
+                                                <li><strong>Geometric Patterns:</strong> Use diagonal lines, squares, or L-shapes for memorability</li>
+                                                <li><strong>Personal Significance:</strong> Choose coordinates based on dates, initials, or meaningful numbers</li>
+                                                <li><strong>Risk-Based Selection:</strong> More coordinates for high-value accounts, fewer for low-risk systems</li>
+                                                <li><strong>Pattern Diversity:</strong> Avoid reusing the same coordinate combinations across critical systems</li>
+                                            </ul>
+                                        </div>
+
+                                        <div class="strategy-section">
+                                            <h6>📝 Documentation Security</h6>
+                                            <p>Best practices for maintaining secure operational records:</p>
+                                            <ul>
+                                                <li><strong>Physical Storage:</strong> Keep written logs separate from cards and seed material</li>
+                                                <li><strong>Coded References:</strong> Use abbreviated system names or codes rather than full service names</li>
+                                                <li><strong>Partial Information:</strong> Log doesn't need to contain complete password reconstruction data</li>
+                                                <li><strong>Regular Review:</strong> Update logs when passwords are rotated or systems are decommissioned</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <!-- Interactive Threat Analysis -->
+                                    <div class="interactive-threat-analysis">
+                                        <h5>🛡️ Interactive Threat Analysis</h5>
+                                        <p class="threat-intro">Select which components have been compromised to see the resulting security level:</p>
+                                        
+                                        <div class="security-note" style="background: #e7f3ff; border: 1px solid #b8daff; border-radius: 6px; padding: 12px; margin-bottom: 15px; font-size: 14px;">
+                                            <strong>Security Model:</strong> 
+                                            <strong>Token Values</strong> = entropy from the actual characters (🃏 card shows these)
+                                            <br>
+                                            <strong>Token Sequence</strong> = entropy from which grid positions you selected (📋 written inventory needed)
+                                            <br>
+                                            Both are required to reconstruct your password!
+                                        </div>
+                                        
+                                        <div class="compromise-controls">
+                                            <div class="control-section">
+                                                <h6>Password Configuration:</h6>
+                                                <div class="token-selection">
+                                                    <label for="token-count">Number of tokens used in password:</label>
+                                                    <input type="number" id="token-count" min="1" max="10" value="4" style="width: 60px; margin: 0 10px;">
+                                                    <span class="token-entropy-display">
+                                                        Token values: <span id="token-entropy-value">26.0 bits</span>
+                                                        (4 tokens × 6.64 bits each)
+                                                    </span>
+                                                    <div style="font-size: 12px; color: #6c757d; margin-top: 5px;">
+                                                        <strong>Note:</strong> This calculates entropy from token <em>values</em> only. 
+                                                        Token <em>sequence</em> (which positions you select) adds separate entropy below.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="control-section">
+                                                <h6>Select Compromised Components:</h6>
+                                                <div class="compromise-checkboxes">                                                    <label class="compromise-checkbox">
+                                                        <input type="checkbox" id="compromise-seed" data-component="seed">
+                                                        <span class="checkbox-custom"></span>
+                                                        <span class="checkbox-label">🌱 Seed Source (BIP-39/Simple/SLIP-39)</span>
+                                                        <span class="entropy-value" id="seed-entropy-display">128.0 bits</span>
+                                                    </label>
+                                                    
+                                    <label class="compromise-checkbox">
+                                        <input type="checkbox" id="compromise-label" data-component="label">
+                                        <span class="checkbox-custom"></span>
+                                        <span class="checkbox-label">🏷️ Card Label (domain/type)</span>
+                                        <span class="entropy-value" id="label-entropy-display">32.0 bits</span>
+                                    </label>
+                                    <div class="entropy-note">
+                                        <small>🧂 Enhanced with salted SHA-512 expansion from simple domain names like "Banking"</small>
+                                    </div>
+                                    
+                                    <label class="compromise-checkbox">
+                                        <input type="checkbox" id="compromise-cardid" data-component="cardid">
+                                        <span class="checkbox-custom"></span>
+                                        <span class="checkbox-label">🔢 Card ID (specific instance)</span>
+                                        <span class="entropy-value" id="cardid-entropy-display">16.0 bits</span>
+                                    </label>
+                                    <div class="entropy-note">
+                                        <small>🎲 Enhanced with salt/expansion from simple IDs like "01", "Main", "Work"</small>
+                                    </div>                                    <label class="compromise-checkbox">
+                                        <input type="checkbox" id="compromise-card" data-component="card">
+                                        <span class="checkbox-custom"></span>
+                                        <span class="checkbox-label">🃏 Physical Card</span>
+                                        <span class="entropy-value" id="card-entropy-display">63.0 bits</span>
+                                    </label>                                                    <label class="compromise-checkbox">
+                                                        <input type="checkbox" id="compromise-tokens" data-component="tokens">
+                                                        <span class="checkbox-custom"></span>
+                                                        <span class="checkbox-label">🎯 Selected Tokens</span>
+                                                        <span class="entropy-value" id="tokens-entropy-display">103.9 bits</span>
+                                                    </label>
+                                                    <div class="entropy-note">
+                                                        <small>💡 Token entropy is dynamic: full value when generation parameters (seed+label+cardid) are secret, coordinate selection only when grid can be generated by attacker.</small>
+                                                    </div>
+                                                    
+                                                    <label class="compromise-checkbox">
+                                                        <input type="checkbox" id="compromise-sequence" data-component="sequence">
+                                                        <span class="checkbox-custom"></span>
+                                                        <span class="checkbox-label">📋 Token Sequence</span>
+                                                        <span class="entropy-value" id="sequence-entropy-display">4.2 bits</span>
+                                                    </label>
+                                                    
+                                                    <label class="compromise-checkbox">
+                                                        <input type="checkbox" id="compromise-memorized" data-component="memorized">
+                                                        <span class="checkbox-custom"></span>
+                                                        <span class="checkbox-label">🧠 Memorized Components (word + PIN + caps)</span>
+                                                        <span class="entropy-value" id="memorized-entropy-display">24.5 bits</span>
+                                                    </label>
+                                                    
+                                                    <label class="compromise-checkbox">
+                                                        <input type="checkbox" id="compromise-patterns" data-component="patterns">
+                                                        <span class="checkbox-custom"></span>
+                                                        <span class="checkbox-label">🎯 Usage Patterns (punctuation + order)</span>
+                                                        <span class="entropy-value" id="patterns-entropy-display">7.6 bits</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="threat-results">
+                                                <div class="remaining-entropy">
+                                                    <h6>Remaining Security:</h6>
+                                                    <div class="entropy-display">
+                                                        <span class="entropy-number" id="remaining-entropy">222.4</span>
+                                                        <span class="entropy-unit">bits</span>
+                                                        <span class="security-level-text">: <span id="remaining-security-level">EXCELLENT</span></span>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="threat-assessment">
+                                                    <h6>Threat Assessment:</h6>
+                                                    <div class="assessment-content" id="threat-assessment-content">
+                                                        <div class="assessment-item">
+                                                            <strong>Attack Complexity:</strong> <span id="attack-complexity">Computationally infeasible (2²²²⁺ operations)</span>
+                                                        </div>
+                                                        <div class="assessment-item">
+                                                            <strong>Recommended Action:</strong> <span id="recommended-action">No action required - excellent security</span>
+                                                        </div>
+                                                        <div class="assessment-item">
+                                                            <strong>Time to Break:</strong> <span id="time-to-break">Universe lifetime + beyond current technology</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="reset-controls">
+                                            <button type="button" class="reset-btn" id="reset-threat-btn">🔄 Reset All</button>
+                                            <button type="button" class="preset-btn" data-preset="seed-only" title="Seed compromised but card secure">Seed Only</button>
+                                            <button type="button" class="preset-btn" data-preset="card-stolen" title="Physical card stolen (grid + ID visible)">Card Stolen</button>
+                                            <button type="button" class="preset-btn" data-preset="memorized-only" title="Memorized components observed">Memorized Only</button>
+                                            <button type="button" class="preset-btn" data-preset="worst-case" title="Everything except seed compromised">Worst Case</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Pattern examples will be generated directly here as individual elements -->
+                            </div>
+                        </div>
+                        
+                        </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+        <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Seed Card</h4>
+                    <p>Deterministic password generation for the security-conscious.</p>
+                    <div class="social-links">
+                        <a href="https://github.com/your-username/seed-card"><i class="fab fa-github"></i></a>
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h4>Resources</h4>
+                    <ul>
+                        <li><a href="/generator" data-route="/generator">Generator</a></li>
+                        <li><a href="#security">Security Model</a></li>
+                        <li><a href="https://github.com/your-username/seed-card/blob/main/docs/design.md">Design Document</a></li>
+                        <li><a href="https://github.com/your-username/seed-card">Source Code</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="#privacy">Privacy Policy</a></li>
+                        <li><a href="#terms">Terms of Use</a></li>
+                        <li><a href="https://github.com/your-username/seed-card/blob/main/LICENSE">License</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Seed Card. Open source project under MIT License.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Vite Entry Point for CSS Processing -->
+    <script type="module" src="./main.js"></script>
+    
+    <!-- Argon2 WASM Library - Safari-Compatible Loader
+         The bundled version (argon2-bundled.min.js) fails on Safari because it 
+         allocates WebAssembly.Memory with maximum: ~2GB which Safari rejects.
+         Our loader uses smaller, Safari-safe memory limits (512MB max). -->
+    <script src="argon2-loader.js"></script>
+    
+    <!-- Application Scripts (served from public/) -->
+    <script src="crypto.js"></script>
+    <script src="test_hkdf_vectors.js"></script> <!-- HKDF test vectors for verification -->
+    <script src="app.js"></script>
+    <script src="generator.js"></script>
+    <script src="router.js"></script>
+    
+    <!-- SPA Initialization -->
+    <script src="spa-init.js"></script>
+
+    <!-- Token Entropy Calculation Modal -->
+    <div id="token-entropy-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🔢 Coordinate Selection Entropy</h3>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="calculation-breakdown">
+                    <div class="calc-step">
+                        <div class="calc-label">Card Index Selection:</div>
+                        <div class="calc-value">Choosing one card from 100 possible cards (A0-J9)</div>
+                        <div class="calc-formula">H = log₂(100) = 6.64 bits per card selection</div>
+                    </div>
+                    <div class="calc-step">
+                        <div class="calc-label">Coordinate Selection:</div>
+                        <div class="calc-value">Choosing positions from 10×10 grid within selected card</div>
+                        <div class="calc-formula">Each coordinate (A0-J9) adds ~6.64 bits of selection entropy</div>
+                    </div>
+                    <div class="calc-step">
+                        <div class="calc-label">Token Values:</div>
+                        <div class="calc-value">4-character Base90 tokens (deterministic from seed + card index)</div>
+                        <div class="calc-formula">H = log₂(90⁴) = 26.0 bits per token (if seed has sufficient entropy)</div>
+                    </div>
+                    <div class="calc-step">
+                        <div class="calc-label">Combined Per Selection:</div>
+                        <div class="calc-value" id="modal-pattern-entropy-explanation">~32.5 bits per coordinate selection</div>
+                        <div class="calc-formula">Card selection + Coordinate position + Token value</div>
+                    </div>
+                    <div class="calc-note">
+                        <strong>Note:</strong> The card index (A0-J9) and coordinate selection (A0-J9) are independent choices that each contribute entropy. Token values derive from the seed and are deterministic once card and coordinates are chosen.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Entropy Modal -->
+    <div id="password-entropy-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">🔐 Password Entropy Breakdown</h3>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-entropy-breakdown">
+                    <!-- Content will be dynamically populated -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Service Worker Registration for PWA (production only) -->
+    <!-- PWA Service Worker Registration -->
+    <script src="pwa-registration.js"></script>
+</body>
+</html>

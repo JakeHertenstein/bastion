@@ -1,0 +1,32 @@
+{
+  "name": "seed-card-web",
+  "version": "1.0.0",
+  "description": "Offline-first seed card generator with cryptographic matrix generation",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build --config vite.config.prod.js",
+    "build:dev": "vite build",
+    "preview": "vite preview",
+    "clean": "rm -rf dev-build/ dist/",
+    "release": "npm run clean && npm run build",
+    "legacy:remove": "rm -rf public/"
+  },
+  "keywords": [
+    "cryptography",
+    "password-generator",
+    "offline",
+    "security",
+    "seed-phrase",
+    "air-gapped"
+  ],
+  "author": "Seed Card Project",
+  "license": "MIT",
+  "devDependencies": {
+    "vite": "^7.2.7",
+    "vite-plugin-singlefile": "^0.13.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

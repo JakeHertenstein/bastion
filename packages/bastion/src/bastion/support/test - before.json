@@ -1,0 +1,57 @@
+{
+  "overview": {
+    "title": "Autofill",
+    "ainfo": "1@email.com",
+    "url": "https://autofill.me",
+    "URLs": [
+      {
+        "l": "website",
+        "u": "https://autofill.me",
+        "m": "default"
+      }
+    ],
+    "passkey": {
+      "credentialId": "bC_HcuI8JIieZedDG-zn1UlAJQhtVSaNGILKcJ1M",
+      "userHandle": "e7f8Z0OqKitOV_yf-Z1V8Q8yiGbHdWWhVsmV8uW0hfI",
+      "rpId": "autofill.me"
+    },
+    "ps": 0,
+    "pbe": 0.0,
+    "pgrng": false,
+    "lh": {
+      "v": 1,
+      "h": [
+        {
+          "i": "w3hmkq4ulgi5bhqz2cww4ef2pe",
+          "v": "6cerqdmlcvedkd5dtj3ma2ad5m"
+        }
+      ]
+    },
+    "tags": [
+      "Bastion/2FA/FIDO2-Software"
+    ]
+  },
+  "details": {
+    "passkey": {
+      "type": "webauthn",
+      "createdAt": 1765121634,
+      "privateKey": "eyJrdHkiOiJFQyIsImNydiI6IlAtMjU2IiwiZCI6InJtRmd0MjdzSkNBeGlTa1AzUFMyTDFMTzFYNzM0WWoyREd3SFd5Y1ZmbkkiLCJ4IjoiTWlodHpMRUJndkhXclNQQW5XMm1YS21OUlU0Tm5WRzBBdXFic3JuTWVGcyIsInkiOiI0Mng0ejh0UG1ZcWdhRHliSWlwRElXVktRdUJIOXRIWllGTnA0MW16eU5ZIiwiYWxnIjoiRVMyNTYifQ",
+      "userHandle": "e7f8Z0OqKitOV_yf-Z1V8Q8yiGbHdWWhVsmV8uW0hfI"
+    },
+    "fields": [
+      {
+        "value": "1@email.com",
+        "id": "identifier",
+        "name": "",
+        "type": "T",
+        "designation": "username"
+      }
+    ]
+  },
+  "createdAt": "2025-12-07T15:33:54Z",
+  "updatedAt": "2025-12-07T15:35:23Z",
+  "faveIndex": 0,
+  "trashed": "N",
+  "templateUuid": "001",
+  "uuid": "hqguqsaovlalodxkabkzujska4"
+}

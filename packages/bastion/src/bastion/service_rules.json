@@ -1,0 +1,89 @@
+{
+  "github": {
+    "max": 39,
+    "description": "GitHub username maximum length"
+  },
+  "twitter": {
+    "max": 15,
+    "description": "Twitter/X username maximum length"
+  },
+  "instagram": {
+    "max": 30,
+    "description": "Instagram username maximum length"
+  },
+  "facebook": {
+    "max": 50,
+    "description": "Facebook username maximum length"
+  },
+  "linkedin": {
+    "min": 3,
+    "max": 100,
+    "description": "LinkedIn custom URL maximum length"
+  },
+  "reddit": {
+    "min": 3,
+    "max": 20,
+    "description": "Reddit username length constraints"
+  },
+  "aws": {
+    "min": 1,
+    "max": 64,
+    "description": "AWS IAM username maximum length"
+  },
+  "azure": {
+    "max": 64,
+    "description": "Azure AD username maximum length"
+  },
+  "gcp": {
+    "max": 64,
+    "description": "Google Cloud Platform email/username"
+  },
+  "docker": {
+    "min": 4,
+    "max": 30,
+    "description": "Docker Hub username constraints"
+  },
+  "npm": {
+    "max": 214,
+    "description": "NPM username/package name maximum"
+  },
+  "pypi": {
+    "max": 50,
+    "description": "PyPI username maximum length"
+  },
+  "gmail": {
+    "min": 6,
+    "max": 30,
+    "description": "Gmail username length (before @)"
+  },
+  "outlook": {
+    "max": 64,
+    "description": "Outlook.com username maximum"
+  },
+  "yahoo": {
+    "min": 4,
+    "max": 32,
+    "description": "Yahoo Mail username constraints"
+  },
+  "stripe": {
+    "max": 255,
+    "description": "Stripe no specific username limit"
+  },
+  "paypal": {
+    "max": 127,
+    "description": "PayPal email maximum length"
+  },
+  "slack": {
+    "max": 21,
+    "description": "Slack display name maximum"
+  },
+  "discord": {
+    "min": 2,
+    "max": 32,
+    "description": "Discord username constraints"
+  },
+  "zoom": {
+    "max": 64,
+    "description": "Zoom display name maximum"
+  }
+}

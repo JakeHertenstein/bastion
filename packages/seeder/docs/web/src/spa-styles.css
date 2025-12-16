@@ -1,0 +1,3152 @@
+/* Basic CSS Reset for Cross-Browser Compatibility */
+* {
+    box-sizing: border-box;
+}
+
+html, body, div, span, h1, h2, h3, h4, h5, h6, p, a, ul, li, nav, header {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font: inherit;
+    vertical-align: baseline;
+}
+
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, section {
+    display: block;
+}
+
+body {
+    line-height: 1;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+ol, ul {
+    list-style: none;
+}
+
+/* Global text selection disable */
+* {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Allow text selection in input fields and editable content */
+input, textarea, [contenteditable="true"] {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+}
+
+/* Allow text selection for help text and informational content */
+.input-help, .help-row, .help-note, .help-examples, .security-text, .hero-text {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+}
+
+/* Modern Responsive Navigation */
+.navbar {
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    display: flex;
+    align-items: center;
+    min-height: 64px;
+    position: relative;
+}
+
+/* Brand/Logo - fixed on left */
+.nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    color: #1f2937;
+    font-weight: 700;
+    font-size: 1.25rem;
+    transition: color 0.2s ease;
+    flex-shrink: 0;
+}
+
+.nav-brand:hover {
+    color: #3b82f6;
+}
+
+.brand-icon {
+    font-size: 1.5rem;
+}
+
+.brand-text {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+/* Navigation menu - absolutely centered */
+.nav-menu {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+}
+
+.nav-list {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    gap: 2rem;
+    align-items: center;
+}
+
+.nav-link {
+    color: #6b7280;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.nav-link:hover {
+    color: #3b82f6;
+    background-color: #eff6ff;
+}
+
+.nav-link.active {
+    color: #3b82f6;
+    background-color: #dbeafe;
+    font-weight: 600;
+}
+
+/* Navigation symbol and text styling */
+.nav-symbol {
+    display: inline !important;
+    margin-right: 0.5rem !important;
+}
+
+.nav-text {
+    display: inline !important;
+    vertical-align: middle !important;
+}
+
+/* Right side actions - help and status */
+.nav-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-shrink: 0;
+}
+
+.nav-help-status {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Status indicator */
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: #6b7280;
+    background: #f9fafb;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.375rem;
+    border: 1px solid #e5e7eb;
+}
+
+.status-label {
+    font-weight: 500;
+}
+
+.status-value {
+    font-weight: 600;
+    color: #059669;
+    /* Remove any bubble styling */
+    background: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    border: none !important;
+}
+
+/* Hide status on home page */
+body.route-home .status-indicator {
+    display: none;
+}
+
+/* Help button */
+.nav-help-btn {
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    color: #6b7280;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.nav-help-btn:hover {
+    background-color: #e5e7eb;
+    color: #374151;
+}
+
+/* Navigation active states */
+.generator-header .nav-item.active,
+.generator-header .nav-item.nav-active,
+.generator-header a.nav-item.active,
+.generator-header a.nav-item.nav-active,
+header.generator-header .nav-item.active,
+header.generator-header .nav-item.nav-active,
+header.generator-header a.nav-item.active,
+header.generator-header a.nav-item.nav-active {
+    color: #2563eb !important;
+    background-color: rgba(37, 99, 235, 0.1) !important;
+    font-weight: 600 !important;
+}
+
+/* Fallback with even higher specificity */
+.nav-item.active,
+.nav-item.nav-active,
+a.nav-item.active,
+a.nav-item.nav-active {
+    color: #2563eb !important;
+    background-color: rgba(37, 99, 235, 0.1) !important;
+    font-weight: 600 !important;
+}
+
+/* Help button styling */
+.help-btn {
+    background: none;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    padding: 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    margin-left: 0.5rem;
+    z-index: 200;
+}
+
+.help-btn:hover {
+    background-color: rgba(37, 99, 235, 0.1);
+    color: #2563eb;
+    border-color: #2563eb;
+}
+
+/* Status indicator - floating on top right */
+.status-indicator {
+    position: absolute !important;
+    top: 50% !important;
+    right: 80px !important; /* Give space for potential help button */
+    transform: translateY(-50%) !important;
+    z-index: 150 !important; /* Above navbar but below help button */
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    padding: 0.25rem 0.75rem !important;
+    border-radius: 20px !important;
+    background: #ffffff !important;
+    border: 1px solid #d1d5db !important;
+    transition: all 0.3s ease !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    color: #374151 !important;
+}
+
+/* Route Views */
+.route-view {
+    min-height: 400px;
+    padding: 2rem 0;
+}
+
+/* Domain next button management */
+.domain-next-btn-enabled {
+    opacity: 1 !important;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+}
+
+.domain-next-btn-disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+}
+
+/* Full width sections */
+.form-section {
+    width: 100%;
+    max-width: none !important;
+    margin: 0 0 2rem 0 !important;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+}
+
+.generator-form {
+    width: 100%;
+    max-width: none !important;
+    margin: 0 !important;
+}
+
+/* Container adjustments for full width */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+/* Home View Styles - Match original hero layout */
+.hero-content {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    padding: 3rem 1rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.hero-text {
+    flex: 1;
+}
+
+.hero-text h1 {
+    font-size: 2.5rem;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+    color: #1e293b;
+}
+
+.hero-text .highlight {
+    color: #2563eb;
+}
+
+.hero-subtitle {
+    font-size: 1.2rem;
+    color: #64748b;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.hero-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.hero-visual {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.card-preview {
+    position: relative;
+}
+
+.matrix-sample {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 1rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+}
+
+/* Hero section matrix should use the same table styling */
+.matrix-sample .password-matrix {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+}
+
+.matrix-sample .password-matrix th,
+.matrix-sample .password-matrix td {
+    padding: 0.4rem;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+    cursor: default; /* Remove pointer cursor */
+}
+
+/* Disable hover effects and clickable styling for hero matrix */
+.matrix-sample .password-matrix th:hover,
+.matrix-sample .password-matrix td:hover {
+    background-color: inherit;
+    cursor: default;
+}
+
+/* Disable corner cell hover effects specifically */
+.matrix-sample .password-matrix .matrix-corner-cell:hover {
+    background-color: #e2e8f0 !important;
+    cursor: default !important;
+}
+
+/* Disable all token hover effects in hero section */
+.matrix-sample .password-matrix .token-text:hover {
+    background-color: inherit !important;
+    cursor: default !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.matrix-sample .password-matrix .token-text:hover::after {
+    display: none !important;
+}
+
+/* Remove any copy-related styling from hero matrix */
+.matrix-sample .password-matrix .token-cell:hover {
+    background-color: #f1f5f9 !important;
+    cursor: default !important;
+}
+
+/* Override ALL cursor styles in hero matrix */
+.matrix-sample .password-matrix td:not(.coord),
+.matrix-sample .password-matrix .token-cell,
+.matrix-sample .password-matrix .token-text,
+.matrix-sample .password-matrix th,
+.matrix-sample .password-matrix * {
+    cursor: default !important;
+}
+
+/* Disable transitions and hover effects completely */
+.matrix-sample .password-matrix td:not(.coord) {
+    cursor: default !important;
+    transition: none !important;
+}
+
+.matrix-sample .password-matrix td:not(.coord):hover {
+    background-color: #f1f5f9 !important;
+    cursor: default !important;
+}
+
+.matrix-sample .password-matrix th {
+    background-color: #f8fafc;
+    font-weight: bold;
+    color: #2563eb;
+    font-size: 0.8rem;
+}
+
+.matrix-sample .password-matrix .coord {
+    background-color: #f8fafc;
+    font-weight: bold;
+    color: #2563eb;
+}
+
+.matrix-sample .password-matrix .token-cell {
+    background: #f1f5f9;
+    font-weight: 500;
+}
+
+.matrix-sample .password-matrix .token-text {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+}
+
+.matrix-sample .password-matrix .matrix-corner-cell {
+    background-color: #e2e8f0;
+    font-size: 0.8rem;
+}
+
+.security-badge {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: #10b981;
+    color: white;
+    padding: 0.5rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+/* Section Styling */
+.features, .how-it-works, .security, .demo {
+    padding: 3rem 0;
+    margin: 2rem 0;
+}
+
+.features {
+    background: #f8fafc;
+    border-radius: 12px;
+}
+
+.features h2, .how-it-works h2, .security h2, .demo h2 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    color: #1e293b;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.feature-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.feature-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.feature-card h3 {
+    margin-bottom: 1rem;
+    color: #1e293b;
+}
+
+.feature-card p {
+    color: #64748b;
+    line-height: 1.6;
+}
+
+/* Workflow Steps */
+.workflow {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+}
+
+.workflow-step {
+    display: flex;
+    gap: 1rem;
+}
+
+.step-number {
+    background: #2563eb;
+    color: white;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.step-content h3 {
+    margin-bottom: 0.5rem;
+    color: #1e293b;
+}
+
+/* Security Section */
+.security-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+.security-text ul {
+    padding-left: 1rem;
+}
+
+.security-text li {
+    margin-bottom: 0.5rem;
+}
+
+.warning-box {
+    background: #fef3c7;
+    border: 1px solid #f59e0b;
+    border-radius: 8px;
+    padding: 1.5rem;
+    color: #92400e;
+}
+
+.warning-box h4 {
+    margin-bottom: 0.5rem;
+    color: #92400e;
+}
+
+/* Demo Section */
+.demo-container {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+.demo-input {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.demo-output {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.input-group {
+    margin-bottom: 1rem;
+}
+
+.label-output {
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-family: 'Courier New', monospace;
+    display: inline-block;
+}
+
+.invalid {
+    border: 2px solid #ef4444 !important;
+    background-color: #fff1f0 !important;
+}
+
+.valid {
+    border: 2px solid #10b981 !important;
+    background-color: #f0fdf4 !important;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+}
+
+/* Entropy Display Styles */
+.hash-info-stats, .label-entropy-stats {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin-top: 0.5rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.5rem;
+}
+
+.hash-stat, .entropy-stat {
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    text-align: center;
+    border: 1px solid transparent;
+}
+
+.hash-stat.valid, .entropy-stat.valid {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
+}
+
+.hash-stat.invalid, .entropy-stat.invalid {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+}
+
+.entropy-stat.empty {
+    background-color: #e2e3e5;
+    border-color: #d6d8db;
+    color: #6c757d;
+}
+
+/* Security Badge Styles for Pattern Examples */
+.security-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: white;
+    margin-left: 0.5rem;
+}
+
+.entropy-info {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.entropy-label {
+    font-weight: 500;
+    color: #6c757d;
+}
+
+.entropy-value {
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    font-weight: 600;
+    color: #495057;
+}
+
+.pattern-example {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    background-color: #fff;
+}
+
+.pattern-info {
+    margin-bottom: 0.5rem;
+}
+
+.pattern-password {
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    background-color: #f8f9fa;
+    padding: 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.password-value {
+    font-weight: 600;
+    color: #495057;
+}
+
+.token-count {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+/* Matrix Entropy Information */
+.matrix-entropy-info {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+}
+
+.matrix-entropy-info h4 {
+    margin: 0 0 0.75rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.entropy-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .entropy-stats {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Responsive Design - Safari Compatible */
+@media (max-width: 768px) {
+    .hero-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .hero-text h1 {
+        font-size: 2rem;
+    }
+    
+    .security-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .demo-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .workflow {
+        grid-template-columns: 1fr;
+    }
+    
+    /* Make navbar span full width on mobile */
+    .navbar {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    /* Force a completely new layout for mobile - override everything */
+    .navbar {
+        padding: 0 !important;
+        min-height: 48px !important;
+        max-height: 48px !important; /* Force single line height */
+        overflow: hidden !important;
+    }
+    
+    .nav-container {
+        display: flex !important;
+        flex-direction: row !important; 
+        align-items: center !important; /* Simple center alignment like wider view */
+        gap: 0.25rem !important;
+        padding: 0.25rem 0.25rem 1rem 0.25rem !important;
+        min-height: 48px !important; /* Use min-height instead of fixed height */
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        position: relative !important;
+        overflow: hidden !important;
+        flex-wrap: nowrap !important;
+        box-sizing: border-box !important;
+        line-height: 1.2 !important;
+    }
+    
+    /* Brand: Simple alignment like wider view */
+    .nav-brand {
+        display: flex !important;
+        align-items: center !important;
+        font-size: 0.7rem !important;
+        flex: 0 0 auto !important;
+        order: 1 !important;
+    }
+    
+    /* Navigation: Simple alignment like wider view */
+    .nav-menu {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        flex: 1 1 auto !important;
+        order: 2 !important;
+    }
+    
+    /* Actions: Simple alignment like wider view */
+    .nav-actions {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        font-size: 0.6rem !important;
+        flex: 0 0 auto !important;
+        order: 3 !important;
+    }
+    
+    /* Simple nav-help-status like wider view */
+    .nav-help-status {
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+    }
+    
+    /* Simple status indicator like wider view */
+    .status-indicator {
+        font-size: 0.625rem;
+        padding: 0.125rem 0.5rem;
+        background: transparent;
+        border: none;
+        display: flex !important;
+        align-items: center !important;
+    }
+    
+    /* Fix help button alignment too */
+    .nav-help-btn {
+        display: flex !important;
+        align-items: center !important;
+        height: 36px !important;
+        line-height: 1.2 !important;
+        margin: 0 !important;
+    }
+    
+    /* Nav list with consistent height */
+    .nav-list {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 0.1rem !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        list-style: none !important;
+        height: 36px !important; /* Match other elements */
+    }
+    
+    /* Nav links with consistent height */
+    .nav-link {
+        display: flex !important;
+        align-items: center !important;
+        padding: 0.1rem 0.15rem !important;
+        font-size: 0.7rem !important;
+        line-height: 1.2 !important; /* Match container */
+        height: 36px !important; /* Match other elements */
+    }
+    
+    /* Symbols with consistent alignment */
+    .nav-symbol {
+        display: inline !important;
+        margin-right: 0.5rem !important;
+        line-height: 1.2 !important; /* Match everything else */
+        font-size: 1.25rem !important; /* Restore proper icon size */
+        margin-right: 0 !important; /* No margin between icons */
+    }
+    
+    .nav-text {
+        display: none !important;
+    }
+    
+    .status-label {
+        display: none; /* Hide "Status:" label on mobile */
+    }
+}
+
+/* Ensure symbols are visible only on narrow screens */
+@media (min-width: 769px) {
+    .nav-symbol {
+        display: none !important;
+    }
+    
+    .nav-text {
+        display: inline !important;
+    }
+}
+
+/* Additional responsive styles */
+@media (max-width: 768px) {
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .container {
+        padding: 0 0.5rem;
+    }
+}
+
+/* Disable text selection on token matrices and make tokens clickable */
+.password-matrix,
+.demo-matrix,
+.card-modal .modal-matrix {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.password-matrix td:not(.coord),
+.demo-matrix td:not(.coord),
+.card-modal .modal-matrix td:not(.coord) {
+    cursor: copy;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.password-matrix td:not(.coord):hover,
+.demo-matrix td:not(.coord):hover,
+.card-modal .modal-matrix td:not(.coord):hover {
+    background-color: rgba(37, 99, 235, 0.1);
+    border-radius: 4px;
+    /* Removed font-weight: 600 to prevent size changes */
+}
+
+/* Add tooltip on hover - only for token text, not index buttons */
+.password-matrix .token-text:hover::after,
+.selected-matrix .token-text:hover::after,
+.demo-matrix .token-text:hover::after,
+.card-modal .modal-matrix td:not(.coord):hover::after {
+    content: "Click to copy";
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1f2937;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    z-index: 1000;
+    pointer-events: none;
+    opacity: 0.9;
+}
+
+/* Phone keypad header styles for generator view */
+.coord-header-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.1;
+    min-height: 40px; /* Ensure consistent height for all headers */
+    padding: 4px 0;
+}
+
+.coord-number {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 1px;
+    height: 1.2em; /* Fixed height for number alignment */
+    display: flex;
+    align-items: flex-start; /* Top-align numbers within their space */
+    justify-content: center;
+}
+
+.coord-letters {
+    font-size: 0.7rem;
+    color: #6c757d;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    line-height: 1;
+    min-height: 1em; /* Reserve space even when empty (0, 1) */
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.password-matrix td:not(.coord):active,
+.demo-matrix td:not(.coord):active,
+.card-modal .modal-matrix td:not(.coord):active {
+    background-color: rgba(37, 99, 235, 0.2);
+    transform: scale(0.98);
+}
+
+/* Compact matrix table styles */
+.password-matrix,
+.selected-matrix,
+.demo-matrix {
+    border-collapse: collapse;
+    border-spacing: 0;
+    width: auto !important;
+    table-layout: auto !important;
+    display: table;
+    margin: 0;
+}
+
+.password-matrix td,
+.password-matrix th,
+.selected-matrix td,
+.selected-matrix th,
+.demo-matrix td,
+.demo-matrix th {
+    padding: 2px 3px !important;
+    border: 1px solid #e5e7eb;
+    line-height: 1.2;
+    font-size: 13px;
+    text-align: center;
+}
+
+.password-matrix .coord-header,
+.selected-matrix .coord-header,
+.demo-matrix .coord-header {
+    padding: 2px 3px !important;
+    font-size: 12px;
+    width: auto !important;
+    min-width: auto !important;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle; /* Ensure headers are vertically centered */
+    height: 40px; /* Consistent height for all headers */
+}
+
+/* Specific styling for headers with phone keypad letters */
+.password-matrix .coord-header-with-letters,
+.selected-matrix .coord-header-with-letters,
+.demo-matrix .coord-header-with-letters {
+    padding: 0 !important; /* Let container handle padding */
+}
+
+/* Make matrix cells more compact but accommodate vertical layout */
+.password-matrix td:not(.coord),
+.selected-matrix td:not(.coord),
+.demo-matrix td:not(.coord) {
+    width: auto !important;
+    min-width: 45px !important;
+    max-width: none !important;
+    height: 45px !important;
+    padding: 2px !important;
+    white-space: nowrap;
+    text-align: center;
+    box-sizing: border-box;
+    vertical-align: middle;
+    position: relative;
+}
+
+/* Column and row header styling with phone keypad and numbering */
+.column-header-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.column-number {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.column-letters {
+    font-size: 9px;
+    font-weight: 400;
+    color: #6b7280;
+    letter-spacing: 0.5px;
+    line-height: 1;
+    min-height: 10px; /* Ensure consistent height even when empty */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.row-header-content {
+    font-size: 12px;
+    font-weight: 600;
+    color: #374151;
+    text-align: center;
+}
+
+/* Token cell with index button and token */
+.token-cell-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    width: 100%;
+    min-height: 40px;
+    padding: 2px;
+}
+
+.token-index-btn {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 3px;
+    padding: 2px 4px;
+    font-size: 11px;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 20px;
+    text-align: center;
+    font-weight: 500;
+    color: #64748b;
+    margin-bottom: 1px;
+}
+
+.token-index-btn:hover {
+    background: #e2e8f0;
+    color: #374151;
+    border-color: #cbd5e1;
+}
+
+.token-index-btn:active {
+    background: #cbd5e1;
+    transform: scale(0.95);
+}
+
+.token-index-btn.selected {
+    border-color: #2563eb;
+    font-weight: 600;
+}
+
+/* Card Generation Progress Button States */
+/* Pending: default grey - waiting to be processed */
+.token-index-btn.gen-pending {
+    /* Use default styling - no special color */
+}
+
+/* Generating: amber/orange with pulse - currently being processed */
+.token-index-btn.gen-generating {
+    background: #f59e0b !important;
+    color: white !important;
+    border-color: #d97706 !important;
+    animation: pulse-generating 0.8s ease-in-out infinite;
+}
+
+/* Complete: green - successfully generated */
+.token-index-btn.gen-complete {
+    background: #22c55e !important;
+    color: white !important;
+    border-color: #16a34a !important;
+}
+
+/* Error: red - generation failed */
+.token-index-btn.gen-error {
+    background: #dc2626 !important;
+    color: white !important;
+    border-color: #991b1b !important;
+}
+
+/* Cancelled: muted grey */
+.token-index-btn.gen-cancelled {
+    background: #9ca3af !important;
+    color: white !important;
+    border-color: #6b7280 !important;
+    opacity: 0.7;
+}
+
+@keyframes pulse-generating {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.05);
+    }
+}
+
+/* Selected card button - bold emphasis on top of generation state */
+.token-index-btn.selected {
+    outline: 3px solid #1e40af !important;
+    outline-offset: 1px;
+    z-index: 10;
+    position: relative;
+    font-weight: 700 !important;
+    box-shadow: 0 0 8px rgba(30, 64, 175, 0.5);
+}
+
+.token-text {
+    font-size: 13px;
+    font-weight: 500;
+    cursor: copy;
+    padding: 2px 3px;
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
+    display: block;
+    width: 100%;
+    text-align: center;
+    min-height: 16px;
+    line-height: 1.2;
+    margin-top: 1px;
+}
+
+.token-text:hover {
+    background-color: rgba(37, 99, 235, 0.1);
+}
+
+.token-text:hover::after {
+    content: "Click to copy token";
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1f2937;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    z-index: 1000;
+    pointer-events: none;
+    opacity: 0.9;
+}
+
+.token-index-btn:hover::after {
+    content: "Select card " attr(title);
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #374151;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 400;
+    white-space: nowrap;
+    z-index: 1001;
+    pointer-events: none;
+    opacity: 0.9;
+}
+
+/* Ensure batch display has vertical layout */
+.batch-display,
+.batch-grid {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Batch grid header styles */
+.batch-grid-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-radius: 8px 8px 0 0;
+    border-bottom: 2px solid #e2e8f0;
+    margin-bottom: 0;
+}
+
+.batch-card-grid {
+    border: 2px solid #e2e8f0;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    padding: 1rem;
+    background: white;
+}
+
+.batch-grid-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+    text-align: center;
+}
+
+.batch-grid-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.batch-grid-hash {
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    color: #64748b;
+    background: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #cbd5e1;
+    width: fit-content;
+    margin: 0 auto;
+}
+
+/* Card actions styles for single card */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+.card-title {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.card-hash {
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    color: #64748b;
+    background: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #cbd5e1;
+    width: fit-content;
+    align-self: center;
+}
+
+.card-header .btn {
+    min-width: 140px;
+}
+
+/* Modal card styling - reuse single card layout */
+.modal-card-container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.modal-card-front {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modal-card-front .card-header {
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-card-front .matrix-container {
+    padding: 1rem;
+}
+
+/* Enhanced styles for flexible date labeling */
+.help-row {
+    margin-bottom: 0.5rem;
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.help-examples {
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+    color: #475569;
+}
+
+.help-examples strong {
+    color: #374151;
+    font-weight: 600;
+}
+
+.example-item {
+    background: #f1f5f9;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-family: 'SF Mono', Consolas, monospace;
+    font-size: 0.8rem;
+    color: #2563eb;
+    font-weight: 500;
+}
+
+.help-note {
+    font-size: 0.8rem;
+    color: #059669;
+    font-style: italic;
+    margin-top: 0.3rem;
+}
+
+/* Card date input specific styling */
+#card-date {
+    font-family: 'SF Mono', Consolas, monospace;
+    letter-spacing: 0.025em;
+}
+
+#card-date::placeholder {
+    font-family: system-ui, -apple-system, sans-serif;
+    letter-spacing: normal;
+    color: #9ca3af;
+}
+
+/* Label info display (if we add it to UI later) */
+.label-info {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.label-info code {
+    background: #e2e8f0;
+    color: #1e40af;
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    font-family: 'SF Mono', Consolas, monospace;
+    font-size: 0.8rem;
+}
+
+/* Label output display */
+.label-output {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin-top: 0.25rem;
+    font-family: 'SF Mono', Consolas, monospace;
+    font-size: 0.9rem;
+    color: #1e40af;
+    word-break: break-all;
+    min-height: 1.5rem;
+}
+
+.label-output code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+    font-family: inherit;
+    font-size: inherit;
+}
+
+/* Enhanced Matrix Copy Functionality */
+.matrix-corner-cell {
+    position: relative;
+    padding: 0 !important;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.matrix-copy-btn {
+    position: static;
+    width: 30px;
+    height: 30px;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 4px;
+    cursor: copy;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.matrix-copy-btn:hover {
+    background-color: rgba(37, 99, 235, 0.1);
+}
+
+.matrix-copy-btn:hover::after {
+    content: "Click to copy";
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1f2937;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    z-index: 1000;
+    pointer-events: none;
+    opacity: 0.9;
+}
+
+/* Highlight all matrix tokens when hovering over copy button */
+.matrix-highlighted td:not(.coord) {
+    background-color: rgba(37, 99, 235, 0.1) !important;
+    border-radius: 2px;
+    transition: background-color 0.2s ease;
+}
+
+.matrix-copy-btn:active {
+    background-color: rgba(37, 99, 235, 0.2);
+}
+
+.coord-header-clickable {
+    cursor: copy;
+    transition: all 0.2s ease;
+    user-select: none;
+    position: relative;
+}
+
+.coord-header-clickable:hover {
+    background-color: rgba(37, 99, 235, 0.1);
+}
+
+.coord-header-clickable:hover::after {
+    content: "Click to copy";
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1f2937;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    z-index: 1000;
+    pointer-events: none;
+    opacity: 0.9;
+}
+
+.coord-header-clickable:active {
+    background-color: rgba(37, 99, 235, 0.2);
+}
+
+/* Enhanced tooltips for matrix headers */
+.coord-header-clickable[title] {
+    position: relative;
+}
+
+/* Row and column highlighting on header hover */
+.row-highlighted td:not(.coord) {
+    background-color: rgba(37, 99, 235, 0.05) !important;
+    border-radius: 4px;
+}
+
+.col-highlighted {
+    background-color: rgba(37, 99, 235, 0.05) !important;
+    border-radius: 4px;
+}
+
+/* Matrix highlighting when hovering over copy button */
+.matrix-highlighted td:not(.coord) {
+    background-color: rgba(37, 99, 235, 0.05) !important;
+    border-radius: 4px;
+}
+
+/* Clickable Hash Display */
+.clickable-hash {
+    cursor: copy;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+    padding: 2px 4px;
+    margin: -2px -4px;
+}
+
+.clickable-hash:hover {
+    background-color: rgba(37, 99, 235, 0.1);
+}
+
+.clickable-hash:hover::after {
+    content: "Click to copy";
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1f2937;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    z-index: 1000;
+    pointer-events: none;
+    opacity: 0.9;
+}
+
+.clickable-hash:active {
+    background-color: rgba(37, 99, 235, 0.2);
+}
+
+/* Clickable Card ID Display */
+.clickable-id {
+    cursor: copy;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+    padding: 2px 4px;
+    margin: -2px -4px;
+}
+
+.clickable-id:hover {
+    background-color: rgba(37, 99, 235, 0.1);
+}
+
+.clickable-id:hover::after {
+    content: "Click to copy";
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1f2937;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    z-index: 1000;
+    pointer-events: none;
+    opacity: 0.9;
+}
+
+.clickable-id:active {
+    background-color: rgba(37, 99, 235, 0.2);
+}
+
+/* Tokens Grid Styles */
+.card-selection-area {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    margin-top: 1rem;
+}
+
+.card-index-grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 8px;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.card-index-item {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #374151;
+    cursor: copy;
+    transition: all 0.2s ease;
+    position: relative;
+    min-height: 32px;
+}
+
+.card-index-item:hover {
+    background-color: rgba(37, 99, 235, 0.1);
+    border-color: #2563eb;
+    transform: scale(1.05);
+}
+
+.card-index-item:hover::after {
+    content: "Click to view card";
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1f2937;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    z-index: 1000;
+    pointer-events: none;
+    opacity: 0.9;
+}
+
+.card-index-item.selected {
+    background-color: #2563eb;
+    color: white;
+    border-color: #1d4ed8;
+}
+
+.card-index-item.selected:hover {
+    background-color: #1d4ed8;
+}
+
+/* Selected Card Display */
+.selected-card-display {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.selected-card-display .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.selected-card-display .card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.selected-card-display .card-hash {
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    color: #6b7280;
+    background: #f3f4f6;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+
+.selected-card-display .matrix-container {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: center;
+    width: auto;
+}
+
+.selected-matrix {
+    margin: 0;
+    width: auto !important;
+}
+
+/* Entropy Summary for Password Examples */
+.entropy-summary {
+    margin: 1.5rem 0;
+    padding: 1.25rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.entropy-summary h4 {
+    margin: 0 0 1rem 0;
+    color: #343a40;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Core Components Section */
+.entropy-core-components {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+@media (max-width: 768px) {
+    .entropy-core-components {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* KDF Attack Resistance Section */
+.kdf-resistance-section {
+    margin: 1rem 0;
+    padding: 1rem;
+    background: linear-gradient(135deg, #e8f4fd 0%, #d1e9fc 100%);
+    border: 1px solid #90caf9;
+    border-radius: 8px;
+}
+
+.kdf-resistance-section h5 {
+    margin: 0 0 0.5rem 0;
+    color: #1565c0;
+    font-size: 1rem;
+}
+
+.kdf-description {
+    font-size: 0.85rem;
+    color: #546e7a;
+    margin: 0 0 0.75rem 0;
+}
+
+.kdf-config {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.8rem;
+    color: #37474f;
+    background: rgba(255,255,255,0.5);
+    padding: 0.5rem;
+    border-radius: 4px;
+    margin-bottom: 0.75rem;
+}
+
+.resistance-scenarios {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+@media (max-width: 600px) {
+    .resistance-scenarios {
+        grid-template-columns: 1fr;
+    }
+}
+
+.resistance-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    background: rgba(255,255,255,0.7);
+    border-radius: 4px;
+    border: 1px solid rgba(144, 202, 249, 0.5);
+}
+
+.resistance-stat .stat-label {
+    font-size: 0.85rem;
+    color: #37474f;
+    font-weight: 500;
+}
+
+.resistance-stat .stat-value {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #1565c0;
+}
+
+.resistance-stat.full-width {
+    grid-column: 1 / -1;
+}
+
+.kdf-note {
+    font-size: 0.8rem;
+    color: #78909c;
+    margin: 0.75rem 0 0 0;
+    padding-top: 0.5rem;
+    border-top: 1px dashed rgba(144, 202, 249, 0.5);
+}
+
+/* Security Scenarios Section */
+.security-scenarios {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+@media (max-width: 768px) {
+    .security-scenarios {
+        grid-template-columns: 1fr;
+    }
+}
+
+.security-scenario {
+    padding: 0.75rem;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    font-weight: 500;
+    gap: 0.25rem;
+}
+
+.security-scenario.primary {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    border: 1px solid #b8dacc;
+    color: #155724;
+}
+
+.security-scenario.fallback {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
+    border: 1px solid #faebcc;
+    color: #856404;
+}
+
+.security-scenario.caution {
+    background: linear-gradient(135deg, #cce5ff 0%, #b3d9ff 100%);
+    border: 1px solid #007bff;
+    color: #004085;
+}
+
+.security-scenario.warning {
+    background: linear-gradient(135deg, #ffe6e6 0%, #ffcccc 100%);
+    border: 1px solid #dc3545;
+    color: #721c24;
+}
+
+.scenario-label {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.scenario-desc {
+    font-size: 0.8rem;
+    font-style: italic;
+    opacity: 0.9;
+    text-align: center;
+}
+
+.scenario-value {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+/* Password Examples Section */
+.password-examples-section {
+    margin: 1.5rem 0;
+}
+
+.password-examples-section h4 {
+    margin: 0 0 1rem 0;
+    color: #343a40;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.examples-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+@media (min-width: 1200px) {
+    .examples-grid {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+    .examples-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.password-example {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 1rem;
+    transition: all 0.2s ease;
+}
+
+.password-example:hover {
+    border-color: #007bff;
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.15);
+    transform: translateY(-1px);
+}
+
+.example-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    gap: 0.5rem;
+}
+
+.example-label {
+    font-weight: 600;
+    color: #495057;
+}
+
+.example-entropy {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #007bff;
+}
+
+.entropy-help-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.entropy-help-btn:hover {
+    background: #0056b3;
+    transform: scale(1.1);
+}
+
+.example-coordinates,
+.example-tokens {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+}
+
+.example-value {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-weight: 600;
+    color: #28a745;
+    font-size: 0.9rem;
+}
+
+/* Info section for label hash */
+.entropy-component.info {
+    grid-column: 1 / -1;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+/* RFC 4086 Security Levels */
+.rfc-security-levels {
+    margin: 1.5rem 0;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.rfc-security-levels h4 {
+    margin: 0 0 1rem 0;
+    color: #343a40;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.rfc-levels-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.rfc-level {
+    padding: 0.75rem;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    border: 2px solid;
+    gap: 0.25rem;
+}
+
+.rfc-level.insufficient {
+    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+    border-color: #dc3545;
+    color: #721c24;
+}
+
+.rfc-level.basic {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
+    border-color: #ffc107;
+    color: #856404;
+}
+
+.rfc-level.good {
+    background: linear-gradient(135deg, #cce5ff 0%, #b3d9ff 100%);
+    border-color: #007bff;
+    color: #004085;
+}
+
+.rfc-level.strong {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    border-color: #28a745;
+    color: #155724;
+}
+
+.rfc-level.excellent {
+    background: linear-gradient(135deg, #e2e3e5 0%, #d6d8db 100%);
+    border-color: #6c757d;
+    color: #383d41;
+}
+
+.level-name {
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+}
+
+.level-range {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.level-desc {
+    font-size: 0.8rem;
+    font-style: italic;
+    text-align: center;
+}
+
+.rfc-note {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin: 0;
+    text-align: center;
+    padding-top: 1rem;
+    border-top: 1px solid #dee2e6;
+}
+
+.rfc-note a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.rfc-note a:hover {
+    text-decoration: underline;
+}
+
+/* Usage Strategies Documentation */
+.usage-strategies {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #e7f3ff 0%, #d0e8ff 100%);
+    border: 1px solid #b3d9ff;
+    border-radius: 8px;
+}
+
+.usage-strategies h5 {
+    margin: 0 0 1rem 0;
+    color: #0056b3;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.strategy-section {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 6px;
+    border-left: 4px solid #007bff;
+}
+
+.strategy-section:last-child {
+    margin-bottom: 0;
+}
+
+.strategy-section h6 {
+    margin: 0 0 0.75rem 0;
+    color: #0056b3;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.strategy-section p {
+    margin: 0 0 0.75rem 0;
+    color: #495057;
+    font-size: 0.95rem;
+}
+
+.strategy-section ul {
+    margin: 0;
+    padding-left: 1.5rem;
+}
+
+.strategy-section li {
+    margin-bottom: 0.5rem;
+    color: #495057;
+    font-size: 0.9rem;
+}
+
+.strategy-section li strong {
+    color: #0056b3;
+}
+
+/* Modal Calculation Breakdown Styles */
+.calc-breakdown {
+    margin: 0.5rem 0;
+    padding: 0.75rem;
+    background: rgba(248, 249, 250, 0.7);
+    border-radius: 4px;
+    border-left: 3px solid #007bff;
+}
+
+.calc-sub-step {
+    margin-bottom: 0.5rem;
+}
+
+.calc-sub-step:last-child {
+    margin-bottom: 0;
+}
+
+.calc-sub-label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.calc-sub-formula {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 0.25rem 0.5rem;
+    border-radius: 3px;
+    font-size: 0.85rem;
+    color: #007bff;
+    margin-bottom: 0.25rem;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.calc-sub-formula:hover {
+    background: rgba(0, 123, 255, 0.1);
+    border-color: #007bff;
+}
+
+.calc-sub-desc {
+    font-size: 0.8rem;
+    color: #6c757d;
+    font-style: italic;
+    margin-bottom: 0.25rem;
+}
+
+/* Copy functionality styles */
+.calc-formula[title*="copy"],
+.calc-sub-formula[title*="copy"],
+.calc-value[title*="copy"],
+.calc-sub-value[title*="copy"],
+.password-display[title*="copy"] {
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.calc-formula[title*="copy"]:hover,
+.calc-sub-formula[title*="copy"]:hover,
+.calc-value[title*="copy"]:hover,
+.calc-sub-value[title*="copy"]:hover,
+.password-display[title*="copy"]:hover {
+    background: rgba(0, 123, 255, 0.1);
+    border-color: #007bff;
+    transform: translateY(-1px);
+}
+
+/* Help Button */
+.help-btn {
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-left: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.help-btn:hover {
+    background: #495057;
+}
+
+/* Modal Styles */
+.modal {
+    display: none !important; /* Force hide by default */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(3px);
+}
+
+.modal.show {
+    display: block !important; /* Force show when .show class is added */
+}
+
+.modal-content {
+    background: white;
+    margin: 5% auto;
+    padding: 0;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px 12px 0 0;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #2e4057;
+    font-size: 1.2rem;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    font-weight: bold;
+    color: #6c757d;
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.close-btn:hover {
+    background: #e9ecef;
+    color: #495057;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+/* Token Entropy Calculation Explanation (for modal) */
+.calculation-breakdown {
+    display: grid;
+    gap: 1rem;
+}
+
+.calc-step {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 1rem;
+}
+
+.calc-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.3rem;
+}
+
+.calc-value {
+    color: #6c757d;
+    margin-bottom: 0.3rem;
+    font-size: 0.9rem;
+}
+
+.calc-formula {
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.85rem;
+    color: #495057;
+}
+
+.calc-note {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 6px;
+    padding: 0.8rem;
+    font-size: 0.9rem;
+    color: #856404;
+}
+
+.calc-note strong {
+    color: #664d03;
+}
+
+/* Pattern Example Help Button */
+.entropy-help-btn {
+    background: #6c757d;
+    border: none;
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    font-size: 12px;
+    height: 20px;
+    line-height: 1;
+    margin-left: auto;
+    padding: 0;
+    transition: all 0.2s ease;
+    width: 20px;
+}
+
+.entropy-help-btn:hover {
+    background: #495057;
+    transform: scale(1.1);
+}
+
+.entropy-help-btn .help-icon {
+    font-weight: bold;
+}
+
+/* Enhanced Pattern Example Layout */
+.pattern-header {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.pattern-info .pattern-header {
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+/* Example header layout for hardcoded password examples */
+.example-header {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+/* Modal Entropy Breakdown Styles */
+.entropy-calculation-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.calc-step {
+    background: #f8f9fa;
+    border-left: 4px solid #6c757d;
+    padding: 12px;
+    border-radius: 0 4px 4px 0;
+}
+
+.calc-step.calc-total {
+    background: #e8f4f8;
+    border-left-color: #0066cc;
+}
+
+.calc-step.calc-security {
+    background: #f0f8f0;
+    border-left-color: #28a745;
+}
+
+.calc-step.calc-warning {
+    background: #fff3cd;
+    border-left-color: #ffc107;
+}
+
+.calc-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 4px;
+}
+
+.calc-value {
+    color: #212529;
+    margin-bottom: 4px;
+}
+
+.calc-formula {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.9em;
+    color: #6c757d;
+    background: #ffffff;
+    padding: 4px 8px;
+    border-radius: 3px;
+    border: 1px solid #dee2e6;
+}
+
+.security-excellent {
+    color: #155724;
+    font-weight: bold;
+}
+
+.security-strong {
+    color: #0c5460;
+    font-weight: bold;
+}
+
+.security-good {
+    color: #856404;
+    font-weight: bold;
+}
+
+.security-basic {
+    color: #721c24;
+    font-weight: bold;
+}
+
+/* Memorized Word Compromise Analysis */
+.memorized-compromise-analysis {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    border: 1px solid #ffeaa7;
+    border-radius: 8px;
+    margin: 20px 0;
+    padding: 20px;
+}
+
+.memorized-compromise-analysis h5 {
+    color: #856404;
+    margin-bottom: 15px;
+}
+
+.memorized-compromise-analysis h6 {
+    color: #664d03;
+    margin-bottom: 10px;
+    margin-top: 15px;
+}
+
+.compromise-scenarios {
+    display: grid;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.compromise-vector {
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 15px;
+}
+
+.vector-header {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.vector-icon {
+    font-size: 1.2em;
+}
+
+.vector-title {
+    font-weight: 600;
+    color: #495057;
+}
+
+.vector-risk {
+    margin-left: auto;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
+.vector-risk.high {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.vector-risk.medium {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.vector-risk.low {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.vector-details {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.compromise-impact {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 15px;
+}
+
+.impact-grid {
+    display: grid;
+    gap: 12px;
+}
+
+.impact-item {
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 12px;
+}
+
+.impact-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 4px;
+}
+
+.impact-value {
+    color: #212529;
+    margin-bottom: 4px;
+}
+
+.impact-note {
+    font-size: 0.9em;
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* Responsive design for memorized analysis */
+@media (min-width: 768px) {
+    .compromise-scenarios {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .impact-grid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+}
+
+/* Close modal when clicking outside */
+.modal.show {
+    display: block !important; /* Force show when .show class is added */
+}
+
+/* Threat Analysis Styling */
+.threat-analysis {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    grid-column: 1 / -1;
+}
+
+.threat-analysis h4 {
+    margin: 0 0 1.5rem 0;
+    color: #2e4057;
+    text-align: center;
+    font-size: 1.2rem;
+}
+
+.threat-scenarios {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.threat-scenario {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    border-left: 4px solid;
+}
+
+.threat-scenario.good {
+    border-left-color: #28a745;
+}
+
+.threat-scenario.warning {
+    border-left-color: #ffc107;
+}
+
+.threat-scenario.critical {
+    border-left-color: #dc3545;
+}
+
+.scenario-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.scenario-icon {
+    font-size: 1.2rem;
+}
+
+.scenario-title {
+    font-weight: 600;
+    color: #495057;
+    flex-grow: 1;
+    margin-left: 0.5rem;
+}
+
+.scenario-security {
+    font-size: 0.75rem;
+    font-weight: bold;
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    text-transform: uppercase;
+}
+
+.threat-scenario.good .scenario-security {
+    background: #d4edda;
+    color: #155724;
+}
+
+.threat-scenario.warning .scenario-security {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.threat-scenario.critical .scenario-security {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.scenario-details {
+    display: grid;
+    gap: 0.4rem;
+}
+
+.detail-item {
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.detail-item strong {
+    color: #495057;
+}
+
+.security-recommendations {
+    background: #e8f4fd;
+    border: 1px solid #b8daff;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.security-recommendations h5 {
+    margin: 0 0 0.75rem 0;
+    color: #004085;
+    font-size: 1rem;
+}
+
+.security-recommendations ul {
+    margin: 0;
+    padding-left: 1.2rem;
+    list-style-type: none;
+}
+
+.security-recommendations li {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    position: relative;
+}
+
+.security-recommendations li:before {
+    content: "•";
+    color: #007bff;
+    font-weight: bold;
+    position: absolute;
+    left: -1rem;
+}
+
+@media (max-width: 768px) {
+    .threat-scenarios {
+        grid-template-columns: 1fr;
+    }
+}
+
+.entropy-summary h4 {
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #495057;
+    text-align: center;
+}
+
+.entropy-breakdown {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.entropy-component {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    background-color: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    min-height: 40px;
+}
+
+.entropy-component.total {
+    grid-column: 1 / -1;
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    border-color: #0056b3;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+.component-label {
+    font-weight: 500;
+    color: #6c757d;
+}
+
+.entropy-component.total .component-label {
+    color: white;
+}
+
+.component-value {
+    font-weight: 600;
+    color: #495057;
+}
+
+.entropy-component.total .component-value {
+    color: white;
+}
+
+.entropy-component.total-known {
+    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+    border: 2px solid #ef6c00;
+    color: white;
+    font-weight: 600;
+    grid-column: 1 / -1;
+}
+
+.entropy-component.total-known .component-label {
+    color: white;
+    font-weight: 600;
+}
+
+.entropy-component.total-known .component-value {
+    color: white;
+}
+
+.entropy-component.info {
+    background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);
+    border: 1px solid #0b6e82;
+    color: white;
+    font-weight: 500;
+}
+
+.entropy-component.info .component-label {
+    color: white;
+    font-weight: 500;
+}
+
+.entropy-component.info .component-value {
+    color: white;
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+}
+
+@media (max-width: 768px) {
+    .entropy-breakdown {
+        grid-template-columns: 1fr;
+    }
+    
+    .entropy-component.total {
+        grid-column: 1;
+    }
+}
+
+/* Password Example Display */
+.password-example {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    border: 1px solid #2196f3;
+    border-radius: 6px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    text-align: center;
+}
+
+.password-example .example-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.password-example .example-label {
+    font-weight: 600;
+    color: #1976d2;
+    font-size: 0.9rem;
+}
+
+.password-example .example-entropy {
+    font-weight: 600;
+    color: #0d47a1;
+    font-size: 0.85rem;
+    background-color: rgba(255,255,255,0.7);
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+}
+
+.password-example .example-coordinates {
+    font-size: 0.85rem;
+    color: #1565c0;
+    margin-bottom: 0.3rem;
+    font-style: italic;
+    background-color: rgba(255,255,255,0.5);
+    padding: 0.3rem;
+    border-radius: 3px;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+}
+
+.password-example .example-tokens {
+    font-size: 0.85rem;
+    color: #0d47a1;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    background-color: rgba(255,255,255,0.7);
+    padding: 0.3rem;
+    border-radius: 3px;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+}
+
+.password-example .example-value {
+    font-weight: 700;
+    color: #0d47a1;
+    font-size: 1.1rem;
+    margin-top: 0.5rem;
+    word-wrap: break-word;
+    word-break: break-all;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+    line-height: 1.4;
+}
+
+/* Memorized Words Entropy Display */
+.memorized-words .entropy-breakdown {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.memorized-words .words-usage {
+    margin: 0.75rem 0;
+    padding: 0.5rem;
+    background-color: #e7f3ff;
+    border-left: 3px solid #007bff;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.9rem;
+}
+
+.memorized-words .usage-note {
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.memorized-words .entropy-component {
+    padding: 0.4rem 0.6rem;
+    margin-bottom: 0.3rem;
+    font-size: 0.9rem;
+}
+
+.memorized-words .entropy-component.total {
+    margin-top: 0.5rem;
+    font-size: 1rem;
+}
+
+/* Pattern Analysis Display */
+.pattern-example.basic {
+    border-left: 4px solid #28a745;
+    background: linear-gradient(135deg, #f8fff9 0%, #e8f5e8 100%);
+}
+
+.pattern-example.secure {
+    border-left: 4px solid #007bff;
+    background: linear-gradient(135deg, #f8fbff 0%, #e3f2fd 100%);
+}
+
+.pattern-example .pattern-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.pattern-example .pattern-category {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #495057;
+}
+
+.pattern-example .pattern-entropy {
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: #0d47a1;
+}
+
+.pattern-example .pattern-coordinates {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+/* Examples Grid Layout */
+.examples-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.example-group h4 {
+    margin-bottom: 1rem;
+    color: #2e4057;
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 0.5rem;
+}
+
+.pattern-examples {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+/* Pattern Analysis Grid Layout */
+.entropy-breakdown .pattern-analysis {
+    grid-column: 1 / -1; /* Span full width of entropy-breakdown grid */
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.entropy-breakdown #pattern-analysis > .pattern-example {
+    /* Ensure pattern examples flow within the entropy breakdown grid */
+    margin-bottom: 0.5rem;
+}
+
+/* Standalone Pattern Analysis Grid Layout (for examples section) */
+.pattern-analysis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+    .examples-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .pattern-analysis {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Responsive Design - Safari Compatible */

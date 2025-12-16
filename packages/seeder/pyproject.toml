@@ -1,0 +1,76 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "bastion-seeder"
+version = "0.3.0"
+description = "Secure password token matrix generator with CLI and web interface"
+readme = "README.md"
+license = { text = "PolyForm-Noncommercial-1.0.0" }
+authors = [
+    { name = "Jake Hertenstein" },
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: Other/Proprietary License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "typer[all]>=0.9.0",
+    "rich>=13.0.0",
+    "mnemonic>=0.21",
+    "shamir-mnemonic>=0.3.0",
+    "argon2-cffi>=21.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=22.0.0",
+    "isort>=5.0.0",
+    "mypy>=1.0.0",
+    "flake8>=5.0.0",
+    "safety>=2.0.0",
+    "beautifulsoup4>=4.11.0",
+    "requests>=2.28.0",
+    "selenium>=4.8.0",
+    "html5lib>=1.1",
+    "cssutils>=2.6.0",
+    "jsbeautifier>=1.14.0",
+]
+
+[project.scripts]
+seeder = "seeder.cli.main:main"
+
+[project.urls]
+Homepage = "https://github.com/jakehertenstein/bastion"
+Repository = "https://github.com/jakehertenstein/bastion"
+Documentation = "https://github.com/jakehertenstein/bastion/blob/main/packages/seeder/README.md"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/seeder"]
+
+[tool.hatch.build.targets.editable]
+dev-mode-dirs = ["src"]
+
+[tool.black]
+line-length = 100
+target-version = ['py38']
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.mypy]
+python_version = "3.8"
+strict = true
+show_error_codes = true

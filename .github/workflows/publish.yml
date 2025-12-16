@@ -1,0 +1,99 @@
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  id-token: write  # Required for trusted publishing
+
+jobs:
+
+  build-core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install build tools
+        run: pip install build twine
+      - name: Clean dist directory
+        run: rm -rf dist/*
+      - name: Build bastion-core
+        run: |
+          cd packages/core
+          python -m build
+          cp dist/* ../../dist/
+      - name: Check bastion-core package
+        run: twine check dist/*
+      - name: Upload core artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-core
+          path: dist/
+
+  build-security:
+    needs: build-core
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install build tools
+        run: pip install build twine
+      - name: Clean dist directory
+        run: rm -rf dist/*
+      - name: Build bastion-security
+        run: |
+          cd packages/bastion
+          python -m build
+          cp dist/* ../../dist/
+      - name: Check bastion-security package
+        run: twine check dist/*
+      - name: Upload security artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-security
+          path: dist/
+
+  publish-core:
+    needs: build-core
+    runs-on: ubuntu-latest
+    environment: pypi
+    steps:
+      - name: Download core artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-core
+          path: dist/
+      - name: Publish bastion-core to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+  publish-security:
+    needs: [publish-core, build-security]
+    runs-on: ubuntu-latest
+    environment: pypi
+    steps:
+      - name: Download security artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-security
+          path: dist/
+      - name: Publish bastion-security to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

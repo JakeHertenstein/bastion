@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "bastion-core"
+version = "0.3.0"
+description = "Shared core utilities for the Bastion security toolchain"
+readme = "README.md"
+license = {text = "PolyForm Noncommercial 1.0.0"}
+requires-python = ">=3.11"
+authors = [
+    {name = "Jake Hertenstein", email = "bastion@jakehertenstein.anonaddy.com"}
+]
+keywords = [
+    "security",
+    "platform-detection",
+    "network",
+    "airgap",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Typing :: Typed",
+]
+dependencies = []  # Core has minimal dependencies
+
+[project.optional-dependencies]
+network = [
+    "httpx>=0.27.0",  # For network connectivity checks
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/bastion_core"]

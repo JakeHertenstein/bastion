@@ -1,0 +1,58 @@
+{
+  "overview": {
+    "URLs": [
+      {
+        "l": "website",
+        "u": "https://autofill.me"
+      }
+    ],
+    "ainfo": "1@email.com",
+    "lh": {
+      "h": [
+        {
+          "i": "w3hmkq4ulgi5bhqz2cww4ef2pe",
+          "v": "6cerqdmlcvedkd5dtj3ma2ad5m"
+        }
+      ],
+      "v": 1
+    },
+    "pbe": 0,
+    "pgrng": false,
+    "ps": 0,
+    "tags": [
+      "Bastion/2FA/FIDO2-Software"
+    ],
+    "title": "Autofill",
+    "url": "https://autofill.me"
+  },
+  "details": {
+    "fields": [
+      {
+        "designation": "username",
+        "name": "username",
+        "type": "T",
+        "value": "1@email.com"
+      },
+      {
+        "designation": "password",
+        "name": "password",
+        "type": "P",
+        "value": ""
+      }
+    ],
+    "notesPlain": "",
+    "passwordHistory": [],
+    "sections": [
+      {
+        "name": "",
+        "title": ""
+      }
+    ]
+  },
+  "createdAt": "2025-12-07T15:33:54Z",
+  "updatedAt": "2025-12-07T20:59:48Z",
+  "faveIndex": 0,
+  "trashed": "N",
+  "templateUuid": "001",
+  "uuid": "hqguqsaovlalodxkabkzujska4"
+}

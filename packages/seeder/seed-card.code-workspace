@@ -1,0 +1,53 @@
+{
+    "folders": [
+        {
+            "name": "🔐 Seed Card (Main)",
+            "path": "."
+        }
+    ],
+    "settings": {
+        "python.defaultInterpreterPath": "./venv/bin/python",
+        "python.terminal.activateEnvironment": true,
+        "python.analysis.extraPaths": ["./src"],
+        "files.exclude": {
+            "**/__pycache__": true,
+            "**/*.pyc": true,
+            "**/venv": true,
+            "**/env": true,
+            "**/.pytest_cache": true,
+            "**/build": true,
+            "**/dist": true,
+            "**/*.egg-info": true
+        }
+    },
+    "extensions": {
+        "recommendations": [
+            "ms-python.python",
+            "ms-python.debugpy",
+            "ms-python.flake8",
+            "ms-python.mypy-type-checker",
+            "ms-python.black-formatter",
+            "ms-python.isort",
+            "charliermarsh.ruff",
+            "ms-python.pytest",
+            "ms-vscode.test-adapter-converter",
+            "redhat.vscode-yaml",
+            "ms-vscode.json",
+            "streetsidesoftware.code-spell-checker",
+            "ms-vscode.vscode-json",
+            "github.vscode-github-actions",
+            "github.copilot",
+            "github.copilot-chat",
+            "ms-vscode.hexeditor",
+            "gruntfuggly.todo-tree"
+        ]
+    },
+    "tasks": {
+        "version": "2.0.0",
+        "tasks": []
+    },
+    "launch": {
+        "version": "0.2.0",
+        "configurations": []
+    }
+}

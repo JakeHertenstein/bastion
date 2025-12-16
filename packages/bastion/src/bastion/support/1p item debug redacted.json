@@ -1,0 +1,321 @@
+{
+  "overview": {
+    "URLs": [
+      {
+        "l": "website",
+        "m": "default",
+        "u": "https://www.paypal.com/signin"
+      }
+    ],
+    "ainfo": "REDACTED@example.com",
+    "lh": "REDACTED",
+    "passkey": {
+      "credentialId": "REDACTED",
+      "rpId": "www.paypal.com"
+    },
+    "pbe": 115.5291519165039,
+    "pgrng": true,
+    "ps": 100,
+    "tags": [
+      "Bastion/2FA/TOTP/YubiKey",
+      "Bastion/Capability/Money-Transfer",
+      "Bastion/PII/Financial",
+      "Bastion/Rotation/90d",
+      "Bastion/Type/Payment",
+      "TODO/recovery account"
+    ],
+    "title": "PayPal",
+    "url": "https://www.paypal.com/signin"
+  },
+  "details": {
+    "fields": [
+      {
+        "designation": "username",
+        "id": "",
+        "name": "username",
+        "type": "T",
+        "value": "REDACTED@example.com"
+      },
+      {
+        "designation": "password",
+        "id": "",
+        "name": "password",
+        "type": "P",
+        "value": "REDACTED"
+      }
+    ],
+    "notesPlain": "",
+    "passwordHistory": [
+      {
+        "time": 1539132744,
+        "value": "REDACTED"
+      },
+      {
+        "time": 1539132843,
+        "value": "REDACTED"
+      },
+      {
+        "time": 1540135714,
+        "value": "REDACTED"
+      },
+      {
+        "time": 1541865049,
+        "value": "REDACTED"
+      },
+      {
+        "time": 1556848266,
+        "value": "REDACTED"
+      },
+      {
+        "time": 1656692515,
+        "value": "REDACTED"
+      },
+      {
+        "time": 1733835041,
+        "value": "REDACTED"
+      }
+    ],
+    "sections": [
+      {
+        "name": "",
+        "title": ""
+      },
+      {
+        "name": "Section_REDACTED",
+        "title": "",
+        "fields": REDACTED
+      },
+      {
+        "name": "REDACTED",
+        "title": "Apps",
+        "fields": [
+          {
+            "k": "URL",
+            "n": "REDACTED",
+            "t": "PayPal",
+            "v": "https://apps.apple.com/us/app/paypal-pay-send-save/id283646709"
+          }
+        ]
+      },
+      {
+        "name": "REDACTED",
+        "title": "Icons",
+        "fields": [
+          {
+            "k": "file",
+            "n": "REDACTED",
+            "t": "paypal.svg",
+            "v": {
+              "documentId": "REDACTED",
+              "encryptedSize": 639,
+              "encryptionKey": "REDACTED",
+              "fileName": "paypal.svg",
+              "integrityHash": "REDACTED",
+              "nonce": "REDACTED",
+              "signingKey": "REDACTED",
+              "unencryptedSize": 623
+            }
+          }
+        ]
+      },
+      {
+        "name": "linked items",
+        "title": "Related Items",
+        "fields": [
+          {
+            "k": "reference",
+            "n": "REDACTED",
+            "t": "YK-REDACTED",
+            "v": "REDACTED"
+          }
+        ]
+      },
+      {
+        "name": "REDACTED",
+        "title": "Security Questions",
+        REDACTED
+      },
+      {
+        "name": "REDACTED",
+        "title": "Token 1",
+        "fields": [
+          {
+            "k": "string",
+            "n": "REDACTED",
+            "t": "Serial",
+            "v": "REDACTED"
+          },
+          {
+            "k": "string",
+            "n": "REDACTED",
+            "t": "Type",
+            "v": "YubiKey"
+          },
+          {
+            "k": "string",
+            "n": "REDACTED",
+            "t": "OATH Name",
+            "v": "PayPal:REDACTED@example.com"
+          },
+          {
+            "k": "string",
+            "n": "REDACTED",
+            "t": "TOTP Enabled",
+            "v": "yes"
+          },
+          {
+            "k": "string",
+            "n": "REDACTED",
+            "t": "PassKey Enabled"
+          }
+        ]
+      },
+      {
+        "name": "REDACTED",
+        "title": "Token 2",
+        "fields": [
+          {
+            "k": "string",
+            "n": "REDACTED",
+            "t": "Serial",
+            "v": "REDACTED"
+          },
+          {
+            "k": "string",
+            "n": "REDACTED",
+            "t": "Type",
+            "v": "YubiKey"
+          },
+          {
+            "k": "string",
+            "n": "REDACTED",
+            "t": "OATH Name",
+            "v": "PayPal:REDACTED@example.com"
+          },
+          {
+            "k": "string",
+            "n": "REDACTED",
+            "t": "TOTP Enabled",
+            "v": "yes"
+          },
+          {
+            "k": "string",
+            "n": "REDACTED",
+            "t": "PassKey Enabled"
+          }
+        ]
+      },
+      {
+        "name": "REDACTED",
+        "title": "Token 3",
+        "fields": [
+          {
+            "k": "string",
+            "n": "REDACTED",
+            "t": "Serial",
+            "v": "REDACTED"
+          },
+          {
+            "k": "string",
+            "n": "REDACTED",
+            "t": "Type",
+            "v": "YubiKey"
+          },
+          {
+            "k": "string",
+            "n": "REDACTED",
+            "t": "OATH Name",
+            "v": "PayPal:REDACTED@example.com"
+          },
+          {
+            "k": "string",
+            "n": "REDACTED",
+            "t": "TOTP Enabled",
+            "v": "yes"
+          },
+          {
+            "k": "string",
+            "n": "REDACTED",
+            "t": "PassKey Enabled"
+          }
+        ]
+      },
+      {
+        "name": "REDACTED",
+        "title": "Token 4",
+        "fields": [
+          {
+            "k": "string",
+            "n": "REDACTED",
+            "t": "Serial",
+            "v": "REDACTED"
+          },
+          {
+            "k": "string",
+            "n": "REDACTED",
+            "t": "Type",
+            "v": "YubiKey"
+          },
+          {
+            "k": "string",
+            "n": "REDACTED",
+            "t": "OATH Name",
+            "v": "PayPal:REDACTED@example.com"
+          },
+          {
+            "k": "string",
+            "n": "REDACTED",
+            "t": "TOTP Enabled",
+            "v": "yes"
+          },
+          {
+            "k": "string",
+            "n": "REDACTED",
+            "t": "PassKey Enabled"
+          }
+        ]
+      },
+      {
+        "name": "REDACTED",
+        "title": "Token 5",
+        "fields": [
+          {
+            "k": "string",
+            "n": "REDACTED",
+            "t": "Serial",
+            "v": "REDACTED"
+          },
+          {
+            "k": "string",
+            "n": "REDACTED",
+            "t": "Type",
+            "v": "YubiKey"
+          },
+          {
+            "k": "string",
+            "n": "REDACTED",
+            "t": "OATH Name",
+            "v": "PayPal:REDACTED@example.com"
+          },
+          {
+            "k": "string",
+            "n": "REDACTED",
+            "t": "TOTP Enabled",
+            "v": "yes"
+          },
+          {
+            "k": "string",
+            "n": "REDACTED",
+            "t": "PassKey Enabled"
+          }
+        ]
+      }
+    ]
+  },
+  "createdAt": "2012-04-27T19:08:14Z",
+  "updatedAt": "2025-12-03T14:22:21Z",
+  "faveIndex": 0,
+  "trashed": "N",
+  "templateUuid": "001",
+  "uuid": "REDACTED"
+}

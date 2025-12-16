@@ -1,0 +1,77 @@
+PolyForm Noncommercial License 1.0.0
+
+<https://polyformproject.org/licenses/noncommercial/1.0.0>
+
+Copyright (c) 2025 Jake Hertenstein
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to use,
+copy, modify, and distribute the Software for noncommercial purposes only,
+subject to the following conditions:
+
+1. Noncommercial Use Only. You may not use the Software for commercial
+   purposes. Commercial purposes include, but are not limited to:
+   - Selling the Software
+   - Using the Software to provide commercial services
+   - Using the Software in a commercial product
+   - Using the Software for commercial advantage or monetary compensation
+
+2. Attribution. You must retain all copyright notices and give appropriate
+   credit to the original author in any copy or derivative work.
+
+3. Commercial Licensing. For commercial use rights, contact the author to
+   negotiate a separate commercial license agreement.
+
+The above copyright notice, this permission notice, and the following
+disclaimer shall be included in all copies or substantial portions of the
+Software.
+
+================================================================================
+DISCLAIMER AND LIMITATION OF LIABILITY
+================================================================================
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+OR OTHER DEALINGS IN THE SOFTWARE.
+
+================================================================================
+SECURITY WARNING - PLEASE READ
+================================================================================
+
+This software handles sensitive security data including passwords, entropy,
+and cryptographic operations. By using this software, you acknowledge and
+accept the following:
+
+YOU USE THIS SOFTWARE ENTIRELY AT YOUR OWN RISK.
+
+This software:
+- Has NOT been independently audited or formally verified
+- Has NOT undergone widespread security review
+- May contain bugs, vulnerabilities, or design flaws
+- Is developed by an individual, not a security team
+- Should NOT be your only line of defense for critical security
+
+The author makes NO guarantees about:
+- The cryptographic soundness of any implementation
+- The security of generated passwords, usernames, or entropy
+- The integrity of data stored or managed by this software
+- Compatibility with future versions of 1Password or other dependencies
+
+If you are using this software for anything important:
+- Maintain independent backups
+- Verify critical operations manually
+- Consider professional security review before production use
+- Understand the code before trusting it with sensitive data
+
+YOU HAVE BEEN WARNED.
+
+By using this software, you accept full responsibility for any consequences,
+including but not limited to data loss, security breaches, or any other
+damages that may result from its use.
+
+If you do not accept these terms, do not use this software.

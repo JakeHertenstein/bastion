@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Seeder Cross-Platform Test Vectors",
+  "description": "Cryptographic test vectors for verifying Python and JavaScript implementations produce identical output. Generated with 64MB Argon2 params for browser compatibility.",
+  "version": "1.0.0",
+  "generated": "2025-12-02",
+
+  "hkdf_expand": {
+    "description": "HKDF-Expand (RFC 5869) test vectors using SHA-512. HKDF-Expand is built on HMAC internally: T(i) = HMAC-SHA512(PRK, T(i-1) || info || i)",
+    "algorithm": "HKDF-Expand with SHA-512",
+    "vectors": [
+      {
+        "name": "Vector 1: Zeros PRK with Bastion label",
+        "description": "All-zero 64-byte PRK with standard Bastion TOKEN/HMAC label format",
+        "prk_hex": "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "info": "Bastion/TOKEN/HMAC:A0.A0:#VERSION=1|C",
+        "length": 32,
+        "expected_hex": "4af43c3bd24a3b1acea1eb2887cfb7ecabcb3170948b34f62684c838f751e70e"
+      },
+      {
+        "name": "Vector 2: Sequential PRK with Bastion label",
+        "description": "PRK bytes 0x00-0x3F (sequential) with different coordinate",
+        "prk_hex": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+        "info": "Bastion/TOKEN/HMAC:B5.J9:#VERSION=1|A",
+        "length": 64,
+        "expected_hex": "832cc4b335d0a664a2cb10e28ec811b1734c0eeea0bc958247dee5a53518fb28a07dc8cd953c4c7bf22f933aa73215e4704060b095edf0852f3d12befd276923"
+      },
+      {
+        "name": "Vector 3: Realistic PRK (SHA-512 of test seed)",
+        "description": "PRK = SHA-512('test-seed-for-vectors'), simulating Argon2 output",
+        "prk_hex": "b71ccf0744aa86b613f6fd8e91d68ea29da80e72d78d8e209e1ceb6390cf17f195434eb0dee0adfc322a87b90f06111508e3b6867912d816146da5361e1efe83",
+        "info": "Bastion/TOKEN/HMAC:C3.D4:#VERSION=1|T",
+        "length": 128,
+        "expected_hex": "d3735da50c6ff158a3a0f3801cca626e0db064511b09d2ef82f35892b5fbf11d37cbfee45ec5459cf1b2d93df65f26221794a2360cb25500e3d04f537c3e5a5ccda16cfa74359730bac0199c2ffb2fcb9b215f90418e3dc047515ceba0c4ff3d44d25e577c0bed973118cfc254e1e2abeabec7862417a32048a433244664f6b6"
+      },
+      {
+        "name": "Vector 4: Multi-block output (3 SHA-512 blocks)",
+        "description": "Tests HKDF block chaining with 192-byte output (3 x 64-byte blocks)",
+        "prk_hex": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "info": "CR80-EXPANSION-TEST",
+        "length": 192,
+        "expected_hex": "d5ad42979b5727095c925b1391a3127f331b77214a14e5e2a456e6a9ebe0ba2bde5103a0f6c22d2a66917c241de9716358f74ddbd37589868264f3beceb7f82e5fac5bf164bd04618b3dc573598ec933a56ed43ca451291efa8f002d5493cb482bbd347c22216d1224b708ec58d340e43cccd09b5566421a2b8601f86b9594eee71b79086e095078ff2843376095a976e2d7dbf4d385a44fd3cd11652b2811c8c22461713e450951c05488c54422507eac6610a41593d6bbb4ad1650ef3f2053"
+      }
+    ]
+  },
+
+  "argon2": {
+    "description": "Argon2id test vectors using 64MB memory for cross-platform browser compatibility",
+    "algorithm": "Argon2id",
+    "test_params": {
+      "time_cost": 3,
+      "memory_mb": 64,
+      "parallelism": 4,
+      "hash_length": 64,
+      "encoded": "TIME=3&MEMORY=64&PARALLELISM=4"
+    },
+    "test_nonce": "TESTNONC",
+    "salt_prefix": "seeder-",
+    "vectors": [
+      {
+        "name": "Vector 1: BIP-39 test mnemonic with test nonce",
+        "description": "Standard BIP-39 test vector mnemonic with TESTNONC nonce and 64MB params. Salt = 'seeder-TESTNONC'",
+        "mnemonic": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        "passphrase": "",
+        "nonce": "TESTNONC",
+        "salt": "seeder-TESTNONC",
+        "params": "TIME=3&MEMORY=64&PARALLELISM=4",
+        "expected_hex": "771721ebd7ee413670271ae7498044a87ce8654106b7411d687f61d406bdf49d0d6a9818bd779ea3825964c102256b20593f3101acb92a04c75fd699f4fb5b14"
+      }
+    ],
+    "note": "The 64MB memory cost is a lowest-common-denominator for browser testing. Production uses 2GB."
+  },
+
+  "luhn_mod36": {
+    "description": "Luhn mod-36 check digit test vectors for label validation",
+    "algorithm": "Luhn mod N (N=36, charset: 0-9A-Z)",
+    "vectors": [
+      {
+        "name": "Simple Bastion label",
+        "body": "Bastion/TOKEN/HMAC:A0.A0:#VERSION=1",
+        "expected_check": "C",
+        "full_label": "Bastion/TOKEN/HMAC:A0.A0:#VERSION=1|C"
+      },
+      {
+        "name": "Different coordinates",
+        "body": "Bastion/TOKEN/HMAC:B5.J9:#VERSION=1",
+        "expected_check": "A",
+        "full_label": "Bastion/TOKEN/HMAC:B5.J9:#VERSION=1|A"
+      },
+      {
+        "name": "Card with nonce params",
+        "body": "Bastion/CARD/SLIP39/ARGON2ID:banking.a0:2025-12-02#VERSION=1&TIME=3&MEMORY=64&PARALLELISM=4&NONCE=TESTNONC&ENCODING=90",
+        "expected_check": "W",
+        "full_label": "Bastion/CARD/SLIP39/ARGON2ID:banking.a0:2025-12-02#VERSION=1&TIME=3&MEMORY=64&PARALLELISM=4&NONCE=TESTNONC&ENCODING=90|W"
+      }
+    ]
+  },
+
+  "label_format": {
+    "description": "Bastion label format specification v1",
+    "grammar": "HIERARCHY:IDENT:DATE#PARAMS|CHECK",
+    "examples": {
+      "token_hmac": "Bastion/TOKEN/HMAC:{card}.{token}:#VERSION=1|CHECK",
+      "card_argon2": "Bastion/CARD/SLIP39/ARGON2ID:{card_id}.{index}:{date}#VERSION=1&TIME=t&MEMORY=m&PARALLELISM=p&NONCE=n&ENCODING=e|CHECK",
+      "username": "Bastion/USER/SHA2/512:{domain}:{date}#VERSION=1&LENGTH=n|CHECK"
+    },
+    "param_order": ["VERSION", "TIME", "MEMORY", "PARALLELISM", "NONCE", "LENGTH", "ENCODING"]
+  }
+}

@@ -1,0 +1,59 @@
+# Bastion Monorepo - Root Workspace Configuration
+# ================================================
+# This is a VIRTUAL workspace - it is NOT an installable package.
+# Use `uv sync` to install all workspace packages in development mode.
+
+# uv workspace configuration (virtual workspace - no [project] section)
+[tool.uv]
+default-groups = ["dev"]
+
+# Shared development dependencies
+[dependency-groups]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-cov>=5.0.0",
+    "pytest-mock>=3.14.0",
+    "mypy>=1.11.0",
+    "ruff>=0.6.0",
+]
+
+[tool.uv.workspace]
+members = [
+    "packages/core",
+    "packages/bastion",
+    "packages/airgap",
+    "packages/seeder",
+]
+
+# Default sources for workspace packages
+[tool.uv.sources]
+bastion-core = { workspace = true }
+bastion-security = { workspace = true }
+bastion-airgap = { workspace = true }
+bastion-seeder = { workspace = true }
+
+# Tool configurations (shared across workspace)
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "packages/*/tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+markers = [
+    "unit: Unit tests that don't require external dependencies",
+    "integration: Integration tests requiring 1Password CLI",
+    "slow: Tests that take more than 1 second to run",
+    "crypto: Tests involving cryptographic operations",
+]

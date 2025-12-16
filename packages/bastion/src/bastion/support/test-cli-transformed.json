@@ -1,0 +1,25 @@
+{
+  "title": "Autofill",
+  "tags": [
+    "Bastion/2FA/FIDO2-Software"
+  ],
+  "category": "LOGIN",
+  "urls": [
+    {
+      "label": "website",
+      "primary": true,
+      "href": "https://autofill.me"
+    }
+  ],
+  "fields": [
+    {
+      "id": "username",
+      "type": "STRING",
+      "purpose": "USERNAME",
+      "label": "username",
+      "value": "1@email.com"
+    }
+  ],
+  "created_at": "2025-12-07T15:33:54Z",
+  "updated_at": "2025-12-07T20:59:48Z"
+}

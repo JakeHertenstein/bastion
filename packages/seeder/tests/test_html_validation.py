@@ -1,0 +1,383 @@
+#!/usr/bin/env python3
+"""
+HTML validation and structure tests for the web interface.
+Ensures all HTML files are valid, accessible, and properly structured.
+"""
+
+import re
+import unittest
+from pathlib import Path
+
+try:
+    import cssutils  # type: ignore
+    import html5lib
+    import jsbeautifier  # type: ignore
+    from bs4 import BeautifulSoup  # type: ignore
+except ImportError:
+    html5lib = None
+
+HTML_DEPS_AVAILABLE = html5lib is not None
+
+
+class TestHTMLStructure(unittest.TestCase):
+    """Test HTML file structure and validity."""
+    
+    def setUp(self):
+        """Set up test environment."""
+        if not HTML_DEPS_AVAILABLE:
+            self.skipTest("HTML testing dependencies not available")
+        
+        self.web_dir = Path(__file__).parent.parent / "docs" / "web"
+        self.html_files = {
+            "index": self.web_dir / "src" / "index.html"
+        }
+        self.css_files = {
+            "spa_styles": self.web_dir / "src" / "spa-styles.css",
+            "threat_analysis": self.web_dir / "src" / "threat-analysis.css"
+        }
+        self.js_files = {
+            "crypto": self.web_dir / "public" / "crypto.js",
+            "app": self.web_dir / "public" / "app.js", 
+            "generator": self.web_dir / "public" / "generator.js"
+        }
+    
+    def test_html_files_exist(self):
+        """Test that all expected HTML files exist."""
+        for name, file_path in self.html_files.items():
+            with self.subTest(file=name):
+                self.assertTrue(file_path.exists(), f"{name}.html should exist")
+    
+    def test_css_and_js_files_exist(self):
+        """Test that CSS and JS files exist."""
+        for name, file_path in self.css_files.items():
+            with self.subTest(file=name):
+                self.assertTrue(file_path.exists(), f"{name} CSS should exist")
+        
+        for name, file_path in self.js_files.items():
+            with self.subTest(file=name):
+                self.assertTrue(file_path.exists(), f"{name} JS should exist")
+    
+    def test_html5_validity(self):
+        """Test that HTML files are valid HTML5."""
+        for name, file_path in self.html_files.items():
+            with self.subTest(file=name):
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                # Parse with html5lib (strict HTML5 parser)
+                try:
+                    doc = html5lib.parse(content, namespaceHTMLElements=False)
+                    self.assertIsNotNone(doc, f"{name}.html should parse as valid HTML5")
+                except (ValueError, TypeError) as e:
+                    self.fail(f"{name}.html has HTML5 parsing errors: {e}")
+    
+    def test_html_structure(self):
+        """Test basic HTML document structure."""
+        for name, file_path in self.html_files.items():
+            with self.subTest(file=name):
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    soup = BeautifulSoup(f.read(), 'html.parser')
+                
+                # Test basic structure
+                self.assertIsNotNone(soup.find('html'), f"{name}.html should have <html> tag")
+                self.assertIsNotNone(soup.find('head'), f"{name}.html should have <head> tag")
+                self.assertIsNotNone(soup.find('body'), f"{name}.html should have <body> tag")
+                self.assertIsNotNone(soup.find('title'), f"{name}.html should have <title> tag")
+                
+                # Test meta tags
+                charset_meta = soup.find('meta', attrs={'charset': True})
+                self.assertIsNotNone(charset_meta, f"{name}.html should have charset meta tag")
+                
+                viewport_meta = soup.find('meta', attrs={'name': 'viewport'})
+                self.assertIsNotNone(viewport_meta, f"{name}.html should have viewport meta tag")
+    
+    def test_css_validity(self):
+        """Test CSS file validity (modern CSS allowed)."""
+        css_found = False
+        for name, css_file in self.css_files.items():
+            if css_file.exists():
+                css_found = True
+                with self.subTest(css_file=name):
+                    with open(css_file, 'r', encoding='utf-8') as f:
+                        css_content = f.read()
+                    
+                    # Basic syntax validation only - allow modern CSS
+                    try:
+                        # Just check file is readable and contains basic CSS structure
+                        self.assertIn('{', css_content, "CSS should contain rule blocks")
+                        self.assertIn('}', css_content, "CSS should contain rule blocks")
+                        self.assertIn(':', css_content, "CSS should contain property declarations")
+                        
+                        # Check for basic structure without strict validation
+                        has_selectors = any(char in css_content for char in ['.', '#', 'body', 'html'])
+                        self.assertTrue(has_selectors, f"{name} CSS should contain selectors")
+                        
+                    except Exception as e:
+                        self.fail(f"CSS validation error in {name}: {e}")
+        
+        if not css_found:
+            self.skipTest("No CSS files found")
+    
+    def test_javascript_syntax(self):
+        """Test JavaScript file syntax."""
+        for name, file_path in self.js_files.items():
+            with self.subTest(file=name):
+                if not file_path.exists():
+                    self.skipTest(f"{name}.js does not exist")
+                
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    js_content = f.read()
+                
+                # Test that jsbeautifier can parse the JavaScript
+                try:
+                    beautified = jsbeautifier.beautify(js_content)
+                    self.assertIsInstance(beautified, str)
+                    self.assertGreater(len(beautified), 0)
+                except Exception as e:
+                    self.fail(f"{name}.js has syntax errors: {e}")
+
+
+class TestHTMLContent(unittest.TestCase):
+    """Test HTML content and accessibility."""
+    
+    def setUp(self):
+        """Set up test environment."""
+        if not HTML_DEPS_AVAILABLE:
+            self.skipTest("HTML testing dependencies not available")
+        
+        self.web_dir = Path(__file__).parent.parent / "docs" / "web"
+        self.html_files = {
+            "index": self.web_dir / "src" / "index.html"
+        }
+    
+    def test_semantic_html(self):
+        """Test for semantic HTML elements."""
+        for name, file_path in self.html_files.items():
+            with self.subTest(file=name):
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    soup = BeautifulSoup(f.read(), 'html.parser')
+                
+                # Check for semantic elements
+                semantic_elements = ['header', 'main', 'section', 'nav', 'footer']
+                found_semantic = [elem for elem in semantic_elements if soup.find(elem)]
+                self.assertGreater(len(found_semantic), 0, 
+                                 f"{name}.html should use semantic HTML elements")
+    
+    def test_accessibility_features(self):
+        """Test basic accessibility features."""
+        for name, file_path in self.html_files.items():
+            with self.subTest(file=name):
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    soup = BeautifulSoup(f.read(), 'html.parser')
+                
+                # Test for alt attributes on images
+                images = soup.find_all('img')
+                for img in images:
+                    self.assertTrue(img.get('alt') is not None, 
+                                  f"Image in {name}.html should have alt attribute")
+                
+                # Test for labels on form inputs (flexible validation)
+                inputs = soup.find_all(['input', 'textarea', 'select'])
+                for input_elem in inputs:
+                    input_id = input_elem.get('id')
+                    input_type = input_elem.get('type', '')
+                    
+                    # Skip inputs that don't need labels (buttons, hidden, etc.)
+                    if input_type in ['hidden', 'submit', 'button', 'reset']:
+                        continue
+                    
+                    if input_id:
+                        # Check for explicit label
+                        label = soup.find('label', attrs={'for': input_id})
+                        
+                        # Check for aria attributes
+                        aria_label = input_elem.get('aria-label')
+                        aria_labelledby = input_elem.get('aria-labelledby')
+                        
+                        # Check for parent label or nearby label
+                        parent_label = input_elem.find_parent('label')
+                        
+                        # Check if input is readonly/disabled (demo inputs are often unlabeled)
+                        is_readonly = input_elem.get('readonly') is not None
+                        is_disabled = input_elem.get('disabled') is not None
+                        
+                        has_label = (label is not None or aria_label is not None or 
+                                   aria_labelledby is not None or parent_label is not None or
+                                   is_readonly or is_disabled)
+                        
+                        self.assertTrue(has_label,
+                                      f"Input {input_id} in {name}.html should have associated label or be readonly/disabled")
+    
+    def test_security_headers_meta_tags(self):
+        """Test for security-related meta tags."""
+        for name, file_path in self.html_files.items():
+            with self.subTest(file=name):
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    soup = BeautifulSoup(f.read(), 'html.parser')
+                
+                # Check for CSP meta tag
+                csp_meta = soup.find('meta', attrs={'http-equiv': 'Content-Security-Policy'})
+                if csp_meta:
+                    csp_content = csp_meta.get('content')
+                    self.assertIsNotNone(csp_content, 
+                                       f"CSP meta tag in {name}.html should have content")
+                
+                # Check for X-Frame-Options equivalent
+                frame_options = soup.find('meta', attrs={'http-equiv': 'X-Frame-Options'})
+                if frame_options:
+                    self.assertIsNotNone(frame_options.get('content'))
+    
+    def test_crypto_js_functions(self):
+        """Test that crypto.js contains expected cryptographic functions."""
+        crypto_file = self.web_dir / "crypto.js"
+        if not crypto_file.exists():
+            self.skipTest("crypto.js does not exist")
+        
+        with open(crypto_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Test for key cryptographic functions (ES6 class-based)
+        expected_functions = [
+            'hkdfLikeStream',     # Our actual HMAC stream function
+            'byteToSymbol',       # Rejection sampling function  
+            'generateTokenMatrix', # Token grid generation
+            'SeedCardCrypto'      # Main crypto class
+        ]
+        
+        for func_name in expected_functions:
+            with self.subTest(function=func_name):
+                # Look for function declaration patterns (ES6 classes and methods)
+                patterns = [
+                    f'function {func_name}',           # Regular function
+                    f'const {func_name} =',           # Arrow function
+                    f'let {func_name} =',             # Variable assignment
+                    f'{func_name}:',                  # Object method
+                    f'{func_name}\\s*=',              # Direct assignment
+                    f'static.*{func_name}',           # ES6 static method
+                    f'class {func_name}',             # ES6 class
+                    f'{func_name}\\s*\\(',            # Function call/definition
+                ]
+                
+                found = any(re.search(pattern, content, re.IGNORECASE) for pattern in patterns)
+                self.assertTrue(found, f"crypto.js should contain function {func_name}")
+    
+    def test_app_js_integration(self):
+        """Test that app.js contains expected application functions."""
+        app_file = self.web_dir / "app.js"
+        if not app_file.exists():
+            self.skipTest("app.js does not exist")
+        
+        with open(app_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Test for key application functions (ES6 class-based)
+        expected_functions = [
+            'generateSingleCard',  # Our actual single card generation
+            'displaySingleCard',   # Display function
+            'getSeedBytes',        # Seed processing
+            'SeedCardApp'          # Main app class
+        ]
+        
+        for func_name in expected_functions:
+            with self.subTest(function=func_name):
+                # Look for function patterns (more flexible)
+                found = func_name in content
+                self.assertTrue(found, f"app.js should reference function {func_name}")
+
+
+class TestResourceLinking(unittest.TestCase):
+    """Test that HTML files properly link to CSS and JS resources."""
+    
+    def setUp(self):
+        """Set up test environment."""
+        if not HTML_DEPS_AVAILABLE:
+            self.skipTest("HTML testing dependencies not available")
+        
+        self.web_dir = Path(__file__).parent.parent / "docs" / "web"
+        self.html_files = {
+            "index": self.web_dir / "src" / "index.html"
+        }
+    
+    def test_css_linking(self):
+        """Test that HTML files link to CSS."""
+        for name, file_path in self.html_files.items():
+            with self.subTest(file=name):
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    soup = BeautifulSoup(f.read(), 'html.parser')
+                
+                css_links = soup.find_all('link', attrs={'rel': 'stylesheet'})
+                self.assertGreater(len(css_links), 0, 
+                                 f"{name}.html should link to CSS files")
+                
+                # Check that linked CSS files exist
+                for link in css_links:
+                    href = link.get('href')
+                    if href and not href.startswith('http'):
+                        # CSS files are in src/ directory 
+                        css_path = self.web_dir / "src" / href
+                        self.assertTrue(css_path.exists(), 
+                                      f"CSS file {href} linked in {name}.html should exist at {css_path}")
+    
+    def test_javascript_linking(self):
+        """Test that HTML files link to JavaScript."""
+        for name, file_path in self.html_files.items():
+            with self.subTest(file=name):
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    soup = BeautifulSoup(f.read(), 'html.parser')
+                
+                js_scripts = soup.find_all('script', attrs={'src': True})
+                
+                # Check that linked JS files exist
+                for script in js_scripts:
+                    src = script.get('src')
+                    if src and not src.startswith('http'):
+                        # Handle different JS file locations
+                        if src.startswith('./'):
+                            # main.js is in src/ directory
+                            js_path = self.web_dir / "src" / src[2:]  # Remove './'
+                        else:
+                            # Other JS files are in public/ directory
+                            js_path = self.web_dir / "public" / src
+                        self.assertTrue(js_path.exists(), 
+                                      f"JS file {src} linked in {name}.html should exist at {js_path}")
+    
+    def test_no_external_dependencies(self):
+        """Test that HTML files don't rely on external resources (for offline use)."""
+        for name, file_path in self.html_files.items():
+            with self.subTest(file=name):
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                # Check for external URLs in various contexts (capture full URLs)
+                external_patterns = [
+                    r'src="(https?://[^"]+)"',
+                    r'href="(https?://[^"]+)"',
+                    r'@import\s+url\s*\(\s*["\']?(https?://[^"\'\\)]+)["\']?\)',
+                    r'url\s*\(\s*["\']?(https?://[^"\'\\)]+)["\']?\)'
+                ]
+                
+                all_external_urls = []
+                for pattern in external_patterns:
+                    matches = re.findall(pattern, content, re.IGNORECASE)
+                    all_external_urls.extend(matches)
+                
+                # Allow specific exceptions for common CDNs and fonts
+                allowed_externals = [
+                    'fonts.googleapis.com',     # Google Fonts
+                    'cdnjs.cloudflare.com',     # Font Awesome icons
+                    'cdn.jsdelivr.net',         # Argon2 WASM library
+                    'github.com',               # GitHub repository links
+                    'tools.ietf.org'            # RFC specifications
+                ]
+                
+                forbidden_matches = []
+                for url in all_external_urls:
+                    if not any(allowed in url for allowed in allowed_externals):
+                        forbidden_matches.append(url)
+                    
+                    self.assertEqual(len(forbidden_matches), 0,
+                                   f"{name}.html should not reference external resources: {forbidden_matches}")
+
+
+if __name__ == '__main__':
+    unittest.main()

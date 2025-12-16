@@ -1,0 +1,236 @@
+/* Card Compromise Modal Styles */
+.card-compromise-modal {
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.card-compromise-modal .modal-body {
+    padding: 20px;
+}
+
+.entropy-calculation {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 15px 0;
+}
+
+.entropy-calculation h4 {
+    color: #495057;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.calc-step {
+    display: grid;
+    grid-template-columns: 2fr 1fr 2fr;
+    gap: 10px;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 8px;
+    background: white;
+    border-radius: 4px;
+    border: 1px solid #e9ecef;
+}
+
+.calc-label {
+    font-weight: 500;
+    color: #495057;
+}
+
+.calc-formula {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    color: #dc3545;
+    text-align: center;
+    cursor: copy;
+    padding: 4px;
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
+}
+
+.calc-formula:hover {
+    background-color: rgba(37, 99, 235, 0.1);
+}
+
+.calc-explanation {
+    font-size: 0.9em;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.calc-total {
+    background: #fff3cd;
+    border: 2px solid #ffc107;
+    border-radius: 6px;
+    padding: 15px;
+    margin-top: 15px;
+}
+
+.calc-total .calc-label {
+    font-size: 1.1em;
+}
+
+.calc-total .calc-formula {
+    color: #856404;
+    font-size: 1.1em;
+}
+
+.attack-scenarios, .mitigation-strategies {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 15px;
+    margin: 15px 0;
+}
+
+.attack-scenarios h4, .mitigation-strategies h4 {
+    color: #495057;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.attack-scenarios ul, .mitigation-strategies ul {
+    margin: 10px 0 0 20px;
+    color: #495057;
+}
+
+.attack-scenarios li, .mitigation-strategies li {
+    margin-bottom: 8px;
+    list-style-type: disc;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .calc-step {
+        grid-template-columns: 1fr;
+        gap: 5px;
+        text-align: center;
+    }
+    
+    .card-compromise-modal {
+        max-width: 95vw;
+        margin: 10px;
+    }
+}
+
+/* Card Compromise Explanation Styles (kept for backwards compatibility but should not appear) */
+.card-compromise-explanation {
+    background: #fff9f9;
+    border: 1px solid #f5c6cb;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 15px;
+    display: none; /* Hide embedded version */
+}
+
+.card-compromise-explanation h5 {
+    color: #721c24;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.compromise-details p {
+    margin-bottom: 10px;
+    color: #495057;
+    line-height: 1.5;
+}
+
+.entropy-breakdown-card {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 15px;
+    margin: 15px 0;
+}
+
+.entropy-breakdown-card h6 {
+    color: #495057;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.card-entropy-item {
+    display: grid;
+    grid-template-columns: 2fr 1fr 2fr;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.card-entropy-item:last-of-type {
+    border-bottom: none;
+}
+
+.item-label {
+    font-weight: 500;
+    color: #495057;
+}
+
+.item-value {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    color: #dc3545;
+    text-align: center;
+}
+
+.item-desc {
+    font-size: 0.9em;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.card-entropy-total {
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 4px;
+    margin-top: 10px;
+    text-align: center;
+    color: #495057;
+    border: 2px solid #dc3545;
+}
+
+.attack-analysis {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 15px;
+    margin-top: 15px;
+}
+
+.attack-analysis h6 {
+    color: #495057;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.attack-analysis ol {
+    margin: 10px 0 10px 20px;
+    color: #495057;
+}
+
+.attack-analysis li {
+    margin-bottom: 5px;
+    list-style-type: decimal;
+}
+
+.attack-analysis p {
+    margin-bottom: 8px;
+    color: #495057;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card-entropy-item {
+        grid-template-columns: 1fr;
+        gap: 5px;
+        text-align: center;
+    }
+    
+    .item-desc {
+        font-size: 0.8em;
+    }
+}

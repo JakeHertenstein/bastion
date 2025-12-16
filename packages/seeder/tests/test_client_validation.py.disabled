@@ -1,0 +1,196 @@
+"""
+Unit tests for client-side validation logic patterns.
+Tests the validation patterns used in the browser interface.
+"""
+
+import os
+import re
+
+import pytest
+
+
+class TestClientValidationLogic:
+    """Test client-side validation logic patterns."""
+    
+    def test_bip39_wordlist_exists(self):
+        """Test that BIP-39 wordlist file exists and is properly formatted."""
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        wordlist_path = os.path.join(project_root, "docs", "web", "src", "assets", "bip39-wordlist.js")
+        
+        assert os.path.exists(wordlist_path), f"BIP-39 wordlist not found at {wordlist_path}"
+        
+        with open(wordlist_path, 'r') as f:
+            content = f.read()
+        
+        # Check basic structure
+        assert "export const BIP39_WORDLIST" in content
+        assert "abandon" in content  # First word
+        assert "zoo" in content      # Last word
+        
+        # Count words (should be close to 2048, allowing for minor variations)
+        word_matches = re.findall(r'"[a-z]+"', content)
+        assert 2040 <= len(word_matches) <= 2060, f"Expected around 2048 words, found {len(word_matches)}"
+    
+    def test_word_normalization_pattern(self):
+        """Test the word normalization logic pattern."""
+        # Simulate the normalizeWords function logic
+        def normalize_words(s):
+            return s.strip().lower().replace('\u2019', "'").replace('\u2018', "'").split()
+        
+        # Test cases
+        assert normalize_words("  ABANDON abandon About  ") == ["abandon", "abandon", "about"]
+        assert normalize_words("word1 word2 word3") == ["word1", "word2", "word3"]
+        assert normalize_words("word's word's") == ["word's", "word's"]  # Handles smart quotes
+    
+    def test_bip39_word_count_validation(self):
+        """Test BIP-39 word count validation logic."""
+        valid_counts = [12, 15, 18, 21, 24]
+        
+        # Test valid counts
+        for count in valid_counts:
+            assert count in valid_counts
+        
+        # Test invalid counts
+        invalid_counts = [6, 11, 13, 14, 16, 20, 25, 30]
+        for count in invalid_counts:
+            assert count not in valid_counts
+    
+    def test_slip39_word_count_validation(self):
+        """Test SLIP-39 word count validation logic."""
+        valid_counts = [20, 33]
+        
+        # Test valid counts
+        assert 20 in valid_counts
+        assert 33 in valid_counts
+        
+        # Test invalid counts
+        invalid_counts = [19, 21, 32, 34, 12, 24]
+        for count in invalid_counts:
+            assert count not in valid_counts
+    
+    def test_html_validation_integration(self):
+        """Test that the HTML file contains validation code."""
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        html_path = os.path.join(project_root, "docs", "web", "src", "index.html")
+        
+        assert os.path.exists(html_path), f"HTML file not found at {html_path}"
+        
+        with open(html_path, 'r') as f:
+            content = f.read()
+        
+        # Check for validation functions
+        assert "function normalizeWords" in content
+        assert "function isValidBIP39Mnemonic" in content
+        assert "function validateBIP39Checksum" in content
+        assert "function isValidSLIP39Share" in content
+        assert "function validateSLIP39Shares" in content
+        
+        # Check for event listeners
+        assert "addEventListener" in content
+        assert "updateLabelPreview" in content
+        
+        # Check for valid examples
+        assert "abandon abandon abandon" in content  # BIP-39 test vector
+        assert "listen helpful academic" in content  # SLIP-39 test shares
+    
+    def test_valid_examples_in_html(self):
+        """Test that HTML contains valid test examples."""
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        html_path = os.path.join(project_root, "docs", "web", "src", "index.html")
+        
+        with open(html_path, 'r') as f:
+            content = f.read()
+        
+        # Check BIP-39 example is the official test vector
+        test_vector = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+        assert test_vector in content
+        
+        # Check SLIP-39 examples exist (real shares)
+        assert "listen helpful academic acid" in content
+        assert "listen helpful academic agency" in content
+        assert "listen helpful academic always" in content
+    
+    def test_css_validation_styles(self):
+        """Test that CSS contains validation styling."""
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        css_path = os.path.join(project_root, "docs", "web", "src", "spa-styles.css")
+        
+        assert os.path.exists(css_path), f"CSS file not found at {css_path}"
+        
+        with open(css_path, 'r') as f:
+            content = f.read()
+        
+        # Check for validation classes
+        assert ".invalid" in content
+        assert ".valid" in content
+        assert ".label-output" in content
+        
+        # Check color coding
+        assert "#ef4444" in content or "red" in content  # Invalid state
+        assert "#10b981" in content or "green" in content  # Valid state
+
+
+class TestValidationMockImplementation:
+    """Test mock implementations of validation logic."""
+    
+    def test_mock_bip39_validation(self):
+        """Mock BIP-39 validation logic."""
+        # Mock BIP-39 wordlist (subset)
+        mock_wordlist = ["abandon", "ability", "able", "about", "above"]
+        
+        def mock_validate_bip39(words):
+            word_list = words.strip().lower().split()
+            if len(word_list) not in [12, 15, 18, 21, 24]:
+                return False
+            for word in word_list:
+                if word not in mock_wordlist:
+                    return False
+            return True
+        
+        # Test valid cases
+        assert mock_validate_bip39("abandon ability able about abandon ability able about abandon ability able about") == True
+        
+        # Test invalid word count
+        assert mock_validate_bip39("abandon ability") == False
+        
+        # Test invalid word
+        assert mock_validate_bip39("invalid word phrase test fake garbage nonsense bad wrong incorrect fake bad terrible") == False
+    
+    def test_mock_slip39_validation(self):
+        """Mock SLIP-39 validation logic."""
+        def mock_validate_slip39_share(words):
+            word_list = words.strip().split()
+            return len(word_list) in [20, 33]
+        
+        # Test valid 20-word share
+        twenty_words = " ".join(["word"] * 20)
+        assert mock_validate_slip39_share(twenty_words) == True
+        
+        # Test valid 33-word share
+        thirty_three_words = " ".join(["word"] * 33)
+        assert mock_validate_slip39_share(thirty_three_words) == True
+        
+        # Test invalid word count
+        ten_words = " ".join(["word"] * 10)
+        assert mock_validate_slip39_share(ten_words) == False
+    
+    def test_mock_label_generation(self):
+        """Mock label generation logic."""
+        def mock_generate_label(seed_type, date, card_id):
+            if date:
+                return f"v1|{seed_type.upper()}|{date}|{card_id}"
+            else:
+                return f"v1|{seed_type.upper()}|{card_id}"
+        
+        # Test with date
+        assert mock_generate_label("simple", "2025-11", "TEST.01") == "v1|SIMPLE|2025-11|TEST.01"
+        assert mock_generate_label("bip39", "2025", "Banking") == "v1|BIP39|2025|Banking"
+        
+        # Test without date
+        assert mock_generate_label("slip39", "", "Recovery") == "v1|SLIP39|Recovery"
+        assert mock_generate_label("simple", None, "Work") == "v1|SIMPLE|Work"
+
+
+if __name__ == "__main__":
+    # Run tests with pytest
+    pytest.main([__file__, "-v"])

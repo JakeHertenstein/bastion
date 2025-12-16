@@ -1,0 +1,492 @@
+#!/usr/bin/env python3
+"""
+Simple HTML and JavaScript validation tests that don't require external dependencies.
+Focus on basic structure, syntax, and consistency checks.
+"""
+
+import re
+import unittest
+from pathlib import Path
+
+
+class TestWebInterfaceBasics(unittest.TestCase):
+    """Basic validation tests for web interface files."""
+    
+    def setUp(self):
+        """Set up test environment."""
+        self.web_dir = Path(__file__).parent.parent / "docs" / "web"
+        self.required_files = {
+            "index.html": "SPA main page with all views",
+            "styles.css": "Stylesheet", 
+            "crypto.js": "Cryptographic functions",
+            "app.js": "Main application logic",
+            "generator.js": "Generator-specific features",
+            "router.js": "SPA routing logic"
+        }
+    
+    def test_required_files_exist_and_not_empty(self):
+        """Test that all required files exist and are not empty."""
+        for filename, description in self.required_files.items():
+            with self.subTest(file=filename):
+                file_path = self.web_dir / filename
+                self.assertTrue(file_path.exists(), f"{description} ({filename}) should exist")
+                self.assertGreater(file_path.stat().st_size, 100, 
+                                 f"{description} ({filename}) should not be empty")
+    
+    def test_html_basic_structure(self):
+        """Test basic HTML structure."""
+        html_files = ["index.html"]
+        
+        for filename in html_files:
+            file_path = self.web_dir / filename
+            if not file_path.exists():
+                continue
+                
+            with self.subTest(file=filename):
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                # Basic HTML structure checks
+                self.assertIn('<!DOCTYPE html>', content, f"{filename} should have DOCTYPE")
+                self.assertIn('<html', content, f"{filename} should have <html> tag")
+                self.assertIn('<head>', content, f"{filename} should have <head>")
+                self.assertIn('<body', content, f"{filename} should have <body>")
+                self.assertIn('<title>', content, f"{filename} should have <title>")
+                self.assertIn('</html>', content, f"{filename} should close <html>")
+                
+                # Meta tags for mobile and encoding
+                self.assertIn('charset', content.lower(), f"{filename} should specify charset")
+                self.assertIn('viewport', content.lower(), f"{filename} should have viewport meta")
+    
+    def test_css_basic_syntax(self):
+        """Test basic CSS syntax."""
+        css_file = self.web_dir / "styles.css"
+        if not css_file.exists():
+            self.skipTest("styles.css not found")
+        
+        with open(css_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Basic CSS syntax checks
+        open_braces = content.count('{')
+        close_braces = content.count('}')
+        self.assertEqual(open_braces, close_braces, "CSS should have matching braces")
+        
+        # Should contain common CSS elements
+        css_elements = ['body', 'font', 'color', 'margin', 'padding']
+        for element in css_elements:
+            self.assertIn(element, content, f"CSS should contain {element}")
+    
+    def test_javascript_basic_syntax(self):
+        """Test basic JavaScript syntax."""
+        js_files = ["crypto.js", "app.js", "generator.js"]
+        
+        for filename in js_files:
+            file_path = self.web_dir / filename
+            if not file_path.exists():
+                continue
+                
+            with self.subTest(file=filename):
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                # Basic JS syntax checks
+                open_braces = content.count('{')
+                close_braces = content.count('}')
+                open_parens = content.count('(')
+                close_parens = content.count(')')
+                open_brackets = content.count('[')
+                close_brackets = content.count(']')
+                
+                self.assertEqual(open_braces, close_braces, f"{filename} should have matching braces")
+                self.assertEqual(open_parens, close_parens, f"{filename} should have matching parentheses")
+                self.assertEqual(open_brackets, close_brackets, f"{filename} should have matching brackets")
+    
+    def test_crypto_js_contains_expected_functions(self):
+        """Test that crypto.js contains expected cryptographic functions."""
+        crypto_file = self.web_dir / "crypto.js"
+        if not crypto_file.exists():
+            self.skipTest("crypto.js not found")
+        
+        with open(crypto_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Key cryptographic functions that should be present
+        expected_crypto = [
+            'PBKDF2',     # PBKDF2 implementation (Web Crypto API)
+            'HMAC',       # HMAC functionality  
+            'SHA-512',    # SHA-512 hashing
+            'ALPHABET',   # Character alphabet
+            'crypto',     # Web Crypto API usage
+        ]
+        
+        for crypto_item in expected_crypto:
+            with self.subTest(item=crypto_item):
+                self.assertIn(crypto_item, content, f"crypto.js should contain {crypto_item}")
+    
+    def test_app_js_contains_expected_functions(self):
+        """Test that app.js contains expected application functions."""
+        app_file = self.web_dir / "app.js"
+        if not app_file.exists():
+            self.skipTest("app.js not found")
+        
+        with open(app_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Key application functions
+        expected_app_functions = [
+            'generateSingleCard',   # Matrix generation method
+            'displaySingleCard',    # Matrix display method
+            'getSeedBytes',         # Seed validation
+            'showError',           # Error handling
+            'addEventListener'      # Event handling
+        ]
+        
+        for func_name in expected_app_functions:
+            with self.subTest(function=func_name):
+                self.assertIn(func_name, content, f"app.js should contain {func_name}")
+    
+    def test_no_hardcoded_secrets(self):
+        """Test that files don't contain hardcoded secrets or real mnemonics."""
+        all_files = list(self.required_files.keys())
+        
+        # Patterns that might indicate secrets
+        secret_patterns = [
+            r'["\']([a-f0-9]{64})["\']',  # Hex secrets
+            r'sk_[a-zA-Z0-9]{24,}',      # API keys starting with sk_
+            r'pk_[a-zA-Z0-9]{24,}',      # API keys starting with pk_
+        ]
+        
+        # Real BIP-39 words to avoid in production
+        avoid_real_mnemonics = [
+            'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about',
+            'zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong'
+        ]
+        
+        for filename in all_files:
+            file_path = self.web_dir / filename
+            if not file_path.exists():
+                continue
+                
+            with self.subTest(file=filename):
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                # Check for secret patterns
+                for pattern in secret_patterns:
+                    matches = re.findall(pattern, content, re.IGNORECASE)
+                    self.assertEqual(len(matches), 0, 
+                                   f"{filename} should not contain secrets matching {pattern}")
+                
+                # Check for real mnemonics
+                for mnemonic in avoid_real_mnemonics:
+                    self.assertNotIn(mnemonic, content, 
+                                   f"{filename} should not contain real mnemonic {mnemonic[:30]}...")
+    
+    def test_html_links_to_existing_resources(self):
+        """Test that HTML files link to existing CSS and JS files."""
+        html_files = ["index.html"]
+        
+        for filename in html_files:
+            file_path = self.web_dir / filename
+            if not file_path.exists():
+                continue
+                
+            with self.subTest(file=filename):
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                # Find CSS links
+                css_links = re.findall(r'<link[^>]*href=["\']([^"\']*\.css)["\']', content)
+                for css_link in css_links:
+                    if not css_link.startswith('http'):
+                        css_path = self.web_dir / css_link
+                        self.assertTrue(css_path.exists(), 
+                                      f"CSS file {css_link} linked in {filename} should exist")
+                
+                # Find JS script sources
+                js_links = re.findall(r'<script[^>]*src=["\']([^"\']*\.js)["\']', content)
+                for js_link in js_links:
+                    if not js_link.startswith('http'):
+                        js_path = self.web_dir / js_link
+                        self.assertTrue(js_path.exists(), 
+                                      f"JS file {js_link} linked in {filename} should exist")
+    
+    def test_consistent_alphabet_usage(self):
+        """Test that alphabet is consistently defined across files."""
+        alphabet_files = ["crypto.js"]
+        found_alphabets = {}
+        
+        for filename in alphabet_files:
+            file_path = self.web_dir / filename
+            if not file_path.exists():
+                continue
+                
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Look for alphabet definition
+            alphabet_match = re.search(r'ALPHABET\s*=\s*["\']([^"\']+)["\']', content)
+            if alphabet_match:
+                found_alphabets[filename] = alphabet_match.group(1)
+        
+        # If multiple alphabet definitions found, they should be identical
+        if len(found_alphabets) > 1:
+            alphabet_values = list(found_alphabets.values())
+            first_alphabet = alphabet_values[0]
+            for filename, alphabet in found_alphabets.items():
+                self.assertEqual(alphabet, first_alphabet, 
+                               f"Alphabet in {filename} should match other files")
+
+
+class TestWebInterfaceContent(unittest.TestCase):
+    """Test content and functionality aspects of web interface."""
+    
+    def setUp(self):
+        """Set up test environment."""
+        self.web_dir = Path(__file__).parent.parent / "docs" / "web"
+    
+    def test_index_page_content(self):
+        """Test that index page contains expected content."""
+        index_file = self.web_dir / "index.html"
+        if not index_file.exists():
+            self.skipTest("index.html not found")
+        
+        with open(index_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Should contain key marketing/info content
+        expected_content = [
+            'Seed Card',
+            'password',
+            'secure',
+            'deterministic',
+            'offline'
+        ]
+        
+        for expected in expected_content:
+            self.assertIn(expected.lower(), content.lower(), 
+                         f"Index page should mention {expected}")
+    
+    def test_spa_generator_view_content(self):
+        """Test that SPA contains generator view with expected form elements."""
+        index_file = self.web_dir / "index.html"
+        if not index_file.exists():
+            self.skipTest("index.html not found")
+        
+        with open(index_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Should contain generator view and form elements
+        generator_elements = [
+            'generator-view',  # Generator view container
+            '<input',
+            '<textarea', 
+            '<button',
+            'type="radio"',    # Seed type radio buttons
+            'Generate'         # Generate button
+        ]
+        
+        for element in generator_elements:
+            self.assertIn(element, content, 
+                         f"SPA should contain {element} for generator functionality")
+    
+    def test_responsive_design_indicators(self):
+        """Test for responsive design indicators in CSS."""
+        css_file = self.web_dir / "styles.css"
+        if not css_file.exists():
+            self.skipTest("styles.css not found")
+        
+        with open(css_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Should contain responsive design elements
+        responsive_indicators = [
+            '@media',
+            'max-width',
+            'min-width',
+            'flex',
+            'grid'
+        ]
+        
+        found_responsive = [indicator for indicator in responsive_indicators 
+                          if indicator in content]
+        
+        self.assertGreater(len(found_responsive), 0, 
+                         "CSS should contain responsive design elements")
+
+
+class TestMatrixDimensions(unittest.TestCase):
+    """Test that matrix dimensions are correct throughout the web interface."""
+    
+    def setUp(self):
+        """Set up test environment."""
+        self.web_dir = Path(__file__).parent.parent / "docs" / "web"
+    
+    def test_crypto_config_dimensions(self):
+        """Test that crypto.js has correct matrix dimensions configured."""
+        crypto_file = self.web_dir / "crypto.js"
+        if not crypto_file.exists():
+            self.skipTest("crypto.js does not exist")
+        
+        with open(crypto_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Check for correct 10x10 configuration
+        self.assertIn('TOKENS_WIDE: 10', content, 
+                     "crypto.js should configure 10 columns")
+        self.assertIn('TOKENS_TALL: 10', content, 
+                     "crypto.js should configure 10 rows")
+    
+    def test_app_js_matrix_rendering(self):
+        """Test that app.js renders full 10×10 matrices."""
+        app_file = self.web_dir / "app.js"
+        if not app_file.exists():
+            self.skipTest("app.js does not exist")
+        
+        with open(app_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Check that renderMatrixTable uses CONFIG dimensions, not hardcoded values
+        self.assertIn('CONFIG.TOKENS_WIDE', content,
+                     "app.js should use CONFIG.TOKENS_WIDE for matrix width")
+        self.assertIn('CONFIG.TOKENS_TALL', content,
+                     "app.js should use CONFIG.TOKENS_TALL for matrix height")
+        
+        # Ensure no hardcoded 5×5 limitations in demo display
+        self.assertNotIn('.slice(0, 5)', content,
+                        "app.js should not limit demo matrix to 5×5")
+        self.assertNotIn('5×5 preview', content,
+                        "app.js should not mention 5×5 preview")
+        
+        # Check for correct description
+        self.assertIn('10×10 matrix', content,
+                     "app.js should mention 10×10 matrix in demo")
+    
+    def test_html_matrix_structure(self):
+        """Test that HTML is structured for 10×10 matrices."""
+        html_files = ["index.html"]
+        
+        for filename in html_files:
+            file_path = self.web_dir / filename
+            if not file_path.exists():
+                continue
+                
+            with self.subTest(file=filename):
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                # Check for matrix container that can hold full 10×10
+                if 'password-matrix' in content:
+                    # Files with password matrix should not limit to 5 columns/rows
+                    self.assertNotIn('0    1    2    3    4', content,
+                                   f"{filename} should not hardcode 5-column headers")
+    
+    def test_coordinate_system_consistency(self):
+        """Test that coordinate system supports full A0-J9 range."""
+        js_files = ["crypto.js", "app.js"]
+        
+        for filename in js_files:
+            file_path = self.web_dir / filename
+            if not file_path.exists():
+                continue
+                
+            with self.subTest(file=filename):
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                # Should support coordinates up to J9
+                if 'coordinate' in content.lower():
+                    # Check for proper coordinate validation (A-J, 0-9)
+                    patterns = [
+                        r"['\"]A['\"].*['\"]J['\"]",  # A to J range
+                        r"['\"]0['\"].*['\"]9['\"]",  # 0 to 9 range
+                        r"rowChar.*J",               # Row validation to J
+                        r"colChar.*9"                # Column validation to 9
+                    ]
+                    
+                    found_patterns = sum(1 for pattern in patterns 
+                                       if re.search(pattern, content))
+                    
+                    if found_patterns > 0:  # Only test files that have coordinate logic
+                        self.assertGreaterEqual(found_patterns, 2,
+                                              f"{filename} should support full A0-J9 coordinate range")
+
+    def test_matrix_formatting_fixes(self):
+        """Test that matrix formatting uses proper HTML table structure."""
+        app_file = self.web_dir / "app.js"
+        if not app_file.exists():
+            self.skipTest("app.js does not exist")
+            
+        with open(app_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+            
+        # Should create HTML table structure via createElement and className
+        self.assertIn("createElement('table')", content,
+                     "app.js should create HTML table elements")
+        self.assertIn("className = 'password-matrix demo-matrix'", content,
+                     "app.js should set demo-matrix class name")
+        
+        # Should not have escaped newlines in HTML context
+        self.assertNotIn("join('\\\\n')", content,
+                        "app.js should not use escaped newlines for HTML display")
+        
+        # Should have proper table headers and cells
+        self.assertIn('<th class="coord-header">', content,
+                     "app.js should create proper table headers with coordinate styling")
+        
+        # Should use CONFIG constants for dimensions
+        self.assertIn('CONFIG.TOKENS_WIDE', content,
+                     "app.js should use CONFIG.TOKENS_WIDE for table dimensions")
+        self.assertIn('CONFIG.TOKENS_TALL', content,
+                     "app.js should use CONFIG.TOKENS_TALL for table dimensions")
+
+    def test_css_matrix_styling(self):
+        """Test that CSS has proper matrix styling."""
+        css_file = self.web_dir / "styles.css"
+        if not css_file.exists():
+            self.skipTest("styles.css does not exist")
+            
+        with open(css_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+            
+        # Should have demo matrix styling
+        self.assertIn('.demo-matrix', content,
+                     "CSS should have demo-matrix class styling")
+        
+        # Should have monospace font for matrices
+        self.assertIn('monospace', content,
+                     "CSS should use monospace font for matrix display")
+
+    def test_spa_script_loading(self):
+        """Test that SPA loads all required scripts."""
+        index_file = self.web_dir / "index.html"
+        if not index_file.exists():
+            self.skipTest("index.html does not exist")
+            
+        with open(index_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+            
+        # Should load crypto.js for cryptographic functions
+        self.assertIn('src="crypto.js"', content,
+                     "index.html should load crypto.js")
+        
+        # Should load app.js for SeedCardApp class
+        self.assertIn('src="app.js"', content,
+                     "index.html should load app.js")
+        
+        # Should load router.js for SPA routing
+        self.assertIn('src="router.js"', content,
+                     "index.html should load router.js")
+        crypto_pos = content.find('src="crypto.js"')
+        app_pos = content.find('src="app.js"')
+        generator_pos = content.find('src="generator.js"')
+        
+        self.assertGreater(app_pos, crypto_pos,
+                          "app.js should be loaded after crypto.js")
+        self.assertGreater(generator_pos, app_pos,
+                          "generator.js should be loaded after app.js")
+
+
+if __name__ == '__main__':
+    unittest.main()

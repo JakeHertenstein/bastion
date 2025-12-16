@@ -1,0 +1,49 @@
+{
+  "id": "hqguqsaovlalodxkabkzujska4",
+  "title": "Autofill",
+  "tags": ["Bastion/2FA/FIDO2-Software"],
+  "version": 5,
+  "vault": {
+    "id": "4lspa5zqvyewhwfjkornvgzujy",
+    "name": "Private"
+  },
+  "category": "LOGIN",
+  "last_edited_by": "BNBZW3EZ3ZAO7NAEZBGTEMPMAI",
+  "created_at": "2025-12-07T15:33:54Z",
+  "updated_at": "2025-12-08T19:28:57Z",
+  "additional_information": "1@email.com",
+  "urls": [
+    {
+      "label": "website",
+      "primary": true,
+      "href": "https://autofill.me"
+    }
+  ],
+  "fields": [
+    {
+      "id": "username",
+      "type": "STRING",
+      "purpose": "USERNAME",
+      "label": "username",
+      "value": "1@email.com",
+      "reference": "op://Private/Autofill/username"
+    },
+    {
+      "id": "password",
+      "type": "CONCEALED",
+      "purpose": "PASSWORD",
+      "label": "password",
+      "reference": "op://Private/Autofill/password",
+      "password_details": {
+        "strength": "TERRIBLE"
+      }
+    },
+    {
+      "id": "notesPlain",
+      "type": "STRING",
+      "purpose": "NOTES",
+      "label": "notesPlain",
+      "reference": "op://Private/Autofill/notesPlain"
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "bastion-airgap"
+version = "0.3.0"
+description = "Air-gapped cryptographic key generation system for SLIP-39 secret sharing"
+readme = "README.md"
+license = { text = "PolyForm-Noncommercial-1.0.0" }
+authors = [
+    { name = "Jake Hertenstein" },
+]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "License :: Other/Proprietary License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+requires-python = ">=3.11"
+dependencies = [
+    "bastion-core",
+    "typer[all]>=0.9.0",
+    "rich>=13.0.0",
+    "shamir-mnemonic>=0.3.0",  # SLIP-39
+    "qrcode>=7.4.0",           # QR code generation
+    "pillow>=10.0.0",          # QR code image generation
+    "reportlab>=4.0.0",        # PDF generation for QR sheets
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=22.0.0",
+    "isort>=5.0.0",
+    "mypy>=1.0.0",
+]
+# Camera/QR reading - may not be available on air-gapped system
+camera = [
+    "pyzbar>=0.1.9",
+]
+
+[project.scripts]
+airgap = "airgap.cli.main:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/airgap"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.isort]
+profile = "black"
+line_length = 100

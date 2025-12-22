@@ -117,17 +117,3 @@ jobs:
           path: dist/
       - name: Publish bastion-security to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-
-  publish:
-    needs: build
-    runs-on: ubuntu-latest
-    environment: pypi
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist/
-      
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1

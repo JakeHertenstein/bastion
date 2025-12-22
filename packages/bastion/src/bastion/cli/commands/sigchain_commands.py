@@ -356,7 +356,7 @@ def session_start(
     timeout: Annotated[int | None, typer.Option("--timeout", "-t", help="Session timeout in minutes")] = None,
 ) -> None:
     """Start a new session.
-    
+
     Sessions provide:
     - Automatic event logging to sigchain
     - Batch anchoring with OpenTimestamps

@@ -42,7 +42,7 @@ def temp_dir():
 @pytest.fixture
 def mock_op_cli():
     """Mock 1Password CLI subprocess calls.
-    
+
     Use this fixture to avoid actual 1Password API calls during tests.
     """
     with patch("subprocess.run") as mock_run:
@@ -57,7 +57,7 @@ def mock_op_cli():
 @pytest.fixture
 def sample_entropy_bytes():
     """Generate sample entropy bytes for testing.
-    
+
     Returns 1024 bytes of pseudo-random data (NOT cryptographically secure,
     only for testing entropy processing logic).
     """

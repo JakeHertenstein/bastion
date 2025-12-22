@@ -58,11 +58,11 @@ class BastionMetadata:
 
 def add_bastion_metadata(uuid: str, metadata: BastionMetadata) -> bool:
     """Add or update Bastion Metadata section in a 1Password item.
-    
+
     Args:
         uuid: 1Password item UUID
         metadata: BastionMetadata object with fields to set
-        
+
     Returns:
         True if successful, False otherwise
     """
@@ -144,10 +144,10 @@ def add_bastion_metadata(uuid: str, metadata: BastionMetadata) -> bool:
 
 def get_bastion_metadata(uuid: str) -> BastionMetadata | None:
     """Retrieve Bastion Metadata from a 1Password item.
-    
+
     Args:
         uuid: 1Password item UUID
-        
+
     Returns:
         BastionMetadata object if found, None otherwise
     """
@@ -230,14 +230,14 @@ def get_bastion_metadata(uuid: str) -> BastionMetadata | None:
 
 def update_bastion_metadata(uuid: str, **kwargs) -> bool:
     """Update specific Bastion Metadata fields.
-    
+
     Args:
         uuid: 1Password item UUID
         **kwargs: Field names and values to update
-        
+
     Returns:
         True if successful, False otherwise
-        
+
     Example:
         update_bastion_metadata(uuid, password_changed="2025-11-27", risk_level="MEDIUM")
     """

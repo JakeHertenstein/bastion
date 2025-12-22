@@ -31,7 +31,7 @@ def analyze_risk(
     account_uuid: str | None = None,
 ) -> None:
     """Analyze account risk with optional filters.
-    
+
     Args:
         db_path: Optional database path
         level: Filter by risk level (critical/high/medium/low)
@@ -136,7 +136,7 @@ def query_accounts(
     limit: int | None = 20,
 ) -> None:
     """Query accounts with flexible filtering.
-    
+
     Args:
         db_path: Optional database path
         has_tag: Filter by tag(s) (AND logic)

@@ -56,10 +56,10 @@ class ValidationRule(ABC):
     def validate(self, account: Account) -> list[ValidationViolation]:
         """
         Validate an account against this rule.
-        
+
         Args:
             account: Account to validate
-            
+
         Returns:
             List of violations (empty if valid)
         """
@@ -278,10 +278,10 @@ class ValidationEngine:
     def validate_all(self, accounts: list[Account] | dict[str, Account]) -> list[ValidationViolation]:
         """
         Validate all accounts against all rules.
-        
+
         Args:
             accounts: List or dict of accounts to validate
-            
+
         Returns:
             List of all violations found
         """
@@ -298,7 +298,7 @@ class ValidationEngine:
     def print_report(self, violations: list[ValidationViolation], console: Console):
         """
         Print validation report.
-        
+
         Args:
             violations: List of violations to report
             console: Rich console for output

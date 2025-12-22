@@ -57,12 +57,12 @@ class OnePasswordManager:
                           integration_version: str = "v1.0.0") -> None:
         """
         Authenticate with 1Password using service account token.
-        
+
         Args:
             token: Service account token (if None, reads from OP_SERVICE_ACCOUNT_TOKEN env var)
             integration_name: Name of the integration
             integration_version: Version of the integration
-            
+
         Raises:
             OnePasswordError: If authentication fails
         """
@@ -96,10 +96,10 @@ class OnePasswordManager:
     async def list_vaults(self) -> list[dict[str, str]]:
         """
         List available 1Password vaults.
-        
+
         Returns:
             List of vault dictionaries with id, name
-            
+
         Raises:
             OnePasswordError: If operation fails
         """
@@ -115,14 +115,14 @@ class OnePasswordManager:
     async def search_seed_items(self, vault_id: str | None = None, tag: str = "seed-card") -> list[OnePasswordItem]:
         """
         Search for seed-related items in 1Password.
-        
+
         Args:
             vault_id: Specific vault to search (optional, searches all vaults if None)
             tag: Tag to search for (default: "seed-card")
-            
+
         Returns:
             List of OnePasswordItem objects
-            
+
         Raises:
             OnePasswordError: If search fails
         """
@@ -177,14 +177,14 @@ class OnePasswordManager:
     async def load_seed_phrase(self, vault_id: str, item_id: str) -> tuple[str, str]:
         """
         Load seed phrase from a 1Password item.
-        
+
         Args:
             vault_id: 1Password vault ID
             item_id: 1Password item ID
-            
+
         Returns:
             Tuple of (seed_phrase, seed_type)
-            
+
         Raises:
             OnePasswordError: If loading fails
         """
@@ -216,7 +216,7 @@ class OnePasswordManager:
             if not seed_phrase:
                 raise OnePasswordError(f"No seed phrase found in item {item_id}")
 
-            logger.info("Loaded %s seed from 1Password item" % seed_type)
+            logger.info(f"Loaded {seed_type} seed from 1Password item")
             return seed_phrase, seed_type
 
         except Exception as e:
@@ -231,10 +231,10 @@ class OnePasswordManager:
                             title: str | None = None) -> str:
         """
         Save seed card data to 1Password.
-        
+
         Note: Only stores the seed phrase and hash. Token grid is derivable
         from the seed and should be generated on-demand for security.
-        
+
         Args:
             card_id: Unique card identifier
             seed_phrase: Seed phrase (will be stored securely)
@@ -242,10 +242,10 @@ class OnePasswordManager:
             sha512_hash: SHA-512 hash for verification
             vault_id: Target vault ID
             title: Item title (optional, defaults to card_id)
-            
+
         Returns:
             1Password item ID of created item
-            
+
         Raises:
             OnePasswordError: If saving fails
         """
@@ -296,7 +296,7 @@ class OnePasswordManager:
             # Create the item
             created_item = await self.client.items.create(item_params)
 
-            logger.info("Saved seed card %s to 1Password item %s" % (card_id, created_item.id))
+            logger.info(f"Saved seed card {card_id} to 1Password item {created_item.id}")
             return created_item.id
 
         except Exception as e:
@@ -308,12 +308,12 @@ class OnePasswordManager:
                               sha512_hash: str) -> None:
         """
         Update existing seed card with new hash.
-        
+
         Args:
             vault_id: 1Password vault ID
             item_id: 1Password item ID to update
             sha512_hash: Updated SHA-512 hash
-            
+
         Raises:
             OnePasswordError: If update fails
         """
@@ -335,7 +335,7 @@ class OnePasswordManager:
             # Save the updated item
             await self.client.items.put(item)
 
-            logger.info("Updated 1Password item %s" % item_id)
+            logger.info(f"Updated 1Password item {item_id}")
 
         except Exception as e:
             raise OnePasswordError(f"Item update failed: {e}") from e
@@ -343,14 +343,14 @@ class OnePasswordManager:
     async def get_card_metadata(self, vault_id: str, item_id: str) -> dict[str, str]:
         """
         Get metadata (hash) from a seed card item.
-        
+
         Args:
             vault_id: 1Password vault ID
             item_id: 1Password item ID
-            
+
         Returns:
             Dictionary with sha512_hash and other metadata
-            
+
         Raises:
             OnePasswordError: If loading fails
         """
@@ -380,11 +380,11 @@ class OnePasswordManager:
     async def delete_seed_card(self, vault_id: str, item_id: str) -> None:
         """
         Delete a seed card item from 1Password.
-        
+
         Args:
             vault_id: 1Password vault ID
             item_id: 1Password item ID to delete
-            
+
         Raises:
             OnePasswordError: If deletion fails
         """
@@ -392,7 +392,7 @@ class OnePasswordManager:
 
         try:
             await self.client.items.delete(vault_id, item_id)
-            logger.info("Deleted 1Password item %s" % item_id)
+            logger.info(f"Deleted 1Password item {item_id}")
 
         except Exception as e:
             raise OnePasswordError(f"Item deletion failed: {e}") from e
@@ -400,11 +400,11 @@ class OnePasswordManager:
     async def archive_seed_card(self, vault_id: str, item_id: str) -> None:
         """
         Archive a seed card item in 1Password.
-        
+
         Args:
             vault_id: 1Password vault ID
             item_id: 1Password item ID to archive
-            
+
         Raises:
             OnePasswordError: If archiving fails
         """
@@ -412,7 +412,7 @@ class OnePasswordManager:
 
         try:
             await self.client.items.archive(vault_id, item_id)
-            logger.info("Archived 1Password item %s" % item_id)
+            logger.info(f"Archived 1Password item {item_id}")
 
         except Exception as e:
             raise OnePasswordError(f"Item archiving failed: {e}") from e
@@ -427,11 +427,11 @@ def create_card_title(card_id: str, seed_type: str) -> str:
 def validate_seed_for_1password(seed_phrase: str | list[str], seed_type: str) -> bool:
     """
     Validate that seed data is suitable for 1Password storage.
-    
+
     Args:
         seed_phrase: Seed phrase to validate (string for BIP-39/Simple, list for SLIP-39)
         seed_type: Type of seed
-        
+
     Returns:
         True if valid for storage
     """

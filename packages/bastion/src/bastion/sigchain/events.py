@@ -55,7 +55,7 @@ class AuditEventType(str, Enum):
 
 class EventPayload(BaseModel):
     """Base class for event payloads.
-    
+
     All payloads must be JSON-serializable and should contain only
     the data necessary to describe the event (no secrets).
     """
@@ -64,7 +64,7 @@ class EventPayload(BaseModel):
 
     def compute_hash(self) -> str:
         """Compute SHA-256 hash of this payload.
-        
+
         Returns:
             Hex-encoded SHA-256 hash
         """
@@ -80,7 +80,7 @@ class EventPayload(BaseModel):
 
     def get_summary(self) -> str:
         """Get human-readable summary for 1Password display.
-        
+
         Returns:
             Short description (max 100 chars)
         """

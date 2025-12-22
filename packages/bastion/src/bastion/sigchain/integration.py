@@ -40,7 +40,7 @@ _session_lock = threading.Lock()
 
 def get_active_session() -> SessionManager | None:
     """Get the currently active session, if any.
-    
+
     Returns:
         Active SessionManager or None
     """
@@ -49,7 +49,7 @@ def get_active_session() -> SessionManager | None:
 
 def set_active_session(session: SessionManager | None) -> None:
     """Set the active session.
-    
+
     Args:
         session: SessionManager instance or None to clear
     """
@@ -60,7 +60,7 @@ def set_active_session(session: SessionManager | None) -> None:
 
 def is_sigchain_enabled() -> bool:
     """Check if sigchain is enabled in config.
-    
+
     Returns:
         True if sigchain auditing is enabled
     """
@@ -78,15 +78,15 @@ def emit_event(
     silent: bool = True,
 ) -> bool:
     """Emit a sigchain event.
-    
+
     If a session is active, appends to it. Otherwise, creates a
     single-use mini-session for this event.
-    
+
     Args:
         payload: Event payload to record
         require_session: If True, fail silently when no session
         silent: If True, don't print status messages
-        
+
     Returns:
         True if event was recorded successfully
     """
@@ -134,16 +134,16 @@ def sigchain_session(
     anchor_on_end: bool = True,
 ) -> Iterator[Sigchain]:
     """Context manager for sigchain sessions.
-    
+
     Usage:
         with sigchain_session() as chain:
             # ... do operations ...
             chain.append(payload)
-    
+
     Args:
         timeout_minutes: Session timeout (default from config)
         anchor_on_end: Whether to submit OTS anchor on session end
-        
+
     Yields:
         Sigchain instance
     """
@@ -175,7 +175,7 @@ def record_username_generated(
     account_uuid: str | None = None,
 ) -> bool:
     """Record a username generation event.
-    
+
     Args:
         domain: Domain the username was generated for
         algorithm: Hash algorithm used
@@ -184,7 +184,7 @@ def record_username_generated(
         length: Username length
         saved_to_1password: Whether saved to 1Password
         account_uuid: 1Password item UUID if saved
-        
+
     Returns:
         True if recorded successfully
     """
@@ -216,7 +216,7 @@ def record_entropy_pool_created(
     device_serial: str | None = None,
 ) -> bool:
     """Record an entropy pool creation event.
-    
+
     Args:
         pool_uuid: 1Password item UUID
         serial_number: Pool serial number
@@ -225,7 +225,7 @@ def record_entropy_pool_created(
         quality_rating: ENT quality rating
         entropy_per_byte: Measured entropy
         device_serial: Hardware device serial if applicable
-        
+
     Returns:
         True if recorded successfully
     """
@@ -252,14 +252,14 @@ def record_tag_operation(
     tags_after: list[str],
 ) -> bool:
     """Record a tag operation event.
-    
+
     Args:
         account_uuid: 1Password item UUID
         account_title: Account title
         action: "add", "remove", or "replace"
         tags_before: Tags before operation
         tags_after: Tags after operation
-        
+
     Returns:
         True if recorded successfully
     """
@@ -290,7 +290,7 @@ def record_password_rotation(
     risk_level: str = "medium",
 ) -> bool:
     """Record a password rotation event.
-    
+
     Args:
         account_uuid: 1Password item UUID
         account_title: Account title
@@ -299,7 +299,7 @@ def record_password_rotation(
         previous_change_date: Previous change date
         rotation_interval_days: Days until next rotation
         risk_level: Account risk level (critical, high, medium, low)
-        
+
     Returns:
         True if recorded successfully
     """
@@ -326,14 +326,14 @@ def record_config_change(
     source: str = "cli",
 ) -> bool:
     """Record a configuration change event.
-    
+
     Args:
         config_section: Config section changed
         config_key: Config key changed
         old_value: Previous value
         new_value: New value
         source: Change source
-        
+
     Returns:
         True if recorded successfully
     """

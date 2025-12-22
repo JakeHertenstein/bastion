@@ -25,7 +25,7 @@ class TokenTagManager:
     def __init__(self, op_client: OpClient, tag_ops: TagOperations):
         """
         Initialize tag manager.
-        
+
         Args:
             op_client: 1Password client
             tag_ops: Tag operations handler
@@ -40,11 +40,11 @@ class TokenTagManager:
     ) -> tuple[bool, list[str]]:
         """
         Auto-add appropriate tags when token is added.
-        
+
         Args:
             account: Account object with current tags
             token_type: Token type being added
-            
+
         Returns:
             (success, added_tags)
         """
@@ -75,12 +75,12 @@ class TokenTagManager:
     ) -> tuple[bool, list[str], list[str]]:
         """
         Auto-remove type tag if this is the last token of this type.
-        
+
         Args:
             account: Account object
             uuid: Item UUID
             token_type: Token type being removed
-            
+
         Returns:
             (success, removed_tags, warnings)
         """
@@ -117,10 +117,10 @@ class TokenTagManager:
     def get_expected_tags_for_item(self, uuid: str) -> list[str]:
         """
         Calculate expected tags based on actual token structure.
-        
+
         Args:
             uuid: Item UUID
-            
+
         Returns:
             List of tags that should be present
         """
@@ -151,13 +151,13 @@ class TokenTagManager:
     def sync_tags_to_tokens(self, account: Account, uuid: str) -> tuple[bool, list[str], list[str]]:
         """
         Synchronize tags to match actual token structure.
-        
+
         Adds missing tags and removes inappropriate tags.
-        
+
         Args:
             account: Account object
             uuid: Item UUID
-            
+
         Returns:
             (success, added_tags, removed_tags)
         """

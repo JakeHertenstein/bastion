@@ -96,10 +96,10 @@ class TestHKDFExpand(unittest.TestCase):
 class TestHKDFTestVectors(unittest.TestCase):
     """
     Test vectors for cross-platform verification.
-    
+
     These vectors ensure Python and JavaScript implementations produce
     identical output. Vectors are loaded from test_vectors.json.
-    
+
     Note: Info labels use Bastion format (Bastion/TOKEN/HMAC:card.token:#VERSION=1|CHECK)
     """
 

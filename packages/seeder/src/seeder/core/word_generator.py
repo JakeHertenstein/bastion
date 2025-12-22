@@ -44,15 +44,15 @@ class WordGenerator:
     def generate_word(seed_bytes: bytes, length: int, word_index: int = 0) -> str:
         """
         Generate a deterministic pronounceable word of specified length.
-        
+
         Args:
             seed_bytes: 64-byte seed for deterministic generation
             length: Desired word length (3-12 characters)
             word_index: Index for generating multiple different words from same seed
-            
+
         Returns:
             Pronounceable word of specified length
-            
+
         Raises:
             ValueError: If length is not supported (3-12 chars)
         """
@@ -95,12 +95,12 @@ class WordGenerator:
     def generate_word_list(seed_bytes: bytes, length: int, count: int = 10) -> list[str]:
         """
         Generate multiple pronounceable words of specified length.
-        
+
         Args:
             seed_bytes: 64-byte seed for deterministic generation
             length: Desired word length (3-12 characters)
             count: Number of words to generate
-            
+
         Returns:
             List of pronounceable words
         """
@@ -118,10 +118,10 @@ class WordGenerator:
     def calculate_word_entropy(length: int) -> float:
         """
         Calculate approximate entropy for a word of given length.
-        
+
         Args:
             length: Word length in characters
-            
+
         Returns:
             Estimated entropy in bits
         """
@@ -145,10 +145,10 @@ class WordGenerator:
     def get_pattern(word: str) -> str:
         """
         Get the consonant/vowel pattern for a word.
-        
+
         Args:
             word: Word to analyze
-            
+
         Returns:
             Pattern string (C=consonant, V=vowel)
         """
@@ -177,17 +177,17 @@ class DictionaryWordGenerator:
                      word_type: str = "common") -> str:
         """
         Generate a deterministic dictionary word.
-        
+
         Args:
             seed_bytes: 64-byte seed for deterministic generation
             word_index: Index for generating multiple different words from same seed
             min_length: Minimum word length
             max_length: Maximum word length
             word_type: Word type filter ("common", "nouns", "verbs", "adjectives", "all")
-            
+
         Returns:
             Dictionary word
-            
+
         Raises:
             ImportError: If wonderwords library is not available
             ValueError: If invalid parameters
@@ -243,14 +243,14 @@ class DictionaryWordGenerator:
                           word_type: str = "common") -> list[str]:
         """
         Generate a list of deterministic dictionary words.
-        
+
         Args:
             seed_bytes: 64-byte seed for deterministic generation
             count: Number of words to generate
             min_length: Minimum word length
             max_length: Maximum word length
             word_type: Word type filter
-            
+
         Returns:
             List of dictionary words
         """
@@ -273,12 +273,12 @@ class DictionaryWordGenerator:
     def calculate_word_entropy(min_length: int, max_length: int, word_type: str = "common") -> float:
         """
         Calculate approximate entropy for dictionary words.
-        
+
         Args:
             min_length: Minimum word length
-            max_length: Maximum word length  
+            max_length: Maximum word length
             word_type: Word type filter
-            
+
         Returns:
             Estimated entropy in bits
         """

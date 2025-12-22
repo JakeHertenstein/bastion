@@ -23,12 +23,12 @@ class MigrationManager:
         batch_mode: bool = False
     ) -> bool:
         """Apply tags to a single item.
-        
+
         Args:
             uuid: Item UUID
             tags_to_add: List of tags to add
             batch_mode: If True, skip confirmation prompt
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -88,12 +88,12 @@ class MigrationManager:
         batch_mode: bool = False
     ) -> bool:
         """Remove tags from a single item.
-        
+
         Args:
             uuid: Item UUID
             tags_to_remove: List of tags to remove
             batch_mode: If True, skip confirmation prompt
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -145,12 +145,12 @@ class MigrationManager:
         batch_mode: bool = False,
     ) -> dict:
         """Add a tag to multiple accounts.
-        
+
         Args:
             tag: Tag to add
             filter_fn: Optional function to filter accounts (receives Account, returns bool)
             batch_mode: If True, skip confirmation prompts
-            
+
         Returns:
             Summary dict with counts
         """
@@ -183,12 +183,12 @@ class MigrationManager:
         batch_mode: bool = False,
     ) -> dict:
         """Remove a tag from multiple accounts.
-        
+
         Args:
             tag: Tag to remove
             filter_fn: Optional function to filter accounts (receives Account, returns bool)
             batch_mode: If True, skip confirmation prompts
-            
+
         Returns:
             Summary dict with counts
         """

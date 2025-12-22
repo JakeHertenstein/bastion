@@ -111,7 +111,7 @@ TAG_MIGRATIONS = {
 
 def run_migration(migration_type: str, db_path, dry_run: bool) -> None:
     """Run a specific tag migration.
-    
+
     Args:
         migration_type: Type of migration to run (e.g., 'tags', 'flat-to-hierarchical')
         db_path: Path to the database file
@@ -127,10 +127,10 @@ def run_migration(migration_type: str, db_path, dry_run: bool) -> None:
 
 def migrate_tags(db_path, dry_run: bool, yes: bool) -> None:
     """Migrate flat bastion-* tags to nested Bastion/* structure.
-    
+
     Finds all accounts with legacy flat tags (e.g., bastion-type-bank)
     and migrates them to the new hierarchical format (e.g., Bastion/Type/Bank).
-    
+
     Args:
         db_path: Path to the database file
         dry_run: If True, show what would be done without making changes
@@ -231,10 +231,10 @@ def migrate_tags(db_path, dry_run: bool, yes: bool) -> None:
 
 def convert_single_to_note(item_uuid: str, dry_run: bool = False) -> None:
     """Convert a single item to SECURE_NOTE by creating a new item.
-    
+
     Creates a new SECURE_NOTE item with all fields copied from the original,
     and tags the original item as 'converted-to-note' for later cleanup.
-    
+
     Args:
         item_uuid: UUID of the item to convert
         dry_run: If True, show what would be done without making changes
@@ -398,11 +398,11 @@ def convert_single_to_note(item_uuid: str, dry_run: bool = False) -> None:
 
 def convert_bulk_to_notes(tag: str, dry_run: bool = False) -> None:
     """Convert all CUSTOM items with a tag to SECURE_NOTE.
-    
+
     Finds all items with the specified tag that are CUSTOM type with
     category_id (indicating they need conversion) and converts each
     to a SECURE_NOTE.
-    
+
     Args:
         tag: Tag to filter items by
         dry_run: If True, show what would be done without making changes
@@ -602,13 +602,13 @@ def convert_bulk_to_notes(tag: str, dry_run: bool = False) -> None:
 
 def migrate_from_bastion_impl(dry_run: bool = False, skip_cache: bool = False) -> None:
     """Migration from Bastion to Bastion format.
-    
+
     This command migrates:
     - Tags: bastion-* and Bastion/* → Bastion/*
     - Sections: "Bastion Metadata" → "Bastion Metadata"
     - Fields: "Bastion Notes" → "Bastion Notes"
     - Cache: password-rotation-database.json → ~/.bsec/cache.db.enc (encrypted)
-    
+
     Args:
         dry_run: If True, show what would be done without making changes
         skip_cache: If True, skip cache infrastructure and migration

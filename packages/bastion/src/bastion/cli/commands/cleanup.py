@@ -26,10 +26,10 @@ def cleanup_duplicate_tags(
     only_uuid: str | None = None,
 ) -> None:
     """Remove duplicate tags from 1Password items.
-    
+
     Uses the local cache to identify duplicates (fast), then applies fixes
     to 1Password and updates the cache incrementally.
-    
+
     Args:
         db_path: Optional database path
         batch: Whether to run non-interactively
@@ -134,20 +134,20 @@ def cleanup_orphaned_passkeys(
     only_uuid: str | None = None,
 ) -> None:
     """Detect and tag orphaned passkeys in 1Password items.
-    
+
     Orphaned passkeys occur when the 1Password CLI bug deletes the private key
     but leaves the public key metadata. This creates a broken state where:
     - Safari offers to use the passkey for authentication
     - Authentication fails (private key is missing)
     - User has no indication the passkey is corrupted
-    
+
     LIMITATION: The 1Password CLI cannot delete passkey data. This function:
     1. Lists all items tagged Bastion/2FA/Passkey/Software
     2. For each item, prompts user to copy export JSON from 1Password UI
     3. Auto-detects orphaned state from pasted JSON
     4. If orphaned: updates tags (Passkey/Software → Passkey/Corrupted)
     5. Provides instructions for manual passkey deletion in 1Password app
-    
+
     Args:
         only_uuid: Optional single item UUID to process
     """

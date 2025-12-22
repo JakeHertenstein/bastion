@@ -43,7 +43,7 @@ class YubiKeyFieldMigration:
 
     def __init__(self, dry_run: bool = False):
         """Initialize migration manager.
-        
+
         Args:
             dry_run: If True, only show what would be done without making changes
         """
@@ -52,10 +52,10 @@ class YubiKeyFieldMigration:
 
     def get_item_by_uuid(self, uuid: str) -> dict | None:
         """Fetch 1Password item by UUID.
-        
+
         Args:
             uuid: 1Password item UUID
-            
+
         Returns:
             Item data dictionary or None if not found
         """
@@ -73,7 +73,7 @@ class YubiKeyFieldMigration:
 
     def get_items_with_yubikey_totp(self) -> list[dict]:
         """Get all login items with Bastion/2FA/TOTP/YubiKey tag.
-        
+
         Returns:
             List of item dictionaries with basic info (id, title, vault)
         """
@@ -91,10 +91,10 @@ class YubiKeyFieldMigration:
 
     def analyze_item_state(self, item_data: dict) -> dict:
         """Analyze current state of authenticator token fields in an item.
-        
+
         Args:
             item_data: Full item data from 1Password
-            
+
         Returns:
             Dictionary with state analysis:
             {
@@ -187,10 +187,10 @@ class YubiKeyFieldMigration:
 
     def validate_migration(self, state: dict) -> tuple[bool, list[str]]:
         """Validate that new token sections match old fields.
-        
+
         Args:
             state: Item state from analyze_item_state()
-            
+
         Returns:
             Tuple of (is_valid, list_of_errors)
         """
@@ -270,12 +270,12 @@ class YubiKeyFieldMigration:
 
     def add_new_fields(self, uuid: str, item_data: dict, state: dict) -> bool:
         """Phase 1: Add new section-based fields.
-        
+
         Args:
             uuid: Item UUID
             item_data: Full item data
             state: Item state from analyze_item_state()
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -339,12 +339,12 @@ class YubiKeyFieldMigration:
 
     def delete_old_fields(self, uuid: str, item_data: dict, state: dict) -> bool:
         """Phase 2: Delete old flat fields after validation.
-        
+
         Args:
             uuid: Item UUID
             item_data: Full item data
             state: Item state from analyze_item_state()
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -413,12 +413,12 @@ class YubiKeyFieldMigration:
 
     def convert_legacy_tokens(self, uuid: str, item_data: dict, state: dict) -> bool:
         """Phase 3: Convert legacy YubiKey TOTP + Tokens sections to individual Token sections.
-        
+
         Args:
             uuid: Item UUID
             item_data: Full item data
             state: Item state from analyze_item_state()
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -493,12 +493,12 @@ class YubiKeyFieldMigration:
 
     def delete_legacy_fields(self, uuid: str, item_data: dict, state: dict) -> bool:
         """Delete legacy YubiKey TOTP and Tokens section fields (when Token sections already exist).
-        
+
         Args:
             uuid: Item UUID
             item_data: Full item data
             state: Item state from analyze_item_state()
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -550,11 +550,11 @@ class YubiKeyFieldMigration:
 
     def migrate_item(self, uuid: str, interactive: bool = True) -> bool:
         """Migrate a single item with auto-phase detection.
-        
+
         Args:
             uuid: Item UUID
             interactive: If True, prompt for confirmation
-            
+
         Returns:
             True if migration performed, False if skipped/failed
         """
@@ -669,10 +669,10 @@ class YubiKeyFieldMigration:
 
     def migrate_all(self, interactive: bool = True) -> dict:
         """Migrate all items with Bastion/TOTP/YubiKey tag.
-        
+
         Args:
             interactive: If True, prompt for confirmation per item
-            
+
         Returns:
             Dictionary with migration statistics
         """
@@ -765,7 +765,7 @@ class YubiKeyFieldMigration:
 
     def save_migration_log(self, log_path: Path) -> None:
         """Save migration log to JSON file.
-        
+
         Args:
             log_path: Path to save log file
         """

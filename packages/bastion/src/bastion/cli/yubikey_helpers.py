@@ -19,18 +19,18 @@ def generate_unique_oath_name(
 ) -> tuple[str, str]:
     """
     Generate unique OATH name optimized for Yubico Authenticator icon matching.
-    
+
     Character limits: issuer=20 (clean title for icon matching), account=54
-    
+
     Issuer: Clean title only (e.g., "1Password", "Google") - kept short for icon matching
     Account: "username (https://domain)" format for disambiguation
-    
+
     Tries in order:
     1. Title:username (https://domain)
     2. Title:username (domain)
     3. Title:username
     4. Title:username [UUID-short]
-    
+
     Returns: (issuer, account) tuple
     """
     # Helper to truncate with limit
@@ -104,17 +104,17 @@ def generate_unique_oath_name(
 
 def get_yubikey_field(item_data: dict, field_name: str, section_name: str | None = None) -> str | None:
     """Get authenticator token field value from Token sections or old flat format.
-    
+
     Supports three formats for backward compatibility:
     1. New Token N sections (e.g., "Token 1", "Token 2") with type-specific fields
     2. Legacy Tokens section with token_N fields
     3. Old flat custom fields (yubikey_oath_name, yubikey_serials)
-    
+
     Args:
         item_data: Full 1Password item data
         field_name: Field name to retrieve (e.g., "oath_name", "serials", "tokens")
         section_name: Deprecated - kept for backward compatibility
-        
+
     Returns:
         Field value string or None if not found
         For "serials"/"tokens", returns comma-separated list from Token sections
@@ -223,13 +223,13 @@ def get_yubikey_field(item_data: dict, field_name: str, section_name: str | None
 
 def get_all_oath_names_from_tokens(item_data: dict) -> list[str]:
     """Get all OATH names from all Token sections in a 1Password item.
-    
+
     This returns ALL OATH names found across all Token N sections,
     which is useful for finding duplicates or stale entries on YubiKeys.
-    
+
     Args:
         item_data: Full 1Password item data
-        
+
     Returns:
         List of OATH names (may be empty if none found)
     """

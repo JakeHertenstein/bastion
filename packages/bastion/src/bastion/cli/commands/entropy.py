@@ -25,7 +25,7 @@ def generate_entropy(
     sources: str | None = None,
 ) -> None:
     """Generate entropy from specified source.
-    
+
     Args:
         source: Entropy source ('yubikey', 'dice', 'infnoise', 'combined')
         bits: Bits to collect (single value or per-source 'yubikey:4096,infnoise:8192')
@@ -278,10 +278,10 @@ def visualize_entropy_pool(
     attach: bool = True,
 ) -> None:
     """Visualize an entropy pool.
-    
+
     By default, attaches visualization images directly to the 1Password item.
     Use --output to save to filesystem instead.
-    
+
     Args:
         pool_uuid: UUID of the entropy pool
         output: Output path for visualization (saves to file instead of attaching)
@@ -337,11 +337,11 @@ def analyze_entropy_pools(
     force: bool = False,
 ) -> None:
     """Analyze entropy pools and attach visualizations.
-    
+
     Generates visualization images and attaches them to 1Password items.
     Only processes pools that don't already have visualizations attached
     (unless --force is used).
-    
+
     Args:
         pool_uuid: Specific pool UUID to analyze (optional)
         all_pools: Analyze all pools missing visualizations
@@ -508,16 +508,16 @@ def batch_infnoise_entropy(
     vault: str = "Private",
 ) -> None:
     """Collect multiple entropy pools from Infinite Noise TRNG.
-    
+
     Automatically collects high-quality entropy pools, retrying indefinitely
     until each pool meets the minimum quality threshold. Uses ENT statistical
     analysis to validate each pool.
-    
+
     Note: Larger samples yield more accurate ENT statistics:
       - 32768 bits (4KB): Reliable GOOD ratings
       - 65536 bits (8KB): Consistent GOOD/EXCELLENT
       - 131072 bits (16KB): Reliable EXCELLENT ratings
-    
+
     Args:
         count: Number of pools to collect (default 100)
         bits: Bits per pool (default 32768 = 4KB for reliable GOOD quality)
@@ -689,18 +689,18 @@ def batch_infnoise_entropy(
 
 def _find_batch_id_and_max_serial(pool: EntropyPool) -> tuple[int, int]:
     """Find the next batch ID and max serial from a single 1Password query.
-    
+
     This function optimizes batch operations by:
     1. Making a single `op item list` call
     2. Extracting max serial from titles (for serial cache)
     3. Checking only recent pools for batch ID
-    
+
     The max serial is also cached in the pool instance for subsequent
     create_pool() calls, avoiding redundant 1Password queries.
-    
+
     Args:
         pool: EntropyPool instance
-        
+
     Returns:
         Tuple of (next_batch_id, max_serial)
     """
@@ -821,14 +821,14 @@ def batch_yubikey_entropy(
     slot: int = 2,
 ) -> None:
     """Collect multiple entropy pools from YubiKey HMAC-SHA1.
-    
+
     Automatically collects high-quality entropy pools using YubiKey's
     challenge-response function. Each pool is validated with ENT statistical
     analysis before storage.
-    
+
     Note: YubiKey collection is slower than TRNG (~0.5s per HMAC response).
     For 16KB pools (131072 bits), expect ~26 seconds per pool.
-    
+
     Args:
         count: Number of pools to collect (default 100)
         bits: Bits per pool (default 131072 = 16KB for EXCELLENT quality)
@@ -1032,14 +1032,14 @@ def batch_system_entropy(
     vault: str = "Private",
 ) -> None:
     """Collect multiple entropy pools from system RNG (/dev/urandom).
-    
+
     Collects cryptographically secure random bytes from the operating system's
     entropy source. System RNG is fast and always produces near-perfect ENT
     statistics since it's algorithmically whitened.
-    
+
     The value of system entropy is for combining with hardware sources
     (YubiKey, Infinite Noise TRNG) for defense-in-depth.
-    
+
     Args:
         count: Number of pools to collect (default 100)
         bits: Bits per pool (default 131072 = 16KB)
@@ -1212,16 +1212,16 @@ def combine_from_sources(
     vault: str = "Private",
 ) -> None:
     """Combine entropy from multiple source types into derived pools.
-    
+
     For each derived pool, selects the first unconsumed pool of each specified
     source type (meeting the minimum bit requirement), combines them using
     XOR+SHAKE256, and marks the source pools as consumed.
-    
+
     This provides defense-in-depth by combining independent entropy sources:
     - Hardware TRNG (infnoise)
     - Hardware HMAC (yubikey)
     - System CSPRNG (system)
-    
+
     Args:
         sources: Comma-separated source types (e.g., 'infnoise,yubikey,system')
         min_bits: Minimum bits required per source pool (default 131072 = 16KB)

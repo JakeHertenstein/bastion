@@ -31,7 +31,7 @@ class InfNoiseMetadata:
 
     def to_dict(self) -> dict[str, str | int | bool]:
         """Convert to dictionary for storage in 1Password.
-        
+
         Field names use Title Case for 1Password canonical form.
         """
         return {
@@ -48,10 +48,10 @@ class InfNoiseError(Exception):
 
 def list_infnoise_devices() -> list[dict[str, str]]:
     """List connected Infinite Noise TRNG devices.
-    
+
     Returns:
         List of dicts with 'serial' key for each device
-        
+
     Raises:
         InfNoiseError: If listing fails
     """
@@ -92,7 +92,7 @@ def list_infnoise_devices() -> list[dict[str, str]]:
 
 def check_infnoise_available() -> tuple[bool, str | None]:
     """Check if Infinite Noise TRNG is available.
-    
+
     Returns:
         Tuple of (is_available, error_message)
         If available, error_message is None
@@ -114,18 +114,18 @@ def collect_infnoise_entropy(
     multiplier: int = 0,
 ) -> tuple[bytes, InfNoiseMetadata]:
     """Collect entropy from Infinite Noise TRNG.
-    
+
     Uses the infnoise CLI to collect random bytes from the hardware TRNG.
     By default, output is whitened using Keccak-1600 for cryptographic quality.
-    
+
     Args:
         bits: Number of bits to collect (must be multiple of 8)
         raw: If True, output raw bits without Keccak whitening
         multiplier: Output multiplier (0 = full entropy, >0 = stretched output)
-        
+
     Returns:
         Tuple of (entropy_bytes, metadata)
-        
+
     Raises:
         InfNoiseError: If collection fails
         ValueError: If bits is invalid
@@ -210,13 +210,13 @@ def collect_infnoise_entropy(
 
 def estimate_collection_time(bits: int) -> tuple[int, float]:
     """Estimate time to collect entropy from Infinite Noise TRNG.
-    
+
     The device outputs approximately 300,000 bits/second raw.
     With Keccak whitening, throughput is still very high.
-    
+
     Args:
         bits: Number of bits to collect
-        
+
     Returns:
         Tuple of (bits, estimated_seconds)
     """

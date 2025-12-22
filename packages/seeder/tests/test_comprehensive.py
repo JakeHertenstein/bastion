@@ -140,7 +140,7 @@ class TestSeedCardCrypto(unittest.TestCase):
     def test_byte_to_symbol_rejection_sampling(self):
         """Test that rejection sampling works correctly."""
         alphabet_size = 90
-        max_usable = (256 // alphabet_size) * alphabet_size  # 180
+        (256 // alphabet_size) * alphabet_size  # 180
 
         # Values < max_usable should be accepted
         result = SeedCardCrypto.byte_to_symbol(100, alphabet_size)

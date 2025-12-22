@@ -25,11 +25,11 @@ if TYPE_CHECKING:
 
 def get_yubikey_password_from_1password(op_uuid: str, op_client: OpClient) -> str | None:
     """Get YubiKey OATH password from 1Password crypto wallet item.
-    
+
     Args:
         op_uuid: 1Password UUID of the YubiKey crypto wallet item
         op_client: OpClient instance for fetching items
-        
+
     Returns:
         The password string if found, None otherwise
     """
@@ -74,7 +74,7 @@ def yubikey_refresh_cache(
     get_password_fn=None,
 ) -> None:
     """Refresh YubiKey slot cache for connected devices.
-    
+
     Args:
         cache: YubiKeyCache instance
         op_client: Optional OpClient for fetching passwords from 1Password
@@ -150,7 +150,7 @@ def yubikey_refresh_cache(
 
 def yubikey_audit_slots(db_manager: DatabaseManager, cache: YubiKeyCache) -> None:
     """Audit YubiKey slot usage and identify gaps.
-    
+
     Args:
         db_manager: DatabaseManager instance
         cache: YubiKeyCache instance
@@ -192,7 +192,6 @@ def yubikey_audit_slots(db_manager: DatabaseManager, cache: YubiKeyCache) -> Non
         console.print("[yellow]No YubiKeys in cache. Run 'bastion refresh yubikey' first.[/yellow]\n")
 
     # Find accounts with TOTP but missing documentation
-    missing_docs = []
     for acc in db.accounts.values():
         has_yubikey_totp = "Bastion/2FA/TOTP/YubiKey" in acc.tag_list
         # Check for yubikey_totp custom field (would need to fetch from 1Password)
@@ -234,10 +233,10 @@ def yubikey_clean_cache(
     op_client: OpClient | None = None,
 ) -> None:
     """Clean YubiKey cache by syncing with hardware.
-    
+
     Compares cached OATH accounts against actual hardware and removes
     stale entries that no longer exist on the YubiKey.
-    
+
     Args:
         cache: YubiKeyCache instance
         serial: Optional specific serial to clean (default: all)
@@ -303,8 +302,7 @@ def yubikey_clean_cache(
         try:
             result = subprocess.run(
                 ["ykman", "--device", s, "oath", "accounts", "list"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                capture_output=True,
                 input=f"{oath_password}\n".encode() if oath_password else b"",
                 timeout=30,
                 check=True,
@@ -351,10 +349,10 @@ def yubikey_clean_cache(
 
 def update_yubikey_items(serials: list[str], cache: YubiKeyCache) -> None:
     """Update YubiKey Note items in 1Password with OATH slot sections.
-    
+
     Syncs the OATH accounts from the cache to 1Password by creating
     structured OATH Slot sections in the YubiKey Note item.
-    
+
     Args:
         serials: List of YubiKey serial numbers to update
         cache: YubiKeyCache instance
@@ -469,14 +467,14 @@ def update_yubikey_items(serials: list[str], cache: YubiKeyCache) -> None:
 
 def yubikey_discover(cache: YubiKeyCache) -> dict[str, int]:
     """Discover YubiKeys from 1Password and add them to cache.
-    
+
     Searches for 1Password items with tag 'YubiKey/Token', extracts the SN field,
     and creates cache entries for YubiKeys not yet in the cache. This allows
     tracking YubiKeys without requiring physical connection.
-    
+
     Args:
         cache: YubiKeyCache instance
-        
+
     Returns:
         Dict with counts: 'discovered', 'already_known', 'no_sn'
     """
@@ -584,15 +582,15 @@ def yubikey_link_single(
     db_manager: DatabaseManager,
 ) -> None:
     """Link a single YubiKey serial to its 1Password Note item.
-    
+
     Searches for 1Password items with tag 'YubiKey/Token' and matches
     the SN field to the serial number.
-    
+
     Args:
         serial: YubiKey serial number
         cache: YubiKeyCache instance
         db_manager: DatabaseManager instance
-        
+
     Raises:
         RuntimeError: If no matching 1Password item is found
     """
@@ -655,13 +653,13 @@ def yubikey_link_single(
 
 def yubikey_link_all(cache: YubiKeyCache) -> dict[str, int]:
     """Link all YubiKeys in cache to 1Password Note items.
-    
+
     Searches for 1Password items with tag 'YubiKey/Token' and matches
     the SN field to link them to cache entries.
-    
+
     Args:
         cache: YubiKeyCache instance
-        
+
     Returns:
         Dict with counts: 'linked', 'already_linked', 'not_found'
     """
@@ -742,10 +740,10 @@ def yubikey_link_all(cache: YubiKeyCache) -> dict[str, int]:
 
 def yubikey_rebuild_mappings(cache: YubiKeyCache, db_manager: DatabaseManager) -> None:
     """Rebuild UUID mappings from 1Password custom fields.
-    
+
     Scans all 1Password items for yubikey_oath_name fields and rebuilds
     the cache mappings between OATH accounts and 1Password items.
-    
+
     Args:
         cache: YubiKeyCache instance
         db_manager: DatabaseManager instance
@@ -871,7 +869,7 @@ def yubikey_rollback(account_name: str, db_manager: DatabaseManager, cache: Yubi
             console.print(f"[cyan]→ YubiKey {serial}...[/cyan]", end=" ")
 
             try:
-                result = subprocess.run(
+                subprocess.run(
                     [
                         "ykman",
                         "--device", serial,
@@ -984,8 +982,7 @@ def add_totp_bulk(tag: str, target_serials: list[str], db_manager: DatabaseManag
         try:
             check_result = subprocess.run(
                 ["ykman", "--device", serial, "oath", "accounts", "list"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                capture_output=True,
                 input=f"{oath_password}\n".encode(),
                 timeout=30,
                 check=False,
@@ -1077,7 +1074,7 @@ def yubikey_migrate(
     conflicting_titles: list | None = None
 ) -> None:
     """Migrate TOTP from 1Password to YubiKey.
-    
+
     Args:
         account_identifier: Name or UUID of the account to migrate
         db_manager: Database manager instance
@@ -1354,8 +1351,7 @@ def yubikey_migrate(
                 try:
                     check_result = subprocess.run(
                         ["ykman", "--device", serial, "oath", "accounts", "list"],
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
+                        capture_output=True,
                         input=f"{oath_password}\n".encode(),
                         timeout=30,
                         check=False,
@@ -1450,8 +1446,7 @@ def yubikey_migrate(
                 existing_accounts = []
                 check_result = subprocess.run(
                     ["ykman", "--device", serial, "oath", "accounts", "list"],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
+                    capture_output=True,
                     input=f"{oath_password}\n".encode(),
                     timeout=30,
                     check=False,
@@ -1487,8 +1482,7 @@ def yubikey_migrate(
                         console.print(f"[dim]  Removing existing: {old_name}[/dim]")
                         subprocess.run(
                             ["ykman", "--device", serial, "oath", "accounts", "delete", old_name, "--force"],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
+                            capture_output=True,
                             input=f"{password_to_use}\n".encode(),
                             timeout=30,
                             check=True,
@@ -1506,8 +1500,7 @@ def yubikey_migrate(
                         totp_uri,
                         "--touch",
                     ],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
+                    capture_output=True,
                     input=f"{password_to_use}\n".encode(),
                     timeout=30,
                     check=True,
@@ -1652,12 +1645,12 @@ def yubikey_sync_workflow(
     force_refresh: bool = False,
 ) -> None:
     """Run the complete YubiKey sync workflow.
-    
+
     Steps:
       1. Checks cache staleness (refreshes if > 1 day old or force_refresh)
       2. Links all connected YubiKeys to 1Password
       3. Updates YubiKey Note items with OATH slot sections
-    
+
     Args:
         db_manager: Database manager instance
         cache: YubiKey cache instance
@@ -1740,7 +1733,7 @@ def sync_yubikey_accounts(
     db_manager: DatabaseManager,
 ) -> None:
     """Sync OATH accounts from one YubiKey to others.
-    
+
     Args:
         source: Source YubiKey serial number
         target: Target YubiKey serial(s) or 'all'
@@ -1924,8 +1917,7 @@ def sync_yubikey_accounts(
             password = passwords_by_serial.get(serial, oath_password) if passwords_by_serial else oath_password
             list_result = subprocess.run(
                 ["ykman", "--device", serial, "oath", "accounts", "list"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                capture_output=True,
                 input=f"{password}\n".encode() if password else b"",
                 timeout=30,
                 check=False,
@@ -2022,10 +2014,10 @@ def link_yubikey_with_uuid(
     cache: YubiKeyCache,
 ) -> None:
     """Link a YubiKey serial to a 1Password UUID.
-    
+
     If op_uuid is not provided, checks if serial already has a UUID in cache
     and reports status.
-    
+
     Args:
         serial: YubiKey serial number
         op_uuid: 1Password item UUID (optional)

@@ -33,10 +33,10 @@ if TYPE_CHECKING:
 @dataclass
 class SLIP39Config:
     """Configuration for SLIP-39 share generation.
-    
+
     Defaults are optimized for Cryptosteel Capsule compatibility
     and estate planning use cases.
-    
+
     Word counts (SLIP-39 standard):
     - 128 bits → 20 words per share (fits Cryptosteel's 24 slots) ← DEFAULT
     - 256 bits → 33 words per share (requires larger storage)
@@ -85,7 +85,7 @@ class SLIP39Config:
     @property
     def words_per_share(self) -> int:
         """Number of words in each mnemonic share.
-        
+
         SLIP-39 formula: 20 words for 128-bit, 33 words for 256-bit.
         Each share includes checksum and metadata.
         """
@@ -165,13 +165,13 @@ class SLIP39ShareSet:
 
 def compute_share_fingerprint(mnemonic: str) -> str:
     """Compute a truncated fingerprint for share verification.
-    
+
     Uses first 8 characters of SHA-256 hash.
     This allows verification without revealing the full share.
-    
+
     Args:
         mnemonic: Space-separated mnemonic words
-        
+
     Returns:
         8-character hex fingerprint
     """
@@ -182,10 +182,10 @@ def compute_share_fingerprint(mnemonic: str) -> str:
 
 def compute_master_fingerprint(master_secret: bytes) -> str:
     """Compute fingerprint for master secret.
-    
+
     Args:
         master_secret: Raw master secret bytes
-        
+
     Returns:
         8-character hex fingerprint
     """
@@ -195,14 +195,14 @@ def compute_master_fingerprint(master_secret: bytes) -> str:
 
 def normalize_mnemonic(mnemonic: str) -> str:
     """Normalize mnemonic for comparison.
-    
+
     - Converts to lowercase
     - Collapses multiple spaces to single space
     - Strips leading/trailing whitespace
-    
+
     Args:
         mnemonic: Input mnemonic string
-        
+
     Returns:
         Normalized mnemonic
     """
@@ -211,13 +211,13 @@ def normalize_mnemonic(mnemonic: str) -> str:
 
 def verify_share_reentry(original: str, user_input: str) -> bool:
     """Verify user's re-entry matches original share.
-    
+
     Performs exact match after normalization.
-    
+
     Args:
         original: Original mnemonic from generation
         user_input: User's re-entered mnemonic
-        
+
     Returns:
         True if exact match after normalization
     """
@@ -226,15 +226,15 @@ def verify_share_reentry(original: str, user_input: str) -> bool:
 
 def validate_share(mnemonic: str) -> tuple[bool, str]:
     """Validate a SLIP-39 share mnemonic.
-    
+
     Checks:
     - Word count (20 or 33 words)
     - All words in SLIP-39 wordlist
     - Checksum validity
-    
+
     Args:
         mnemonic: Space-separated mnemonic words
-        
+
     Returns:
         Tuple of (is_valid, error_message)
     """
@@ -259,19 +259,19 @@ def generate_shares(
     entropy_source: EntropyCollection | None = None,
 ) -> SLIP39ShareSet:
     """Generate SLIP-39 Shamir shares.
-    
+
     If master_secret is not provided, generates cryptographically
     random bytes using either the provided entropy source or
     system randomness.
-    
+
     Args:
         config: Share configuration (uses defaults if None)
         master_secret: Optional pre-generated master secret
         entropy_source: Optional verified entropy for secret generation
-        
+
     Returns:
         SLIP39ShareSet with all generated shares
-        
+
     Raises:
         ValueError: If configuration is invalid
     """
@@ -339,16 +339,16 @@ def recover_secret(
     passphrase: str = "",
 ) -> bytes:
     """Recover master secret from SLIP-39 shares.
-    
+
     Requires at least threshold number of valid shares.
-    
+
     Args:
         mnemonics: List of share mnemonics (threshold or more required)
         passphrase: Optional passphrase used during generation
-        
+
     Returns:
         Recovered master secret bytes
-        
+
     Raises:
         ValueError: If shares are invalid or insufficient
     """
@@ -373,12 +373,12 @@ def recover_secret(
 
 def verify_shares(share_set: SLIP39ShareSet) -> tuple[bool, str]:
     """Verify shares can reconstruct the original secret.
-    
+
     Tests recovery using exactly threshold shares.
-    
+
     Args:
         share_set: Share set to verify
-        
+
     Returns:
         Tuple of (success, message)
     """
@@ -407,11 +407,11 @@ def verify_shares(share_set: SLIP39ShareSet) -> tuple[bool, str]:
 
 def format_share_for_display(share: SLIP39Share, show_mnemonic: bool = True) -> str:
     """Format a share for terminal display.
-    
+
     Args:
         share: Share to format
         show_mnemonic: Whether to include the actual mnemonic
-        
+
     Returns:
         Formatted string for display
     """
@@ -435,10 +435,10 @@ def format_share_for_display(share: SLIP39Share, show_mnemonic: bool = True) -> 
 
 def format_share_summary(share_set: SLIP39ShareSet) -> str:
     """Format a summary of all shares (fingerprints only).
-    
+
     Args:
         share_set: Share set to summarize
-        
+
     Returns:
         Formatted summary string
     """

@@ -43,10 +43,10 @@ ARGON2_MAX_PARALLELISM = 16    # Cap auto-detected parallelism
 
 def get_auto_parallelism() -> int:
     """Auto-detect optimal parallelism based on CPU cores, capped at 16.
-    
+
     This matches the web app's behavior for cross-platform consistency.
     More lanes = more memory-hard, but slower if lanes > cores.
-    
+
     Returns:
         Number of parallel lanes (1-16)
     """
@@ -81,11 +81,11 @@ def encode_argon2_params(time_cost: int = ARGON2_TIME_COST,
 
 def decode_argon2_params(encoded: str) -> tuple[int, int, int]:
     """Decode Argon2 params from Bastion URL-style format.
-    
+
     Format: TIME=3&MEMORY=2048&PARALLELISM=4
-    
+
     Returns (time_cost, memory_mb, parallelism).
-    
+
     Raises:
         ValueError: If format is invalid or missing required params
     """
@@ -149,7 +149,7 @@ CSV_HEADERS = ["ID", "DATE", "SHORT_HASH", "SHA512", "TOKENS", "ENCODING"]
 # A0=top-left, J0=top-right, A9=bottom-left, J9=bottom-right
 def coordinate_to_indices(coord: str) -> tuple[int, int]:
     """Convert A0-J9 coordinate to (row, col) indices.
-    
+
     Spreadsheet convention: letter=column (A-J), number=row (0-9)
     Returns (row, col) for matrix[row][col] access.
     """
@@ -171,7 +171,7 @@ def coordinate_to_indices(coord: str) -> tuple[int, int]:
 
 def indices_to_coordinate(row: int, col: int) -> str:
     """Convert (row, col) indices to A0-J9 coordinate.
-    
+
     Spreadsheet convention: letter=column (A-J), number=row (0-9)
     """
     if row < 0 or row >= TOKENS_TALL:

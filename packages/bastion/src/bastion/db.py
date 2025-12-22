@@ -52,10 +52,10 @@ class BastionCacheManager:
 
     def _get_encryption_key(self) -> bytes:
         """Fetch encryption key from 1Password.
-        
+
         Returns:
             Fernet-compatible encryption key (32 bytes, base64 encoded)
-            
+
         Raises:
             EncryptionError: If key cannot be retrieved
         """
@@ -75,7 +75,7 @@ class BastionCacheManager:
 
             # Extract encryption_key field
             key_b64 = None
-            
+
             for field in item.get("fields", []):
                 if field.get("label") == "encryption_key":
                     key_b64 = field.get("value")
@@ -97,12 +97,12 @@ class BastionCacheManager:
 
     def _validate_machine_uuid(self) -> None:
         """Validate that current machine UUID matches the 1Password key entry.
-        
+
         Raises:
             EncryptionError: If UUIDs don't match (triggers auto-recovery in load())
         """
         from bastion_core.platform import get_machine_uuid
-        
+
         try:
             result = subprocess.run(
                 ["op", "item", "get", BASTION_KEY_ITEM_NAME,
@@ -112,14 +112,14 @@ class BastionCacheManager:
                 check=True,
             )
             item = json.loads(result.stdout)
-            
+
             # Extract machine_uuid field
             key_machine_uuid = None
             for field in item.get("fields", []):
                 if field.get("label") == "machine_uuid":
                     key_machine_uuid = field.get("value")
                     break
-            
+
             # Validate if UUID exists in 1P entry
             if key_machine_uuid:
                 current_uuid = get_machine_uuid()
@@ -136,15 +136,15 @@ class BastionCacheManager:
 
     def create_encryption_key(self) -> str:
         """Generate a new Fernet encryption key and store in 1Password.
-        
+
         Returns:
             The base64-encoded key that was created
-            
+
         Raises:
             EncryptionError: If key cannot be created/stored
         """
         from bastion_core.platform import get_machine_identifier, get_machine_uuid
-        
+
         Fernet = _get_fernet()
 
         # Generate new Fernet key
@@ -201,7 +201,7 @@ class BastionCacheManager:
                 "tags": ["Bastion/System/Cache-Key"],
             }
 
-            result = subprocess.run(
+            subprocess.run(
                 ["op", "item", "create", "--format", "json"],
                 input=json.dumps(item_template),
                 capture_output=True,
@@ -230,16 +230,16 @@ class BastionCacheManager:
 
     def roll_key(self) -> None:
         """Generate a new encryption key and re-encrypt the cache.
-        
+
         Security: Key is rolled on each sync to limit exposure window.
-        
+
         Process (write-first for safety):
         1. Generate new Fernet key
         2. Decrypt cache with current key
         3. Encrypt cache with new key and write atomically
         4. Update 1Password with new key
         5. Clear in-memory key cache
-        
+
         If step 4 fails, the cache is already encrypted with the new key,
         but 1Password still has the old key. This is recoverable by
         re-running sync (which will fail to decrypt, prompting cache rebuild).
@@ -281,15 +281,15 @@ class BastionCacheManager:
 
     def _update_key_in_1password(self, new_key: str) -> None:
         """Update the encryption key in 1Password.
-        
+
         Uses field assignment syntax (not JSON stdin) to avoid the
         passkey deletion bug with op item edit.
-        
+
         Args:
             new_key: New Fernet key (base64 encoded string)
         """
         from bastion_core.platform import get_machine_identifier, get_machine_uuid
-        
+
         rotated_at = datetime.now(UTC).isoformat()
         machine_id = get_machine_identifier()
         machine_uuid = get_machine_uuid()
@@ -318,10 +318,10 @@ class BastionCacheManager:
 
     def _encrypt(self, data: bytes) -> bytes:
         """Encrypt data using Fernet.
-        
+
         Args:
             data: Plaintext bytes to encrypt
-            
+
         Returns:
             Encrypted bytes
         """
@@ -332,13 +332,13 @@ class BastionCacheManager:
 
     def _decrypt(self, data: bytes) -> bytes:
         """Decrypt data using Fernet.
-        
+
         Args:
             data: Encrypted bytes
-            
+
         Returns:
             Decrypted plaintext bytes
-            
+
         Raises:
             EncryptionError: If decryption fails (wrong key, corrupted data)
         """
@@ -366,10 +366,10 @@ class BastionCacheManager:
 
     def load(self) -> Database:
         """Load and decrypt database from encrypted cache.
-        
+
         Automatically migrates from legacy ~/.bastion/cache.db.enc path
         if the new path doesn't exist but the old one does.
-        
+
         Returns:
             Database object
         """
@@ -387,14 +387,14 @@ class BastionCacheManager:
         try:
             # Validate machine UUID before attempting decryption
             self._validate_machine_uuid()
-            
+
             with open(self.cache_path, "rb") as f:
                 encrypted_data = f.read()
 
             decrypted_data = self._decrypt(encrypted_data)
             data = json.loads(decrypted_data.decode("utf-8"))
             return Database.model_validate(data)
-        except EncryptionError as e:
+        except EncryptionError:
             # Backup the bad cache for forensic analysis, then start fresh
             try:
                 ts = datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')
@@ -409,7 +409,7 @@ class BastionCacheManager:
 
     def save(self, db: Database, backup: bool = True) -> None:
         """Encrypt and save database atomically with optional backup.
-        
+
         Args:
             db: Database object to save
             backup: Whether to create a backup first
@@ -462,7 +462,7 @@ class BastionCacheManager:
 
 class DatabaseManager:
     """Manage database file operations (LEGACY - plaintext format).
-    
+
     DEPRECATED: Use BastionCacheManager for encrypted storage.
     This class is retained for backward compatibility during migration.
     Will be removed in a future version.

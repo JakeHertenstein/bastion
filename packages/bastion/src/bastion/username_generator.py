@@ -11,9 +11,9 @@ This module provides a secure, deterministic username generation system that:
 
 Label Format (Bastion Label Specification v1):
     v1:USER:ALGO:PARAMS:IDENT:DATE[|CHECK]
-    
+
     Example: v1:USER:SHA512:L16:github.com:2025-11-30|K
-    
+
     See label_spec.py for full specification.
 
 Security Design: HMAC vs Key Derivation Functions (Argon2id, PBKDF2, scrypt)
@@ -65,10 +65,10 @@ VALID_ENCODINGS = {10, 36, 64}
 
 def base10_encode(number: int) -> str:
     """Encode a number to base10 string (0-9 only).
-    
+
     Args:
         number: Integer to encode
-        
+
     Returns:
         Base10 encoded string (numeric only)
     """
@@ -77,10 +77,10 @@ def base10_encode(number: int) -> str:
 
 def base36_encode(number: int) -> str:
     """Encode a number to base36 string (0-9, a-z).
-    
+
     Args:
         number: Integer to encode
-        
+
     Returns:
         Base36 encoded string (lowercase)
     """
@@ -99,13 +99,13 @@ def base36_encode(number: int) -> str:
 
 def base64_encode(data: bytes) -> str:
     """Encode bytes to URL-safe base64 string (without padding).
-    
+
     Uses URL-safe alphabet (- and _ instead of + and /) for
     compatibility with usernames and URLs.
-    
+
     Args:
         data: Bytes to encode
-        
+
     Returns:
         URL-safe base64 encoded string (no padding)
     """
@@ -114,14 +114,14 @@ def base64_encode(data: bytes) -> str:
 
 def encode_hash(raw_hash: bytes, encoding: int = 36) -> str:
     """Encode hash bytes using specified encoding.
-    
+
     Args:
         raw_hash: Raw hash bytes
         encoding: Alphabet size (10, 36, or 64)
-        
+
     Returns:
         Encoded string
-        
+
     Raises:
         ValueError: If encoding is not supported
     """
@@ -139,15 +139,15 @@ def encode_hash(raw_hash: bytes, encoding: int = 36) -> str:
 
 def generate_nonce(length: int = 8) -> str:
     """Generate a URL-safe random nonce for non-recoverable usernames.
-    
+
     Nonce mode provides protection against stolen seeds:
     - If seed is compromised, attacker cannot regenerate usernames
     - Nonce must be stored alongside the generated username
     - Cannot recover username from label + salt alone (requires nonce)
-    
+
     Args:
         length: Desired nonce length in characters (default 8)
-        
+
     Returns:
         URL-safe random string
     """
@@ -166,14 +166,14 @@ def generate_username_v1_sha256(
     nonce: str | None = None,
 ) -> str:
     """Generate username using HMAC-SHA256.
-    
+
     Args:
         label: Full label (e.g., "v1:USER:SHA256:L16:github.com:2025-11-30")
         secret_salt: High-entropy secret key
         length: Desired username length (default 16, max 51 for base36)
         encoding: Output encoding (10=numeric, 36=alphanumeric, 64=base64)
         nonce: Optional random nonce for non-recoverable usernames
-        
+
     Returns:
         Deterministic username string
     """
@@ -194,14 +194,14 @@ def generate_username_v1_sha512(
     nonce: str | None = None,
 ) -> str:
     """Generate username using HMAC-SHA512 (default algorithm).
-    
+
     Args:
         label: Full label (e.g., "v1:USER:SHA512:L16:github.com:2025-11-30")
         secret_salt: High-entropy secret key
         length: Desired username length (default 16, max 100 for base36)
         encoding: Output encoding (10=numeric, 36=alphanumeric, 64=base64)
         nonce: Optional random nonce for non-recoverable usernames
-        
+
     Returns:
         Deterministic username string
     """
@@ -222,14 +222,14 @@ def generate_username_v1_sha3_512(
     nonce: str | None = None,
 ) -> str:
     """Generate username using HMAC-SHA3-512 (quantum-resistant option).
-    
+
     Args:
         label: Full label (e.g., "v1:USER:SHA3-512:L16:github.com:2025-11-30")
         secret_salt: High-entropy secret key
         length: Desired username length (default 16, max 100 for base36)
         encoding: Output encoding (10=numeric, 36=alphanumeric, 64=base64)
         nonce: Optional random nonce for non-recoverable usernames
-        
+
     Returns:
         Deterministic username string
     """
@@ -250,17 +250,17 @@ def generate_username(
     nonce: str | None = None,
 ) -> str:
     """Generate username (legacy SHA256 wrapper for backward compatibility).
-    
+
     This function is deprecated. Use generate_username_v1_sha512() or parse
     the label to determine the correct algorithm.
-    
+
     Args:
         label: Service identifier or full label
         secret_salt: High-entropy secret key
         length: Desired username length (default 16)
         encoding: Output encoding (10=numeric, 36=alphanumeric, 64=base64)
         nonce: Optional random nonce for non-recoverable usernames
-        
+
     Returns:
         Deterministic username string
     """
@@ -275,16 +275,16 @@ def verify_username(
     nonce: str | None = None,
 ) -> bool:
     """Verify a username was generated from the given label and salt.
-    
+
     Uses constant-time comparison to prevent timing attacks.
-    
+
     Args:
         label: Original service identifier or full label
         username: Username to verify
         secret_salt: Secret salt used for generation
         encoding: Output encoding (10=numeric, 36=alphanumeric, 64=base64)
         nonce: Optional nonce if username was generated with nonce mode
-        
+
     Returns:
         True if username matches, False otherwise
     """
@@ -294,12 +294,12 @@ def verify_username(
 
 class LabelParser:
     """Compatibility wrapper for BastionLabel.
-    
+
     New Label Format: v1:USER:SHA512:L16:github.com:2025-11-30|K
-    
+
     This class provides backward compatibility while using the new
     BastionLabel specification under the hood.
-    
+
     NOTE: Owner is no longer stored in labels. Store owner in 1Password
     metadata section instead.
     """
@@ -321,10 +321,10 @@ class LabelParser:
 
     def __init__(self, label: str):
         """Parse a label string.
-        
+
         Accepts both new format (v1:USER:SHA512:L16:github.com:2025-11-30)
         and legacy format (v1:sha512:owner:domain:date) for compatibility.
-        
+
         Args:
             label: Full label string
         """
@@ -400,7 +400,7 @@ class LabelParser:
 
     def is_valid(self) -> bool:
         """Check if label is valid.
-        
+
         Returns:
             True if label has all required components
         """
@@ -410,10 +410,10 @@ class LabelParser:
 
     def get_generation_function(self):
         """Get the appropriate generation function for this label's algorithm.
-        
+
         Returns:
             Callable generation function
-            
+
         Raises:
             ValueError: If algorithm is unknown
         """
@@ -429,7 +429,7 @@ class LabelParser:
 
     def get_max_length(self) -> int:
         """Get maximum username length for this algorithm.
-        
+
         Returns:
             Maximum length (51 for SHA256, 100 for SHA512/SHA3-512)
         """
@@ -453,9 +453,9 @@ class LabelParser:
         bastion_version: str | None = None,
     ) -> str:
         """Build a label from components using new BastionLabel format.
-        
+
         New format: Bastion/USER/ALGO:IDENT:DATE#PARAMS|CHECK
-        
+
         Args:
             version: Version (ignored - bastion_version used instead)
             algorithm: Algorithm name (sha256, sha512, sha3-512)
@@ -467,7 +467,7 @@ class LabelParser:
             nonce: Optional random nonce for non-recoverable usernames (stolen seed protection)
             encoding: Output encoding (10, 36, 64)
             bastion_version: Bastion tool version (e.g., "0.3.0") - stored as VERSION param
-            
+
         Returns:
             Formatted label string in new BastionLabel format
         """
@@ -508,7 +508,7 @@ class LabelParser:
 
 class UsernameGeneratorConfig:
     """Configuration manager for username generator stored in 1Password Secure Note.
-    
+
     Config is stored in a Secure Note titled "Bastion Username Generator Config"
     with JSON content containing default_owner, default_algorithm, default_length,
     and service_rules.
@@ -533,10 +533,10 @@ class UsernameGeneratorConfig:
 
     def load_config_from_1password(self) -> dict:
         """Load configuration from 1Password Secure Note.
-        
+
         Returns:
             Configuration dictionary
-            
+
         Raises:
             RuntimeError: If load fails
         """
@@ -594,7 +594,7 @@ class UsernameGeneratorConfig:
 
     def _create_default_config(self) -> dict:
         """Create default config in 1Password.
-        
+
         Returns:
             Default configuration dictionary
         """
@@ -641,7 +641,7 @@ class UsernameGeneratorConfig:
 
     def _detect_owner(self) -> str:
         """Detect owner email from 1Password account.
-        
+
         Returns:
             Email address or empty string if detection fails
         """
@@ -662,10 +662,10 @@ class UsernameGeneratorConfig:
 
     def save_config_to_1password(self, config: dict) -> None:
         """Save configuration to 1Password Secure Note.
-        
+
         Args:
             config: Configuration dictionary to save
-            
+
         Raises:
             RuntimeError: If save fails
         """
@@ -700,7 +700,7 @@ class UsernameGeneratorConfig:
 
     def get_default_owner(self) -> str:
         """Get default owner from config.
-        
+
         Returns:
             Owner email address
         """
@@ -709,7 +709,7 @@ class UsernameGeneratorConfig:
 
     def get_default_algorithm(self) -> str:
         """Get default algorithm from config.
-        
+
         Returns:
             Algorithm name (e.g., "sha512")
         """
@@ -718,7 +718,7 @@ class UsernameGeneratorConfig:
 
     def get_default_length(self) -> int:
         """Get default length from config.
-        
+
         Returns:
             Default username length
         """
@@ -727,7 +727,7 @@ class UsernameGeneratorConfig:
 
     def get_service_rules(self) -> dict:
         """Get service-specific rules from config.
-        
+
         Returns:
             Dictionary of service_name -> constraints
         """
@@ -736,7 +736,7 @@ class UsernameGeneratorConfig:
 
     def set_default_owner(self, owner: str) -> None:
         """Set default owner in config.
-        
+
         Args:
             owner: Owner email address
         """
@@ -746,7 +746,7 @@ class UsernameGeneratorConfig:
 
     def set_default_algorithm(self, algorithm: str) -> None:
         """Set default algorithm in config.
-        
+
         Args:
             algorithm: Algorithm name (sha256, sha512, sha3-512)
         """
@@ -756,7 +756,7 @@ class UsernameGeneratorConfig:
 
     def set_default_length(self, length: int) -> None:
         """Set default length in config.
-        
+
         Args:
             length: Default username length
         """
@@ -766,10 +766,10 @@ class UsernameGeneratorConfig:
 
     def get_service_max_length(self, service: str) -> int | None:
         """Get maximum length for a specific service.
-        
+
         Args:
             service: Service name (e.g., 'github', 'twitter')
-            
+
         Returns:
             Maximum length, or None if not defined
         """
@@ -786,7 +786,7 @@ class UsernameGenerator:
 
     def __init__(self, op_client=None, config: UsernameGeneratorConfig | None = None):
         """Initialize generator.
-        
+
         Args:
             op_client: Optional OpClient instance. If None, uses subprocess directly.
             config: Optional config instance. If None, creates new one.
@@ -797,10 +797,10 @@ class UsernameGenerator:
 
     def find_highest_serial_number(self, version: str = "v1") -> int:
         """Find the highest serial number for salt items of a given version.
-        
+
         Args:
             version: Version string (e.g., "v1")
-            
+
         Returns:
             Highest serial number found, or 0 if none exist
         """
@@ -838,11 +838,11 @@ class UsernameGenerator:
         algorithm: str = "sha512"
     ) -> tuple[str, str, int] | None:
         """Get the latest salt item by highest serial number.
-        
+
         Args:
             version: Version string (e.g., "v1")
             algorithm: Algorithm name for filtering
-            
+
         Returns:
             Tuple of (salt_value, salt_uuid, serial_number) or None if not found
         """
@@ -886,10 +886,10 @@ class UsernameGenerator:
         salt_uuid: str | None = None
     ) -> tuple[str, str] | None:
         """Retrieve salt from 1Password by UUID or get latest.
-        
+
         Args:
             salt_uuid: Optional specific salt UUID to retrieve
-            
+
         Returns:
             Tuple of (salt_value, salt_uuid) or None if not found
         """
@@ -930,10 +930,10 @@ class UsernameGenerator:
         entropy_pool_uuid: str | None = None,
     ) -> tuple[str, str, int]:
         """Create a new salt item in 1Password with serial number.
-        
+
         The salt can be provided directly, derived from an entropy pool stored
         in 1Password, or generated using Python's cryptographically secure RNG.
-        
+
         Args:
             salt: Secret salt to store (hex string). If None, derives from
                   entropy_pool_uuid or generates a secure random value.
@@ -943,10 +943,10 @@ class UsernameGenerator:
             entropy_pool_uuid: UUID of entropy pool to derive salt from.
                               If provided, salt is derived using HKDF-SHA512
                               and the entropy pool is marked as consumed.
-            
+
         Returns:
             Tuple of (salt_value, salt_uuid, serial_number)
-            
+
         Raises:
             RuntimeError: If creation fails or entropy pool is invalid
         """
@@ -1032,20 +1032,20 @@ class UsernameGenerator:
         encoding: int = 36,
     ) -> str:
         """Generate a username for the given service label.
-        
+
         Retrieves the salt from 1Password and generates a deterministic username
         using the algorithm specified in the label.
-        
+
         Args:
             label: Full label (e.g., "Bastion/USER/SHA2/512:domain:date#PARAMS")
             length: Desired username length (default 16)
             salt_uuid: Optional specific salt UUID to use
             nonce: Optional nonce for non-recoverable usernames (stolen seed protection)
             encoding: Output encoding (10=numeric, 36=alphanumeric, 64=base64)
-            
+
         Returns:
             Generated username
-            
+
         Raises:
             RuntimeError: If salt is not found in 1Password
             ValueError: If label is invalid or algorithm unknown
@@ -1086,17 +1086,17 @@ class UsernameGenerator:
         encoding: int = 36,
     ) -> bool:
         """Verify a username was generated from the given label.
-        
+
         Args:
             label: Full label string
             username: Username to verify
             salt_uuid: Optional specific salt UUID to use
             nonce: Optional nonce if username was generated with nonce mode
             encoding: Output encoding used (10, 36, or 64)
-            
+
         Returns:
             True if username matches, False otherwise
-            
+
         Raises:
             RuntimeError: If salt is not found in 1Password
         """
@@ -1112,10 +1112,10 @@ class UsernameGenerator:
 
     def check_label_collision(self, label: str) -> dict | None:
         """Check if a label already exists in 1Password.
-        
+
         Args:
             label: Full label to check for duplicates
-            
+
         Returns:
             Dictionary with collision info (title, uuid) or None if no collision
         """
@@ -1163,10 +1163,10 @@ class UsernameGenerator:
 
     def suggest_collision_suffix(self, label: str) -> list[str]:
         """Suggest alternative labels for collision resolution.
-        
+
         Args:
             label: Original colliding label
-            
+
         Returns:
             List of suggested alternative labels with suffix variations
         """
@@ -1200,7 +1200,7 @@ class UsernameGenerator:
         salt_uuid: str | None = None,
     ) -> dict:
         """Create a 1Password login item with generated username and full metadata.
-        
+
         Args:
             title: Display title for the login item
             label: Full label for username generation (e.g., "v1:sha3-512:owner:service:date")
@@ -1209,10 +1209,10 @@ class UsernameGenerator:
             length: Username length (default: 16)
             tags: Optional list of tags to add
             salt_uuid: Optional specific salt UUID to use
-            
+
         Returns:
             Dictionary with item details including 'uuid', 'username', 'label', 'salt_uuid', etc.
-            
+
         Raises:
             RuntimeError: If creation fails or salt not found
             ValueError: If label is invalid

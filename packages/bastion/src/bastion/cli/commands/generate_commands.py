@@ -9,7 +9,7 @@ import typer
 from rich.console import Console
 
 from ...username_generator import UsernameGenerator
-from ..helpers import get_db_manager, get_encrypted_db_manager
+from ..helpers import get_encrypted_db_manager
 from .entropy import (
     batch_infnoise_entropy,
     batch_system_entropy,

@@ -20,9 +20,9 @@ def sync_vault(
     quiet: bool = False,
 ) -> None:
     """Sync database from 1Password vault.
-    
+
     Fetches items in batches with progress indicator.
-    
+
     Args:
         db_path: Optional path to database
         only_uuid: Optional single account UUID
@@ -47,18 +47,18 @@ def sync_vault(
 
     # Use encrypted cache manager (ignores db_path - always uses ~/.bsec/cache/db.enc)
     cache_mgr = get_encrypted_db_manager()
-    
+
     # Update machine identity metadata
-    from bastion_core.platform import get_machine_identifier, get_machine_uuid
-    
+    from bastion_core.platform import get_machine_uuid
+
     db = cache_mgr.load()
-    
+
     machine_id = get_machine_identifier()
     machine_uuid = get_machine_uuid()
     db.metadata.machine_hostname = machine_id["hostname"]
     db.metadata.machine_node = machine_id["node_name"]
     db.metadata.machine_uuid = machine_uuid
-    
+
     op_client = OpClient()
     planner = RotationPlanner()
 

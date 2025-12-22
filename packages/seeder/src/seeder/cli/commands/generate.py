@@ -217,10 +217,10 @@ def generate_batch(
     parallelism: int | None = typer.Option(None, "--parallelism", "-P", help="Argon2 parallelism / lanes (default: auto-detect CPU cores, max 16)"),
 ):
     """📦 Generate a batch of 100 cards (A0-J9) with unique labels per card index.
-    
+
     This generates 100 seed cards in a single CSV file, each with a unique card_index
     from A0 to J9 (matching the web app's batch generation).
-    
+
     Example:
         seeder generate batch --simple "my secret" --output cards.csv
     """
@@ -423,15 +423,15 @@ def generate_words(
     max_length: int | None = typer.Option(None, "--max-length", help="Maximum length for dictionary words (default: same as length)")
 ):
     """🎲 Generate pronounceable or dictionary words for memorized password components.
-    
+
     ⚠️  NOTE: This generates custom words for PASSWORD COMPONENTS,
         not BIP-39/SLIP-39 mnemonic words. These are for memorized parts of passwords.
-    
+
     Word types:
     - pronounceable: Custom generated pronounceable words (3-12 chars)
     - common: Common English dictionary words
     - nouns: Dictionary nouns only
-    - verbs: Dictionary verbs only  
+    - verbs: Dictionary verbs only
     - adjectives: Dictionary adjectives only
     - all: All dictionary word types
     """

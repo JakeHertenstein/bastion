@@ -27,7 +27,7 @@ class SystemRNGMetadata:
 
     def to_dict(self) -> dict:
         """Convert to dictionary for storage.
-        
+
         Field names use Title Case for 1Password canonical form.
         """
         return {
@@ -46,7 +46,7 @@ class SystemRNGError(Exception):
 
 def get_system_info() -> dict:
     """Collect system information for metadata.
-    
+
     Returns:
         Dictionary with OS name, version, release, kernel version
     """
@@ -76,18 +76,18 @@ def get_system_info() -> dict:
 
 def collect_urandom_entropy(bits: int = 512) -> tuple[bytes, SystemRNGMetadata]:
     """Collect entropy from /dev/urandom (non-blocking, preferred).
-    
+
     /dev/urandom is a cryptographically secure PRNG that never blocks.
     On modern systems (Linux 3.17+, macOS, BSD), it's seeded from hardware
     entropy and provides high-quality random data suitable for all
     cryptographic purposes.
-    
+
     Args:
         bits: Number of bits to collect (must be multiple of 8)
-        
+
     Returns:
         Tuple of (entropy_bytes, metadata)
-        
+
     Raises:
         SystemRNGError: If collection fails
         ValueError: If bits is not a multiple of 8
@@ -134,19 +134,19 @@ def collect_random_entropy(
     timeout_seconds: int = 30
 ) -> tuple[bytes, SystemRNGMetadata]:
     """Collect entropy from /dev/random (blocking, hardware pool).
-    
+
     /dev/random blocks if the kernel entropy pool is depleted. On modern
     systems, this is rarely necessary as /dev/urandom is cryptographically
     secure. Use this only if you specifically need hardware entropy pool
     access and can tolerate blocking.
-    
+
     Args:
         bits: Number of bits to collect (must be multiple of 8)
         timeout_seconds: Maximum seconds to wait before timing out
-        
+
     Returns:
         Tuple of (entropy_bytes, metadata)
-        
+
     Raises:
         SystemRNGError: If collection fails or times out
         ValueError: If bits is not a multiple of 8
@@ -210,7 +210,7 @@ def collect_random_entropy(
 
 def check_system_rng_available() -> dict:
     """Check which system RNG sources are available.
-    
+
     Returns:
         Dictionary with availability status:
         {

@@ -21,14 +21,14 @@ class DeviceType(str, Enum):
 
 class SigchainLink(BaseModel):
     """Individual link in the sigchain.
-    
+
     Each link contains:
     - Sequence number for ordering
     - Hash of previous link (chain integrity)
     - Event type and payload hash
     - Dual timestamps (source creation + chain append)
     - Device provenance
-    
+
     The payload itself is stored separately; only its hash is in the link
     to keep the chain compact and enable selective disclosure.
     """
@@ -58,10 +58,10 @@ class SigchainLink(BaseModel):
 
     def compute_hash(self) -> str:
         """Compute SHA-256 hash of this link for chaining.
-        
+
         Uses canonical JSON serialization (sorted keys, no extra whitespace)
         to ensure deterministic hashing.
-        
+
         Returns:
             Hex-encoded SHA-256 hash
         """
@@ -79,7 +79,7 @@ class SigchainLink(BaseModel):
 
 class ChainHead(BaseModel):
     """Current state of the sigchain for persistence.
-    
+
     Stored in 1Password as a Secure Note for quick access to chain state
     without loading the full chain from git.
     """
@@ -108,7 +108,7 @@ class ChainHead(BaseModel):
 
 class EnclaveImportBatch(BaseModel):
     """Batch of events imported from Bastion Enclave.
-    
+
     When events are transferred from the air-gapped Enclave to Manager
     via QR codes, they're wrapped in this batch structure that preserves
     the original timestamps and Enclave chain state.
@@ -147,7 +147,7 @@ class EnclaveImportBatch(BaseModel):
 
     def compute_checksum(self) -> str:
         """Compute checksum for transfer verification.
-        
+
         Returns:
             Hex-encoded SHA-256 hash of batch data (excluding checksum field)
         """
@@ -160,7 +160,7 @@ class EnclaveImportBatch(BaseModel):
 
     def verify_checksum(self) -> bool:
         """Verify the batch checksum.
-        
+
         Returns:
             True if checksum matches, False otherwise
         """
@@ -180,7 +180,7 @@ class EventSummary(BaseModel):
 
     def format_line(self) -> str:
         """Format as single line for Notes field.
-        
+
         Returns:
             Formatted string like: "#42 [manager] password_rotation: Updated github.com"
         """

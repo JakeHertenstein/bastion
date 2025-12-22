@@ -30,11 +30,11 @@ AUTH_ERROR_PATTERNS = [
 
 class OPAuthError(Exception):
     """Raised when 1Password authentication is required.
-    
+
     This exception is raised when the 1Password app is locked or
     the CLI session has expired. It should be caught to implement
     wait-for-unlock behavior.
-    
+
     IMPORTANT: This exception message must NEVER contain sensitive data
     like entropy, passwords, or keys.
     """
@@ -43,10 +43,10 @@ class OPAuthError(Exception):
 
 def is_auth_error(stderr: str) -> bool:
     """Check if an error message indicates an authentication issue.
-    
+
     Args:
         stderr: Error output from op CLI
-        
+
     Returns:
         True if error indicates auth/lock issue
     """
@@ -56,7 +56,7 @@ def is_auth_error(stderr: str) -> bool:
 
 def is_authenticated() -> bool:
     """Check if 1Password is currently authenticated and unlocked.
-    
+
     Returns:
         True if authenticated, False if locked or not signed in
     """
@@ -74,7 +74,7 @@ def is_authenticated() -> bool:
 
 def send_notification(title: str, message: str) -> None:
     """Send a desktop notification.
-    
+
     Args:
         title: Notification title
         message: Notification body
@@ -98,10 +98,10 @@ def wait_for_auth(
     bell: bool = True,
 ) -> None:
     """Wait indefinitely for 1Password authentication.
-    
+
     Polls for authentication status and blocks until 1Password is unlocked.
     Optionally sends notifications and terminal bell to alert the user.
-    
+
     Args:
         check_interval: Seconds between auth checks (default 5)
         notify: Send desktop notification when waiting starts (default True)
@@ -131,10 +131,10 @@ def wait_for_auth(
 
 def validate_tag(tag: str) -> bool:
     """Validate tag matches Bastion/* format.
-    
+
     Args:
         tag: Tag string to validate
-        
+
     Returns:
         True if valid Bastion tag, False otherwise
     """
@@ -143,10 +143,10 @@ def validate_tag(tag: str) -> bool:
 
 def is_legacy_tag(tag: str) -> bool:
     """Check if tag is a legacy Bastion format (needs migration).
-    
+
     Args:
         tag: Tag string to check
-        
+
     Returns:
         True if legacy Bastion/* or sat-* format
     """
@@ -155,10 +155,10 @@ def is_legacy_tag(tag: str) -> bool:
 
 def sanitize_for_subprocess(value: str) -> str:
     """Sanitize a string value for safe use in subprocess calls.
-    
+
     Args:
         value: String to sanitize
-        
+
     Returns:
         Safely quoted string
     """
@@ -215,9 +215,9 @@ class OpClient:
 
     def list_items_with_prefix(self, prefix: str, vault: str | None = None) -> list[dict[str, Any]]:
         """List all items that have any tag starting with the given prefix.
-        
+
         For nested tags like 'Bastion/', this will match 'Bastion/Type/Bank', 'Bastion/2FA/TOTP', etc.
-        
+
         Args:
             prefix: Tag prefix to filter by
             vault: Optional vault name to filter by
@@ -248,13 +248,13 @@ class OpClient:
 
     def list_items_with_tag(self, tag: str, vault: str | None = None) -> list[dict[str, Any]]:
         """List all items with a specific tag (exact match).
-        
+
         Uses the 1Password CLI's native --tags filter for efficiency.
-        
+
         Args:
             tag: Exact tag to filter by (e.g., 'YubiKey/Token')
             vault: Optional vault name to filter by
-            
+
         Returns:
             List of items with the specified tag
         """
@@ -274,7 +274,7 @@ class OpClient:
 
     def list_all_items(self, vault: str | None = None) -> list[dict[str, Any]]:
         """List all items in 1Password (no filtering).
-        
+
         Args:
             vault: Optional vault name to filter by
         """
@@ -307,13 +307,13 @@ class OpClient:
 
     def get_items_batch(self, items: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Get full details for multiple items in a single CLI call.
-        
+
         This is much more efficient than calling get_item() individually for each item.
         Uses `op item get -` which reads item references from stdin.
-        
+
         Args:
             items: List of item dicts (from list_items_*) containing at least 'id' key
-            
+
         Returns:
             List of full item details. Items that fail to fetch are omitted.
         """
@@ -366,14 +366,14 @@ class OpClient:
 
     def edit_item_tags(self, uuid: str, tags: list[str]) -> bool:
         """Set item tags (replaces all tags with provided list).
-        
+
         Args:
             uuid: 1Password item UUID
             tags: List of tags to set (must be Bastion/* format or non-Bastion tags)
-            
+
         Returns:
             True on success, error string on failure
-            
+
         Raises:
             ValueError: If any Bastion-prefixed tag doesn't match valid format
         """
@@ -402,7 +402,7 @@ class OpClient:
         try:
             # Use assignment syntax (tags=value) which replaces instead of appends
             # UUID is from 1Password, tags_str is validated above
-            result = subprocess.run(
+            subprocess.run(
                 ["op", "item", "edit", uuid, f"tags={tags_str}"],
                 capture_output=True,
                 text=True,

@@ -28,11 +28,11 @@ logger = logging.getLogger(__name__)
 
 def _mask_sensitive(value: str, prefix_len: int = 2) -> str:
     """Mask sensitive values in logs, showing only prefix.
-    
+
     Args:
         value: Value to mask
         prefix_len: Number of characters to show at start
-        
+
     Returns:
         Masked value (e.g., 'pa****' for 'password')
     """
@@ -102,7 +102,7 @@ class YubiKeyService:
 
     def __init__(self, cache_mgr: BastionCacheManager):
         """Initialize with cache manager.
-        
+
         Args:
             cache_mgr: BastionCacheManager for accessing sync cache
         """
@@ -126,9 +126,9 @@ class YubiKeyService:
 
     def get_yubikey_items(self) -> list[Account]:
         """Get all YubiKey/Token items from sync cache.
-        
+
         Matches items with tags starting with 'YubiKey/Token' (e.g., 'YubiKey/Token/5 NFC').
-        
+
         Returns:
             List of Account objects with YubiKey/Token* tag
         """
@@ -139,10 +139,10 @@ class YubiKeyService:
 
     def get_yubikey_by_serial(self, serial: str) -> Account | None:
         """Find YubiKey item by serial number.
-        
+
         Args:
             serial: YubiKey serial number
-            
+
         Returns:
             Account if found, None otherwise
         """
@@ -155,10 +155,10 @@ class YubiKeyService:
 
     def get_yubikey_device(self, serial: str) -> YubiKeyDevice | None:
         """Get YubiKey device info by serial.
-        
+
         Args:
             serial: YubiKey serial number
-            
+
         Returns:
             YubiKeyDevice if found, None otherwise
         """
@@ -170,7 +170,7 @@ class YubiKeyService:
 
     def get_all_devices(self) -> list[YubiKeyDevice]:
         """Get all YubiKey devices from sync cache.
-        
+
         Returns:
             List of YubiKeyDevice objects, sorted by serial number
         """
@@ -184,10 +184,10 @@ class YubiKeyService:
 
     def _account_to_device(self, account: Account) -> YubiKeyDevice | None:
         """Convert Account to YubiKeyDevice.
-        
+
         Args:
             account: Account object with YubiKey/Token tag
-            
+
         Returns:
             YubiKeyDevice or None if serial not found
         """
@@ -240,12 +240,12 @@ class YubiKeyService:
 
     def get_login_items_with_yubikey(self, serial: str) -> list[Account]:
         """Get Login items that have TOTP on a specific YubiKey.
-        
+
         Looks for items with Token N sections where Serial matches.
-        
+
         Args:
             serial: YubiKey serial number
-            
+
         Returns:
             List of Account objects
         """
@@ -274,7 +274,7 @@ class YubiKeyService:
 
     def list_connected_serials(self) -> list[str]:
         """List serial numbers of connected YubiKeys.
-        
+
         Returns:
             List of serial number strings
         """
@@ -292,12 +292,12 @@ class YubiKeyService:
 
     def scan_oath_accounts(self, serial: str, password: str | None = None, verbose: int = 0) -> list[OathAccount]:
         """Scan OATH accounts on a physical YubiKey.
-        
+
         Args:
             serial: YubiKey serial number
             password: OATH password if required
             verbose: Verbosity level (0=silent, 1=info, 2+=debug)
-            
+
         Returns:
             List of OathAccount objects
         """
@@ -356,11 +356,11 @@ class YubiKeyService:
 
     def is_oath_password_required(self, serial: str, verbose: int = 0) -> bool:
         """Check if OATH password is required for a YubiKey.
-        
+
         Args:
             serial: YubiKey serial number
             verbose: Verbosity level (0=silent, 1=info, 2+=debug)
-            
+
         Returns:
             True if password is required
         """
@@ -400,11 +400,11 @@ class YubiKeyService:
 
     def get_oath_password(self, serial: str, verbose: int = 0) -> str | None:
         """Get OATH password from 1Password for a YubiKey.
-        
+
         Args:
             serial: YubiKey serial number
             verbose: Verbosity level (0=silent, 1=info, 2+=debug)
-            
+
         Returns:
             Password string if found, None otherwise
         """
@@ -468,12 +468,12 @@ class YubiKeyService:
 
     def compare_device(self, serial: str, password: str | None = None, verbose: int = 0) -> ScanResult:
         """Compare physical YubiKey with 1Password record.
-        
+
         Args:
             serial: YubiKey serial number
             password: OATH password if required
             verbose: Verbosity level (0=silent, 1=info, 2+=debug)
-            
+
         Returns:
             ScanResult with comparison details
         """
@@ -507,11 +507,11 @@ class YubiKeyService:
 
     def update_1p_oath_slots(self, serial: str, oath_accounts: list[OathAccount]) -> bool:
         """Update 1Password YubiKey item with current OATH slots.
-        
+
         Args:
             serial: YubiKey serial number
             oath_accounts: List of OATH accounts from physical scan
-            
+
         Returns:
             True if update succeeded
         """
@@ -555,11 +555,11 @@ class YubiKeyService:
 
     def get_totp_profile(self, serial: str, profile_override: str | None = None) -> str | None:
         """Get TOTP provisioning profile for a YubiKey.
-        
+
         Args:
             serial: YubiKey serial number
             profile_override: Optional profile name to override
-            
+
         Returns:
             Profile name or None if not found/configured
         """
@@ -582,10 +582,10 @@ class YubiKeyService:
 
     def get_totp_capacity(self, serial: str) -> int:
         """Get TOTP capacity for a YubiKey.
-        
+
         Args:
             serial: YubiKey serial number
-            
+
         Returns:
             Capacity (32 or 64), defaults to 32 if not configured
         """
@@ -608,14 +608,14 @@ class YubiKeyService:
 
     def get_accounts_for_profile(self, profile: str) -> list[Account]:
         """Get Login accounts that should be provisioned for a profile.
-        
+
         Accounts must have:
         - Tag: Bastion/2FA/TOTP/YubiKey/Include/<profile>
         - NOT have: Bastion/2FA/TOTP/YubiKey/Exclude/<profile>
-        
+
         Args:
             profile: Profile name
-            
+
         Returns:
             List of Account objects, sorted alphabetically by issuer then username
         """
@@ -639,12 +639,12 @@ class YubiKeyService:
         verbose: int = 0,
     ) -> dict:
         """Build provisioning plan for a YubiKey.
-        
+
         Args:
             serial: YubiKey serial number
             profile_override: Optional profile name to override
             verbose: Verbosity level
-            
+
         Returns:
             Dict with provisioning plan:
             - profile: Profile name
@@ -652,7 +652,7 @@ class YubiKeyService:
             - count: Number of accounts to provision
             - accounts: List of dicts with issuer, username, otpauth
             - ykman_commands: List of ykman commands to execute
-            
+
         Raises:
             ValueError: If YubiKey not found, profile not set, or no accounts found
         """
@@ -752,13 +752,13 @@ class YubiKeyService:
         verbose: int = 0,
     ) -> bool:
         """Execute provisioning plan on YubiKey.
-        
+
         Args:
             serial: YubiKey serial number
             plan: Provisioning plan from build_provision_plan
             require_touch: Whether to require touch for TOTP
             verbose: Verbosity level
-            
+
         Returns:
             True if provisioning succeeded
         """
@@ -810,13 +810,13 @@ class PasswordRequiredError(Exception):
 
 def sync_yubikey_items(cache_mgr: BastionCacheManager) -> int:
     """Sync only YubiKey/Token items from 1Password.
-    
+
     This is a targeted sync that refreshes just the YubiKey items
     without doing a full vault sync.
-    
+
     Args:
         cache_mgr: BastionCacheManager instance
-        
+
     Returns:
         Number of items synced
     """

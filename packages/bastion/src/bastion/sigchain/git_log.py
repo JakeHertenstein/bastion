@@ -41,7 +41,7 @@ class SigchainGitLog:
 
     def __init__(self, sigchain_dir: Path | None = None) -> None:
         """Initialize git log interface.
-        
+
         Args:
             sigchain_dir: Path to sigchain git repo
         """
@@ -55,11 +55,11 @@ class SigchainGitLog:
         verify_signatures: bool = True,
     ) -> list[GitCommit]:
         """Get recent commits from git log.
-        
+
         Args:
             count: Maximum commits to return
             verify_signatures: Whether to verify GPG signatures
-            
+
         Returns:
             List of GitCommit objects
         """
@@ -113,12 +113,12 @@ class SigchainGitLog:
         limit: int = 50,
     ) -> Iterator[tuple[SigchainLink, dict[str, Any]]]:
         """Read events from JSONL files.
-        
+
         Args:
             date: Filter by date (YYYY-MM-DD)
             event_type: Filter by event type
             limit: Maximum events to return
-            
+
         Yields:
             Tuples of (link, payload)
         """
@@ -163,7 +163,7 @@ class SigchainGitLog:
         show_events: bool = True,
     ) -> None:
         """Pretty-print git log with optional event details.
-        
+
         Args:
             count: Number of commits to show
             verify: Verify GPG signatures
@@ -211,7 +211,7 @@ class SigchainGitLog:
         limit: int = 50,
     ) -> None:
         """Pretty-print events from JSONL files.
-        
+
         Args:
             date: Filter by date
             event_type: Filter by event type
@@ -253,7 +253,7 @@ class SigchainGitLog:
 
     def verify_chain(self) -> tuple[bool, str]:
         """Verify the sigchain integrity.
-        
+
         Returns:
             Tuple of (is_valid, message)
         """

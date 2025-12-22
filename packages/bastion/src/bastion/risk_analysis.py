@@ -4,6 +4,7 @@ from collections import defaultdict
 from typing import Any
 
 from rich.console import Console
+from rich.prompt import Prompt
 from rich.table import Table
 
 from .models import Account, RiskLevel, TwoFAMethod
@@ -20,19 +21,19 @@ class RiskAnalyzer:
     def _build_dependency_graph(self) -> dict[str, list[str]]:
         """
         Build dependency graph with email recovery as default.
-        
+
         Returns mapping of account_uuid -> list of account_uuids it can recover.
-        
+
         Algorithm:
         1. Find accounts with Bastion/Capability/Recovery or Bastion/Capability/Identity (email accounts)
         2. DEFAULT: Assume all accounts are recoverable by email
         3. EXCEPTION: Skip accounts with Bastion/Dependency/No-Email-Recovery tag
         4. Match recovery_email from username against email accounts
         5. ALTERNATE: Also check alternate_recovery_email field for secondary recovery
-        
+
         IMPORTANT: Most accounts are recoverable by email. Use Bastion/Dependency/No-Email-Recovery
         tag for exceptions (like 1Password which requires Secret Key + Master Password).
-        
+
         ALTERNATE RECOVERY: Accounts with alternate_recovery_email field will create
         additional dependency edges (e.g., Square can be recovered by both primary and
         alternate email accounts).
@@ -97,7 +98,7 @@ class RiskAnalyzer:
     def analyze_account(self, account: Account) -> dict[str, Any]:
         """
         Analyze a single account and return detailed risk assessment.
-        
+
         Returns:
             Dictionary with risk score, level, and breakdown
         """
@@ -167,7 +168,7 @@ class RiskAnalyzer:
 
     def print_risk_report(self, console: Console, results: list[dict[str, Any]] | None = None, limit: int | None = 20) -> None:
         """Print formatted risk report.
-        
+
         Args:
             console: Rich console for output
             results: Analysis results (if None, will analyze all)
@@ -267,13 +268,52 @@ class RiskAnalyzer:
             lower_title = account_title.lower()
             exact_matches = [acc for acc in self.accounts.values() if acc.title.lower() == lower_title]
             partial_matches = [acc for acc in self.accounts.values() if lower_title in acc.title.lower()]
-            if exact_matches:
-                account = exact_matches[0]
-            elif partial_matches:
-                account = partial_matches[0]
+            
+            # Combine matches (exact first, then partial, remove duplicates)
+            all_matches = exact_matches + [acc for acc in partial_matches if acc not in exact_matches]
+            
+            if len(all_matches) > 1:
+                # Multiple matches - prompt user to select
+                console.print(f"\n[yellow]Found {len(all_matches)} accounts matching '{account_title}':[/yellow]\n")
+                for idx, acc in enumerate(all_matches[:20], 1):  # Limit to 20 for usability
+                    # Show additional context to help differentiate
+                    context_parts = []
+                    if acc.username:
+                        context_parts.append(f"[dim]{acc.username}[/dim]")
+                    if acc.urls:
+                        # Show first URL if multiple
+                        first_url = acc.urls.split(",")[0].strip()
+                        context_parts.append(f"[dim cyan]{first_url}[/dim cyan]")
+                    context = " - " + " ".join(context_parts) if context_parts else ""
+                    console.print(f"  {idx}. {acc.title}{context}")
+                if len(all_matches) > 20:
+                    console.print(f"  [dim]... and {len(all_matches) - 20} more[/dim]")
+                
+                console.print("")
+                choice = Prompt.ask(
+                    "Select account",
+                    choices=[str(i) for i in range(1, min(len(all_matches), 20) + 1)],
+                    default="1"
+                )
+                account = all_matches[int(choice) - 1]
+            elif len(all_matches) == 1:
+                account = all_matches[0]
 
         if not account:
             console.print(f"[red]Account not found: {account_title or account_uuid or 'unspecified'}[/red]")
+            if account_title:
+                # Show similar matches to help user
+                lower_search = account_title.lower()
+                similar = [
+                    acc.title for acc in self.accounts.values()
+                    if any(word in acc.title.lower() for word in lower_search.split())
+                ]
+                if similar:
+                    console.print("\n[yellow]Did you mean one of these?[/yellow]")
+                    for title in sorted(similar)[:10]:
+                        console.print(f"  • {title}")
+                    if len(similar) > 10:
+                        console.print(f"  [dim]... and {len(similar) - 10} more[/dim]")
             return
 
         console.print(f"\n[bold]Dependency Analysis: {account.title}[/bold]\n")

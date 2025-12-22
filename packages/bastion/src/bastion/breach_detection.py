@@ -23,7 +23,7 @@ class BreachDetector:
     def _get_password_hash_prefix(self, password: str) -> tuple[str, str]:
         """
         Get SHA-1 hash of password and split into prefix/suffix for k-anonymity.
-        
+
         Returns:
             Tuple of (first 5 chars, remaining chars)
         """
@@ -33,10 +33,10 @@ class BreachDetector:
     def check_password(self, password: str) -> tuple[bool, int]:
         """
         Check if password has been breached using HIBP k-anonymity API.
-        
+
         Args:
             password: Password to check
-            
+
         Returns:
             Tuple of (is_breached, breach_count)
         """
@@ -69,11 +69,11 @@ class BreachDetector:
     ) -> tuple[bool, int]:
         """
         Check if account password is breached by retrieving from 1Password.
-        
+
         Args:
             account: Account to check
             op_client: 1Password CLI client
-            
+
         Returns:
             Tuple of (is_breached, breach_count)
         """
@@ -109,12 +109,12 @@ class BreachDetector:
     ) -> dict[str, tuple[bool, int]]:
         """
         Scan all accounts for breached passwords.
-        
+
         Args:
             db: Database with accounts
             op_client: 1Password CLI client
             update_tags: If True, add bastion-sec-breach-exposed tag to breached accounts
-            
+
         Returns:
             Dictionary mapping account UUID to (is_breached, breach_count)
         """

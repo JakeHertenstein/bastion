@@ -31,17 +31,17 @@ console = Console()
 def _show_machine_info() -> None:
     """Display machine UUID and identity information."""
     from bastion_core.platform import (
-        get_machine_uuid,
-        get_machine_identifier,
-        is_macos,
-        is_linux,
-        is_windows,
         architecture,
+        get_machine_identifier,
+        get_machine_uuid,
+        is_linux,
+        is_macos,
+        is_windows,
     )
-    
+
     machine_id = get_machine_identifier()
     machine_uuid = get_machine_uuid()
-    
+
     # Determine UUID source
     uuid_source = "Unknown"
     if is_macos():
@@ -50,17 +50,17 @@ def _show_machine_info() -> None:
         uuid_source = "Primary MAC Address (SHA-512)"
     elif is_windows():
         uuid_source = "Primary MAC Address (SHA-512)"
-    
+
     table = Table(title="Machine Identity", show_header=True, title_style="bold cyan")
     table.add_column("Property", style="cyan", no_wrap=True)
     table.add_column("Value", style="green")
-    
+
     table.add_row("Machine UUID", f"[bold]{machine_uuid}[/bold]")
     table.add_row("UUID Source", uuid_source)
     table.add_row("Hostname", machine_id["hostname"])
     table.add_row("Node Name", machine_id["node_name"])
     table.add_row("Architecture", architecture())
-    
+
     console.print()
     console.print(table)
     console.print()

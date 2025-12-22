@@ -175,7 +175,7 @@ def analyze_command(
     if noun == "risk":
         analyze_risk(db_path, level, has_tag, has_capability, weakest_2fa, account, account_uuid)
     elif noun == "dependencies":
-        analyze_dependencies(db_path, account or None, account_uuid)
+        analyze_dependencies(db_path, account, account_uuid)
     else:
         console.print(f"[red]Error:[/red] Expected 'risk' or 'dependencies', got '{noun}'")
         raise typer.Exit(1)

@@ -45,11 +45,11 @@ class ChainIntegrityError(SigchainError):
 
 class Sigchain:
     """Manages the cryptographic audit chain.
-    
+
     The sigchain is an append-only log where each entry (link) contains
     the hash of the previous entry, forming an immutable chain. The chain
     can be verified by recomputing hashes from genesis.
-    
+
     Attributes:
         device: The device type (manager or enclave)
         links: Ordered list of chain links
@@ -63,7 +63,7 @@ class Sigchain:
         payloads: dict[str, dict] | None = None,
     ) -> None:
         """Initialize the sigchain.
-        
+
         Args:
             device: Device type that owns this chain
             links: Existing chain links (for loading)
@@ -94,11 +94,11 @@ class Sigchain:
         source_timestamp: datetime | None = None,
     ) -> SigchainLink:
         """Append a new event to the chain.
-        
+
         Args:
             payload: Event payload to record
             source_timestamp: When the event occurred (defaults to now)
-            
+
         Returns:
             The newly created link
         """
@@ -130,16 +130,16 @@ class Sigchain:
         batch: EnclaveImportBatch,
     ) -> SigchainLink:
         """Import a batch of events from Bastion Enclave.
-        
+
         Creates individual links for each Enclave event, preserving their
         original timestamps, then creates an EnclaveImport wrapper event.
-        
+
         Args:
             batch: Batch of events from Enclave
-            
+
         Returns:
             The EnclaveImport wrapper link
-            
+
         Raises:
             SigchainError: If batch verification fails
         """
@@ -182,16 +182,16 @@ class Sigchain:
 
     def verify(self, full: bool = True) -> bool:
         """Verify chain integrity.
-        
+
         Walks the chain from genesis, verifying that each link's prev_hash
         matches the computed hash of the previous link.
-        
+
         Args:
             full: If True, verify entire chain; if False, only check last 100 links
-            
+
         Returns:
             True if chain is valid
-            
+
         Raises:
             ChainIntegrityError: If verification fails (with details)
         """
@@ -232,14 +232,14 @@ class Sigchain:
         end_seqno: int | None = None,
     ) -> str:
         """Compute Merkle root of a range of events.
-        
+
         Used for OTS anchoring — the Merkle root commits to all events
         in the range without revealing their contents.
-        
+
         Args:
             start_seqno: First event to include (default: 1)
             end_seqno: Last event to include (default: current head)
-            
+
         Returns:
             Hex-encoded SHA-256 Merkle root
         """
@@ -273,7 +273,7 @@ class Sigchain:
 
     def get_chain_head(self) -> ChainHead:
         """Get current chain state for persistence.
-        
+
         Returns:
             ChainHead with current state and event summaries
         """
@@ -311,7 +311,7 @@ class Sigchain:
 
     def export_for_git(self) -> dict:
         """Export chain state for git storage.
-        
+
         Returns:
             Dictionary with chain data suitable for JSON serialization
         """
@@ -331,11 +331,11 @@ class Sigchain:
         end_seqno: int | None = None,
     ) -> Iterator[str]:
         """Export events as JSON Lines for append-only log.
-        
+
         Args:
             start_seqno: First event (default: 1)
             end_seqno: Last event (default: head)
-            
+
         Yields:
             JSON strings, one per event
         """
@@ -353,10 +353,10 @@ class Sigchain:
     @classmethod
     def load_from_git(cls, data: dict) -> Sigchain:
         """Load chain from git export format.
-        
+
         Args:
             data: Dictionary from export_for_git()
-            
+
         Returns:
             Reconstructed Sigchain
         """
@@ -374,10 +374,10 @@ class Sigchain:
     @classmethod
     def load_from_file(cls, path: Path) -> Sigchain:
         """Load chain from JSON file.
-        
+
         Args:
             path: Path to chain.json
-            
+
         Returns:
             Loaded Sigchain
         """
@@ -387,7 +387,7 @@ class Sigchain:
 
     def save_to_file(self, path: Path) -> None:
         """Save chain to JSON file.
-        
+
         Args:
             path: Destination path
         """

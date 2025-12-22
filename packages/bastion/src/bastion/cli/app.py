@@ -93,9 +93,9 @@ def main(
     ] = None,
 ) -> None:
     """Bastion - Ground-level defense for 1Password credential security.
-    
+
     BREAKING CHANGE (v0.2.0): 1Password commands moved to `bastion 1p` subcommand.
-    
+
     \b
     Examples (new paths):
       bastion 1p sync vault          # Sync from 1Password
@@ -104,7 +104,7 @@ def main(
       bastion 1p audit no-tags       # Audit for missing tags
       bastion 1p tags list           # List all tags
       bastion 1p yubikey list        # YubiKey assignments
-    
+
     \b
     General utilities (unchanged):
       bastion generate entropy yubikey     # Generate entropy

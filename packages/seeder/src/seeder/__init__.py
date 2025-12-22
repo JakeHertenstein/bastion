@@ -1,7 +1,7 @@
 """
 Seeder - Password Token Matrix Generator
 
-A secure, deterministic password token generator that creates 10×10 matrices 
+A secure, deterministic password token generator that creates 10×10 matrices
 of cryptographic tokens from various seed sources.
 """
 

@@ -180,11 +180,11 @@ class YubiKeySerialInfo:
 
 class YubiKeyCache:
     """Manage YubiKey TOTP slot cache and transactions.
-    
+
     Supports two storage modes:
     1. Encrypted (preferred): Stores in db.yubikey_cache via BastionCacheManager
     2. Legacy file: Stores in plaintext JSON file (deprecated)
-    
+
     Use from_encrypted() or from_file() factory methods to create.
     """
 
@@ -194,7 +194,7 @@ class YubiKeyCache:
         cache_manager: BastionCacheManager | None = None,
     ):
         """Initialize cache.
-        
+
         Args:
             cache_path: Path to legacy plaintext cache file (deprecated)
             cache_manager: BastionCacheManager for encrypted storage (preferred)
@@ -213,10 +213,10 @@ class YubiKeyCache:
     @classmethod
     def from_encrypted(cls, cache_manager: BastionCacheManager) -> YubiKeyCache:
         """Create cache using encrypted storage (preferred).
-        
+
         Args:
             cache_manager: BastionCacheManager instance
-            
+
         Returns:
             YubiKeyCache configured for encrypted storage
         """
@@ -227,10 +227,10 @@ class YubiKeyCache:
     @classmethod
     def from_file(cls, cache_path: Path) -> YubiKeyCache:
         """Create cache using legacy file storage (deprecated).
-        
+
         Args:
             cache_path: Path to plaintext JSON cache file
-            
+
         Returns:
             YubiKeyCache configured for file storage
         """
@@ -359,12 +359,12 @@ class YubiKeyCache:
     def refresh_serial(self, serial: str, role: str = "", password: str | None = None) -> tuple[bool, str]:
         """
         Refresh OATH accounts for a specific YubiKey.
-        
+
         Args:
             serial: YubiKey serial number
             role: Optional role description
             password: Optional OATH password (if None, will prompt via stdin)
-        
+
         Returns:
             (success, message)
         """
@@ -374,8 +374,7 @@ class YubiKeyCache:
                 # Use provided password
                 result = subprocess.run(
                     ["ykman", "--device", serial, "oath", "accounts", "list"],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
+                    capture_output=True,
                     input=f"{password}\n".encode(),
                     timeout=30,
                     check=False,
@@ -442,7 +441,7 @@ class YubiKeyCache:
     def list_connected_yubikeys(self) -> list[str]:
         """
         List serial numbers of connected YubiKeys.
-        
+
         Returns:
             List of serial numbers
         """
@@ -483,11 +482,11 @@ class YubiKeyCache:
     def get_account_serials(self, issuer: str, account: str) -> list[str]:
         """
         Get list of serials that have a specific OATH account.
-        
+
         Args:
             issuer: OATH issuer
             account: OATH account name
-        
+
         Returns:
             List of serial numbers
         """

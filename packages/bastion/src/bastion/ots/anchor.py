@@ -31,7 +31,7 @@ class AnchorStatus(str, Enum):
 
 class PendingAnchor(BaseModel):
     """A timestamp anchor awaiting Bitcoin confirmation.
-    
+
     Pending anchors are stored locally until the OTS proof can be
     upgraded with a Bitcoin attestation (typically 1-24 hours).
     """
@@ -63,7 +63,7 @@ class PendingAnchor(BaseModel):
 
 class CompletedAnchor(BaseModel):
     """A fully confirmed OTS timestamp proof.
-    
+
     Once the Bitcoin attestation is available, the pending anchor
     is upgraded to a completed anchor with the full proof.
     """
@@ -91,7 +91,7 @@ class CompletedAnchor(BaseModel):
 @dataclass
 class MerkleTree:
     """Merkle tree for batching event hashes.
-    
+
     Builds a binary merkle tree from event payload hashes,
     producing a single root that can be timestamped.
     """
@@ -101,7 +101,7 @@ class MerkleTree:
 
     def add_leaf(self, data: bytes | str) -> None:
         """Add a leaf to the tree.
-        
+
         Args:
             data: Raw bytes or hex string to add as leaf
         """
@@ -143,7 +143,7 @@ class MerkleTree:
 
     def get_root(self) -> bytes:
         """Get the merkle root.
-        
+
         Returns:
             The root hash, or empty hash if no leaves
         """
@@ -161,10 +161,10 @@ class MerkleTree:
 
     def get_proof(self, leaf_index: int) -> list[tuple[bytes, str]]:
         """Get merkle proof for a specific leaf.
-        
+
         Args:
             leaf_index: Index of the leaf to prove
-            
+
         Returns:
             List of (hash, direction) tuples for verification
         """
@@ -196,12 +196,12 @@ class MerkleTree:
         root: bytes
     ) -> bool:
         """Verify a merkle proof.
-        
+
         Args:
             leaf: The original leaf data
             proof: Proof from get_proof()
             root: Expected merkle root
-            
+
         Returns:
             True if proof is valid
         """
@@ -225,14 +225,14 @@ class MerkleTree:
 
 class OTSAnchor:
     """Manages OTS anchoring for sigchain events.
-    
+
     This class handles the full lifecycle of timestamp proofs:
     1. Building merkle trees from session events
     2. Submitting roots to calendar servers
     3. Storing pending anchors
     4. Upgrading proofs once Bitcoin confirmation arrives
     5. Storing completed proofs
-    
+
     Example:
         >>> anchor = OTSAnchor(storage_path)
         >>> anchor.create_anchor(session_id, event_hashes, seqno_range)
@@ -242,7 +242,7 @@ class OTSAnchor:
 
     def __init__(self, storage_path: Path):
         """Initialize the anchor manager.
-        
+
         Args:
             storage_path: Path to store anchor data
         """
@@ -261,14 +261,14 @@ class OTSAnchor:
         seqno_range: tuple[int, int],
     ) -> PendingAnchor:
         """Create a new anchor from event hashes.
-        
+
         Builds a merkle tree and prepares for submission to calendars.
-        
+
         Args:
             session_id: ID of the session creating this anchor
             event_hashes: List of hex-encoded event payload hashes
             seqno_range: (start, end) seqno range of events
-            
+
         Returns:
             PendingAnchor ready for submission
         """
@@ -291,10 +291,10 @@ class OTSAnchor:
 
     def save_pending(self, anchor: PendingAnchor) -> Path:
         """Save a pending anchor to disk.
-        
+
         Args:
             anchor: The anchor to save
-            
+
         Returns:
             Path to saved file
         """
@@ -306,7 +306,7 @@ class OTSAnchor:
 
     def load_pending(self) -> list[PendingAnchor]:
         """Load all pending anchors.
-        
+
         Returns:
             List of pending anchors
         """
@@ -321,10 +321,10 @@ class OTSAnchor:
 
     def save_completed(self, anchor: CompletedAnchor) -> Path:
         """Save a completed anchor to disk.
-        
+
         Args:
             anchor: The completed anchor to save
-            
+
         Returns:
             Path to saved file
         """
@@ -342,10 +342,10 @@ class OTSAnchor:
 
     def load_completed(self, merkle_root: str | None = None) -> list[CompletedAnchor]:
         """Load completed anchors.
-        
+
         Args:
             merkle_root: Optional filter by merkle root
-            
+
         Returns:
             List of completed anchors
         """
@@ -362,10 +362,10 @@ class OTSAnchor:
 
     def get_anchor_for_seqno(self, seqno: int) -> CompletedAnchor | PendingAnchor | None:
         """Find the anchor containing a specific seqno.
-        
+
         Args:
             seqno: The sigchain sequence number
-            
+
         Returns:
             The anchor containing this seqno, or None
         """
@@ -385,7 +385,7 @@ class OTSAnchor:
 
     def get_stats(self) -> dict[str, Any]:
         """Get anchor statistics.
-        
+
         Returns:
             Dict with pending/completed counts and ranges
         """

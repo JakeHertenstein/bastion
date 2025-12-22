@@ -37,11 +37,11 @@ def register_commands(app: typer.Typer) -> None:
         quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Only output exit code, no text")] = False,
     ) -> None:
         """Verify generated credentials match their source.
-        
+
         Username verification:
           bastion verify username github.com h7x2k9m4p8q3n1r5
           bastion verify username --label "Bastion/USER/SHA2/512:github.com:2025-11-30#..." h7x2k9m4p8q3n1r5
-        
+
         Exit codes:
           0 = Match verified
           1 = No match (mismatch or error)
@@ -63,7 +63,7 @@ def _verify_username(
     quiet: bool,
 ) -> None:
     """Verify a username against its label.
-    
+
     Args:
         identifier: Domain name or ignored if full_label provided
         username: Username to verify
@@ -141,10 +141,10 @@ def _verify_username(
 
 def _lookup_label_for_domain(domain: str) -> str | None:
     """Look up a label from 1Password for the given domain.
-    
+
     Args:
         domain: Domain to search for
-        
+
     Returns:
         Label string if found, None otherwise
     """
@@ -192,10 +192,10 @@ def _lookup_label_for_domain(domain: str) -> str | None:
 
 def _get_label_from_item(item_id: str) -> str | None:
     """Get the Bastion label from a 1Password item.
-    
+
     Args:
         item_id: 1Password item UUID
-        
+
     Returns:
         Label string if found, None otherwise
     """

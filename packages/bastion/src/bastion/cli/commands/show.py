@@ -21,7 +21,7 @@ def show_person(
     include_recovery: bool,
 ) -> None:
     """Show details for a specific person.
-    
+
     Args:
         manager: PeopleManager instance
         person_id: Person name or UUID
@@ -59,7 +59,7 @@ def show_person(
 
 def show_recovery_matrix(manager: PeopleManager) -> None:
     """Display the recovery matrix for all people.
-    
+
     Args:
         manager: PeopleManager instance
     """

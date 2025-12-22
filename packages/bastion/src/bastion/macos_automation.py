@@ -31,14 +31,14 @@ def is_macos() -> bool:
 
 def run_applescript(script: str, timeout: int = 30) -> str:
     """Run an AppleScript and return the result.
-    
+
     Args:
         script: AppleScript code to execute
         timeout: Maximum seconds to wait
-        
+
     Returns:
         Script output as string
-        
+
     Raises:
         MacOSAutomationError: If script fails or times out
     """
@@ -90,7 +90,7 @@ def is_1password_running() -> bool:
 
 def activate_1password() -> None:
     """Bring 1Password app to foreground.
-    
+
     Raises:
         MacOSAutomationError: If activation fails
     """
@@ -105,10 +105,10 @@ def activate_1password() -> None:
 
 def activate_terminal() -> bool:
     """Bring Terminal/iTerm/VS Code back to foreground.
-    
+
     Detects and activates the terminal application, trying common ones
     in order: VS Code, Cursor, iTerm2, Terminal.app.
-    
+
     Returns:
         True if a terminal was activated
     """
@@ -146,13 +146,13 @@ def activate_terminal() -> bool:
 
 def get_1password_item_link(item_id: str) -> str | None:
     """Get the 1Password share link for an item using op CLI.
-    
+
     Uses `op item get --share-link` to get the official internal link,
     which includes account, host, vault, and item IDs.
-    
+
     Args:
         item_id: Item UUID
-        
+
     Returns:
         Share link URL or None if failed
     """
@@ -172,14 +172,14 @@ def get_1password_item_link(item_id: str) -> str | None:
 
 def open_1password_item(item_id: str, vault_id: str | None = None) -> bool:
     """Open 1Password directly to a specific item using URL scheme.
-    
+
     Gets the official share link via op CLI and converts it to the
     onepassword:// URL scheme to open directly in the desktop app.
-    
+
     Args:
         item_id: Item UUID
         vault_id: Optional vault UUID (unused, kept for API compatibility)
-        
+
     Returns:
         True if URL was opened successfully
     """
@@ -210,14 +210,14 @@ def open_1password_item(item_id: str, vault_id: str | None = None) -> bool:
 
 def open_item_and_prompt(item_id: str, vault_id: str | None = None) -> bool:
     """Open 1Password directly to a specific item for manual JSON copy.
-    
+
     Opens 1Password directly to the item using its UUID, positioning
     the user to right-click and "Copy as JSON".
-    
+
     Args:
         item_id: Item UUID
         vault_id: Optional vault UUID (improves reliability)
-        
+
     Returns:
         True if 1Password was opened successfully
     """
@@ -240,7 +240,7 @@ def open_item_and_prompt(item_id: str, vault_id: str | None = None) -> bool:
 
 def show_notification(title: str, message: str, sound: bool = False) -> None:
     """Show a macOS notification.
-    
+
     Args:
         title: Notification title
         message: Notification body
@@ -275,14 +275,14 @@ def wait_for_clipboard_change(
     check_interval: float = 0.5,
 ) -> str | None:
     """Wait for clipboard content to change.
-    
+
     Polls the clipboard until content differs from original_content.
-    
+
     Args:
         original_content: The content to compare against
         timeout: Maximum seconds to wait
         check_interval: Seconds between clipboard checks
-        
+
     Returns:
         New clipboard content, or None if timeout
     """
@@ -302,7 +302,7 @@ def wait_for_clipboard_change(
 
 def get_clipboard_content() -> str:
     """Get current clipboard content as string.
-    
+
     Returns:
         Clipboard content, or empty string if not text
     """
@@ -323,7 +323,7 @@ def get_clipboard_content() -> str:
 
 def clear_clipboard() -> bool:
     """Clear the clipboard content.
-    
+
     Returns:
         True if successful
     """

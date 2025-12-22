@@ -22,23 +22,23 @@ FIELD DEFINITIONS
 -----------------
     TOOL      Tool name. Currently "Bastion".
               Case: PascalCase
-              
+
     TYPE      Generator type identifier.
               Values: USER, CARD, KEY
               Case: UPPERCASE
-              
+
     ALGO      Cryptographic algorithm(s) used, hierarchical with "/".
               Values: SHA2/512, SHA3/512, SLIP39/ARGON2ID, X25519, RSA/4096, etc.
               Case: UPPERCASE
-              
+
     IDENT     Service/purpose identifier.
               Case: lowercase
               Examples: github.com, aws-prod, banking.a0, ssh-primary
-              
+
     DATE      Generation date or user-defined descriptor.
               Recommended: ISO 8601 (YYYY-MM-DD)
               Examples: 2025-11-30, initial, recovery-1
-              
+
     PARAMS    Generation parameters in URL query-string notation.
               VERSION always required.
               Format: ATTR=value joined with "&" (canonical order required)
@@ -95,13 +95,13 @@ EXAMPLES
 --------
     Username (16 char, with tool version):
         Bastion/USER/SHA2/512:github.com:2025-11-30#BASTION=0.3.0&VERSION=1&LENGTH=16|K
-        
+
     Username (custom length, SHA3):
         Bastion/USER/SHA3/512:aws.amazon.com:2025-11-30#BASTION=0.3.0&VERSION=1.1&LENGTH=24|M
-        
+
     Card token with KDF params:
         Bastion/CARD/SLIP39/ARGON2ID:banking.a0:2025-11-30#BASTION=0.3.0&VERSION=1&TIME=3&MEMORY=2048&PARALLELISM=8&NONCE=Kx7mQ9bL&ENCODING=90|X
-        
+
     Key (minimal params):
         Bastion/KEY/X25519:ssh-primary:2025-11-30#VERSION=1|J
 
@@ -194,13 +194,13 @@ LUHN_BASE = 36
 
 def luhn_mod36_char_to_int(char: str) -> int:
     """Convert character to Luhn mod-36 value.
-    
+
     Args:
         char: Single character [0-9A-Za-z]
-        
+
     Returns:
         Integer value 0-35
-        
+
     Raises:
         ValueError: If character not in alphabet
     """
@@ -212,13 +212,13 @@ def luhn_mod36_char_to_int(char: str) -> int:
 
 def luhn_mod36_int_to_char(value: int) -> str:
     """Convert integer to Luhn mod-36 character.
-    
+
     Args:
         value: Integer 0-35
-        
+
     Returns:
         Uppercase character [0-9A-Z]
-        
+
     Raises:
         ValueError: If value out of range
     """
@@ -229,23 +229,23 @@ def luhn_mod36_int_to_char(value: int) -> str:
 
 def luhn_mod36_generate(s: str) -> str:
     """Generate Luhn mod-36 check character for a string.
-    
+
     Uses the standard Luhn algorithm adapted for base-36:
     1. Process characters right-to-left
     2. Double every second digit (from the right)
     3. If doubled value >= 36, subtract 36 (equivalently, sum digits in base-36)
     4. Sum all values
     5. Check digit = (36 - (sum mod 36)) mod 36
-    
+
     Args:
         s: Input string (alphanumeric, case-insensitive)
-        
+
     Returns:
         Single uppercase check character [0-9A-Z]
-        
+
     Raises:
         ValueError: If string contains invalid characters
-        
+
     Example:
         >>> luhn_mod36_generate("v1:USER:SHA512:L16:github.com:2025-11-30")
         '1'
@@ -274,15 +274,15 @@ def luhn_mod36_generate(s: str) -> str:
 
 def luhn_mod36_validate(s: str) -> bool:
     """Validate a string with Luhn mod-36 check character.
-    
+
     The check character should be the last alphanumeric character.
-    
+
     Args:
         s: String ending with check character
-        
+
     Returns:
         True if check digit is valid, False otherwise
-        
+
     Example:
         >>> luhn_mod36_validate("v1:USER:SHA512:L16:github.com:2025-11-30|K")
         True
@@ -321,11 +321,11 @@ PARAM_VALUE_PATTERN = re.compile(r'^[A-Za-z0-9._-]+$')
 
 def validate_param_value(value: str, param_name: str) -> None:
     """Validate a parameter value.
-    
+
     Args:
         value: Parameter value to validate
         param_name: Parameter name (for error messages)
-        
+
     Raises:
         ValueError: If value is empty or contains invalid characters
     """
@@ -340,21 +340,21 @@ def validate_param_value(value: str, param_name: str) -> None:
 
 def encode_params(params: dict[str, int | str]) -> str:
     """Encode parameter dictionary to URL query-string format.
-    
+
     Uses '&' as parameter separator and '=' as key-value separator.
     Parameters are output in canonical order (BASTION, VERSION first).
-    
+
     Args:
         params: Dictionary of parameter key-value pairs
-                Keys: 'bastion', 'version', 'time', 'memory', 'parallelism', 
+                Keys: 'bastion', 'version', 'time', 'memory', 'parallelism',
                       'nonce', 'length', 'encoding'
-                
+
     Returns:
         Parameter string (e.g., "BASTION=0.3.0&VERSION=1&LENGTH=16")
-        
+
     Raises:
         ValueError: If any value is empty or contains invalid characters
-        
+
     Example:
         >>> encode_params({'bastion': '0.3.0', 'version': 1, 'length': 16})
         'BASTION=0.3.0&VERSION=1&LENGTH=16'
@@ -392,19 +392,19 @@ def encode_params(params: dict[str, int | str]) -> str:
 
 def decode_params(params_str: str) -> dict[str, int | str]:
     """Decode URL query-string parameter format to dictionary.
-    
+
     Uses '&' as parameter separator and '=' as key-value separator.
     Validates canonical ordering and rejects empty values.
-    
+
     Args:
         params_str: Parameter string (e.g., "VERSION=1&LENGTH=16")
-        
+
     Returns:
         Dictionary of parameter key-value pairs
-        
+
     Raises:
         ValueError: If parameters are out of order, empty, or malformed
-        
+
     Example:
         >>> decode_params('VERSION=1&LENGTH=16')
         {'version': '1', 'length': 16}
@@ -465,11 +465,11 @@ def decode_params(params_str: str) -> dict[str, int | str]:
 
 def validate_field_charset(value: str, field_name: str) -> list[str]:
     """Validate that a field contains only URL-safe Base64 characters.
-    
+
     Args:
         value: Field value to validate
         field_name: Name of field (for error messages)
-        
+
     Returns:
         List of error messages (empty if valid)
     """
@@ -481,10 +481,10 @@ def validate_field_charset(value: str, field_name: str) -> list[str]:
 
 def validate_ident_charset(value: str) -> list[str]:
     """Validate that ident field contains valid characters (including period).
-    
+
     Args:
         value: Ident field value to validate
-        
+
     Returns:
         List of error messages (empty if valid)
     """
@@ -496,10 +496,10 @@ def validate_ident_charset(value: str) -> list[str]:
 
 def validate_type(type_: str) -> list[str]:
     """Validate type field.
-    
+
     Args:
         type_: Type string (e.g., "USER")
-        
+
     Returns:
         List of error messages (empty if valid)
     """
@@ -510,11 +510,11 @@ def validate_type(type_: str) -> list[str]:
 
 def validate_algo(algo: str, type_: str) -> list[str]:
     """Validate algorithm field for given type.
-    
+
     Args:
         algo: Algorithm string with / hierarchy (e.g., "SHA2/512")
         type_: Generator type for context
-        
+
     Returns:
         List of error messages (empty if valid)
     """
@@ -540,9 +540,9 @@ def validate_algo(algo: str, type_: str) -> list[str]:
 @dataclass
 class BastionLabel:
     """Parsed Bastion label with validation and building capabilities.
-    
+
     New format: TOOL/TYPE/ALGO:IDENT:DATE#PARAMS|CHECK
-    
+
     Attributes:
         tool: Tool name (e.g., "Bastion")
         type: Generator type (USER, CARD, KEY)
@@ -551,7 +551,7 @@ class BastionLabel:
         date: Date or descriptor (2025-11-30, initial)
         params: Parameter string (VERSION=1&LENGTH=16, etc.)
         check: Luhn check character or None if not present
-        
+
     Example:
         >>> label = BastionLabel.parse("Bastion/USER/SHA2/512:github.com:2025-11-30#VERSION=1&LENGTH=16|K")
         >>> label.type
@@ -581,18 +581,18 @@ class BastionLabel:
     @classmethod
     def parse(cls, label: str) -> BastionLabel:
         """Parse a label string into BastionLabel.
-        
+
         Format: TOOL/TYPE/ALGO:IDENT:DATE#PARAMS|CHECK
-        
+
         Args:
             label: Full label string, with or without check digit
-            
+
         Returns:
             Parsed BastionLabel instance
-            
+
         Raises:
             ValueError: If label format is invalid
-            
+
         Example:
             >>> BastionLabel.parse("Bastion/USER/SHA2/512:github.com:2025-11-30#VERSION=1&LENGTH=16|K")
             BastionLabel(tool='Bastion', type='USER', algo='SHA2/512', ...)
@@ -660,7 +660,7 @@ class BastionLabel:
         with_check: bool = True,
     ) -> BastionLabel:
         """Build a new label with defaults for missing fields.
-        
+
         Args:
             type: Generator type (USER, CARD, KEY)
             ident: Service/purpose identifier
@@ -669,10 +669,10 @@ class BastionLabel:
             params: Parameters (defaults based on type)
             tool: Tool name (default "Bastion")
             with_check: Whether to compute check digit
-            
+
         Returns:
             New BastionLabel instance
-            
+
         Example:
             >>> label = BastionLabel.build_new("USER", "github.com", "2025-11-30")
             >>> label.algo
@@ -705,7 +705,7 @@ class BastionLabel:
 
     def hierarchy(self) -> str:
         """Get hierarchy portion (1Password tag).
-        
+
         Returns:
             Hierarchy string: TOOL/TYPE/ALGO
         """
@@ -713,7 +713,7 @@ class BastionLabel:
 
     def tag(self) -> str:
         """Get 1Password tag (alias for hierarchy).
-        
+
         Returns:
             1Password-compatible tag string
         """
@@ -721,7 +721,7 @@ class BastionLabel:
 
     def body(self) -> str:
         """Get label body (without check digit).
-        
+
         Returns:
             Label string without "|CHECK" suffix
         """
@@ -729,13 +729,13 @@ class BastionLabel:
 
     def build(self, with_check: bool = True) -> str:
         """Build complete label string.
-        
+
         Args:
             with_check: Whether to include check digit
-            
+
         Returns:
             Complete label string
-            
+
         Example:
             >>> label.build()
             'Bastion/USER/SHA2/512:github.com:2025-11-30#VERSION=1&LENGTH=16|K'
@@ -752,7 +752,7 @@ class BastionLabel:
 
     def with_check(self) -> BastionLabel:
         """Return copy with computed check digit.
-        
+
         Returns:
             New BastionLabel with check digit set
         """
@@ -769,7 +769,7 @@ class BastionLabel:
 
     def without_check(self) -> BastionLabel:
         """Return copy without check digit.
-        
+
         Returns:
             New BastionLabel with check=None
         """
@@ -785,10 +785,10 @@ class BastionLabel:
 
     def validate(self) -> list[str]:
         """Validate all fields.
-        
+
         Returns:
             List of error messages (empty if valid)
-            
+
         Example:
             >>> label = BastionLabel.parse("Bastion/USER/SHA2/512:github.com:2025-11-30#VERSION=1&LENGTH=16|K")
             >>> label.validate()
@@ -827,7 +827,7 @@ class BastionLabel:
 
     def is_valid(self) -> bool:
         """Check if label is valid.
-        
+
         Returns:
             True if no validation errors
         """
@@ -835,7 +835,7 @@ class BastionLabel:
 
     def verify_check(self) -> bool:
         """Verify the check digit is correct.
-        
+
         Returns:
             True if check digit matches, False if missing or incorrect
         """
@@ -845,14 +845,14 @@ class BastionLabel:
 
     def get_param(self, key: str, default: int | str | None = None) -> int | str | None:
         """Get a decoded parameter value.
-        
+
         Args:
             key: Parameter key (length, time, memory, parallelism, encoding)
             default: Default value if not present
-            
+
         Returns:
             Parameter value or default
-            
+
         Example:
             >>> label.get_param('length')
             16
@@ -865,10 +865,10 @@ class BastionLabel:
 
     def get_length(self, default: int = 16) -> int:
         """Get length parameter.
-        
+
         Args:
             default: Default length if not specified
-            
+
         Returns:
             Length value
         """
@@ -882,13 +882,13 @@ class BastionLabel:
 
 def parse_label(label: str) -> BastionLabel:
     """Parse a label string (convenience function).
-    
+
     Args:
         label: Full label string
-        
+
     Returns:
         Parsed BastionLabel
-        
+
     Example:
         >>> parse_label("Bastion/USER/SHA2/512:github.com:2025-11-30#VERSION=1&LENGTH=16|K")
         BastionLabel(...)
@@ -906,7 +906,7 @@ def build_label(
     with_check: bool = True,
 ) -> str:
     """Build a label string (convenience function).
-    
+
     Args:
         type: Generator type (USER, CARD, KEY)
         ident: Service/purpose identifier
@@ -915,10 +915,10 @@ def build_label(
         params: Parameters (defaults based on type)
         tool: Tool name (default "Bastion")
         with_check: Whether to include check digit
-        
+
     Returns:
         Complete label string
-        
+
     Example:
         >>> build_label("USER", "github.com", "2025-11-30")
         'Bastion/USER/SHA2/512:github.com:2025-11-30#VERSION=1&LENGTH=16|K'
@@ -937,13 +937,13 @@ def build_label(
 
 def validate_label(label: str) -> tuple[bool, list[str]]:
     """Validate a label string (convenience function).
-    
+
     Args:
         label: Label string to validate
-        
+
     Returns:
         Tuple of (is_valid, error_messages)
-        
+
     Example:
         >>> validate_label("Bastion/USER/SHA2/512:github.com:2025-11-30#VERSION=1&LENGTH=16|K")
         (True, [])

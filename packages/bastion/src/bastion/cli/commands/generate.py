@@ -30,7 +30,7 @@ def generate_mermaid(
     output_path: Path,
 ) -> None:
     """Generate a mermaid diagram from the database.
-    
+
     Args:
         db: Password rotation database
         output_path: Path to write the diagram to
@@ -45,7 +45,7 @@ def username_init(
     entropy_source: str | None,
 ) -> None:
     """Initialize username generator with salt.
-    
+
     Args:
         generator: UsernameGenerator instance
         vault: 1Password vault name
@@ -89,10 +89,10 @@ def username_init(
 
 def _prompt_entropy_source(vault: str) -> str | None:
     """Prompt user to select an entropy source for salt derivation.
-    
+
     Args:
         vault: Vault name for new entropy pools
-        
+
     Returns:
         Selected entropy pool UUID, or None for system RNG
     """
@@ -175,13 +175,13 @@ def _handle_entropy_source_selection(
     pool_manager: EntropyPool,
 ) -> str | None:
     """Handle the selected entropy source and return UUID.
-    
+
     Args:
         selected_source: Source type ('system', 'yubikey', 'infnoise', 'pool')
         suitable_pools: List of available entropy pools
         vault: Vault name for new pools
         pool_manager: EntropyPool instance
-        
+
     Returns:
         Selected entropy pool UUID, or None for system RNG
     """
@@ -239,10 +239,10 @@ def _handle_entropy_source_selection(
 
 def _select_from_existing_pools(suitable_pools: list[dict]) -> str | None:
     """Display pool selection table and get user choice.
-    
+
     Args:
         suitable_pools: List of available entropy pools
-        
+
     Returns:
         Selected pool UUID
     """
@@ -294,7 +294,7 @@ def username_verify(
     username: str,
 ) -> None:
     """Verify a username against its label.
-    
+
     Args:
         generator: UsernameGenerator instance
         label: Full label string
@@ -336,7 +336,7 @@ def username_generate(
     encoding: int = 36,
 ) -> None:
     """Generate a deterministic username and optionally save to 1Password.
-    
+
     Args:
         generator: UsernameGenerator instance
         config: Username generator configuration
@@ -441,7 +441,7 @@ def _interactive_username_prompts(
     length: int | None,
 ) -> tuple[str, str, str, int]:
     """Prompt user for missing username generation parameters.
-    
+
     Returns:
         Tuple of (owner, algorithm, date, length)
     """
@@ -487,7 +487,7 @@ def _handle_collision(
     collision_uuid: str,
 ) -> None:
     """Handle label collision by showing alternatives and exiting.
-    
+
     Args:
         generator: UsernameGenerator instance
         label: The colliding label
@@ -522,7 +522,7 @@ def _save_username_to_1password(
     length: int,
 ) -> None:
     """Save generated username to 1Password as a login item.
-    
+
     Args:
         generator: UsernameGenerator instance
         username: Generated username

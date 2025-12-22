@@ -20,13 +20,13 @@ class SeederGrid:
     def __init__(self, seed_bytes: bytes, card_id: str | None = None, base: str = DEFAULT_BASE, card_index: str = "A0"):
         """
         Initialize grid with seed material.
-        
+
         Args:
             seed_bytes: 64-byte seed for token generation
             card_id: Optional card ID to incorporate into token generation
             base: Base system to use (base10, base62, base90) - defaults to base90
             card_index: Card index for batch generation (A0-J9), default "A0"
-            
+
         Raises:
             GridGenerationError: If grid generation fails or base is invalid
         """
@@ -85,7 +85,7 @@ class SeederGrid:
 
     def _generate_coordinate_map(self) -> None:
         """Generate coordinate-to-token mapping.
-        
+
         Spreadsheet convention: letter=column (A-J), number=row (0-9)
         A0=top-left, J0=top-right, A9=bottom-left, J9=bottom-right
         """
@@ -102,13 +102,13 @@ class SeederGrid:
     def get_token(self, coordinate: str) -> str:
         """
         Get token at specific coordinate.
-        
+
         Args:
             coordinate: Grid coordinate (e.g., "A0", "J9")
-            
+
         Returns:
             Token string at coordinate
-            
+
         Raises:
             CoordinateError: If coordinate is invalid
         """
@@ -137,10 +137,10 @@ class SeederGrid:
     def get_tokens_by_pattern(self, coordinates: list[str]) -> list[str]:
         """
         Get tokens for a list of coordinates.
-        
+
         Args:
             coordinates: List of coordinate strings
-            
+
         Returns:
             List of tokens corresponding to coordinates
         """
@@ -149,10 +149,10 @@ class SeederGrid:
     def find_token_coordinates(self, target_token: str) -> list[str]:
         """
         Find all coordinates containing a specific token.
-        
+
         Args:
             target_token: Token to search for
-            
+
         Returns:
             List of coordinates where token appears
         """
@@ -167,10 +167,10 @@ class SeederGrid:
     def verify_tokens_at_coordinates(self, coordinate_token_pairs: list[tuple[str, str]]) -> bool:
         """
         Verify that expected tokens appear at specified coordinates.
-        
+
         Args:
             coordinate_token_pairs: List of (coordinate, expected_token) tuples
-            
+
         Returns:
             True if all tokens match, False otherwise
         """
@@ -186,10 +186,10 @@ class SeederGrid:
     def get_grid_as_string(self, separator: str = " ") -> str:
         """
         Get grid as formatted string.
-        
+
         Args:
             separator: Token separator (default: space)
-            
+
         Returns:
             Grid formatted as string
         """
@@ -201,7 +201,7 @@ class SeederGrid:
     def get_grid_statistics(self) -> dict[str, any]:
         """
         Get statistics about the generated grid.
-        
+
         Returns:
             Dictionary with grid statistics
         """
@@ -228,12 +228,12 @@ class CSVExporter:
     ) -> None:
         """
         Export grid data to CSV format compatible with card template.
-        
+
         Args:
             grid: SeederGrid instance containing the token matrix
             card_id: Unique identifier for this card/matrix
             filename: Output CSV filename
-            
+
         Raises:
             GridGenerationError: If export fails
         """
@@ -281,7 +281,7 @@ class CSVExporter:
 
 class CoordinateUtils:
     """Utility functions for coordinate manipulation.
-    
+
     Spreadsheet convention: letter=column (A-J), number=row (0-9)
     A0=top-left, J0=top-right, A9=bottom-left, J9=bottom-right
     """
@@ -290,12 +290,12 @@ class CoordinateUtils:
     def validate_coordinate(coordinate: str) -> bool:
         """
         Validate coordinate format.
-        
+
         Spreadsheet convention: letter=column (A-J), number=row (0-9)
-        
+
         Args:
             coordinate: Coordinate string to validate (e.g., "A0", "J9")
-            
+
         Returns:
             True if valid, False otherwise
         """
@@ -309,15 +309,15 @@ class CoordinateUtils:
     def coordinate_to_indices(coordinate: str) -> tuple[int, int]:
         """
         Convert coordinate to row/column indices.
-        
+
         Spreadsheet convention: letter=column (A-J), number=row (0-9)
-        
+
         Args:
             coordinate: Grid coordinate (e.g., "A0" = col 0, row 0)
-            
+
         Returns:
             Tuple of (row, column) indices for matrix[row][col] access
-            
+
         Raises:
             CoordinateError: If coordinate is invalid
         """
@@ -334,16 +334,16 @@ class CoordinateUtils:
     def indices_to_coordinate(row: int, col: int) -> str:
         """
         Convert row/column indices to coordinate.
-        
+
         Spreadsheet convention: letter=column (A-J), number=row (0-9)
-        
+
         Args:
             row: Row index (0-9) - becomes the number in coordinate
             col: Column index (0-9) - becomes the letter in coordinate
-            
+
         Returns:
             Coordinate string (e.g., row=0, col=0 -> "A0")
-            
+
         Raises:
             CoordinateError: If indices are out of range
         """
@@ -357,10 +357,10 @@ class CoordinateUtils:
     def get_adjacent_coordinates(coordinate: str) -> list[str]:
         """
         Get coordinates adjacent to given coordinate.
-        
+
         Args:
             coordinate: Center coordinate
-            
+
         Returns:
             List of valid adjacent coordinates
         """

@@ -43,7 +43,7 @@ class EnclaveEventType(str):
 
 class EnclaveEvent(BaseModel):
     """An audit event from the Enclave.
-    
+
     These events are created offline and later imported to the
     Manager's sigchain via QR code transfer.
     """
@@ -93,7 +93,7 @@ class EnclaveEvent(BaseModel):
 
 class EnclaveBatch(BaseModel):
     """A batch of events for QR transfer to Manager.
-    
+
     Batches are compressed and encoded for efficient QR code transfer.
     The Manager imports these and appends to its sigchain.
     """
@@ -147,9 +147,9 @@ class EnclaveBatch(BaseModel):
 
     def to_qr_data(self) -> str:
         """Serialize batch for QR code transfer.
-        
+
         Uses compression and base64 encoding to fit in QR capacity.
-        
+
         Returns:
             Base64-encoded compressed JSON
         """
@@ -180,10 +180,10 @@ class EnclaveBatch(BaseModel):
     @classmethod
     def from_qr_data(cls, qr_data: str) -> EnclaveBatch:
         """Deserialize batch from QR code data.
-        
+
         Args:
             qr_data: Base64-encoded compressed JSON
-            
+
         Returns:
             Reconstructed EnclaveBatch
         """
@@ -224,10 +224,10 @@ class EnclaveBatch(BaseModel):
 
     def can_fit_in_qr(self, max_bytes: int = 2048) -> bool:
         """Check if batch fits in a single QR code.
-        
+
         Args:
             max_bytes: Maximum bytes for QR (Level H, ~2KB practical limit)
-            
+
         Returns:
             True if batch fits
         """
@@ -236,11 +236,11 @@ class EnclaveBatch(BaseModel):
 
 class EnclaveSession:
     """Manages an Enclave session with event logging.
-    
+
     This is a simplified session manager for offline use.
     Events are logged to a local file and can be exported
     as a batch for QR transfer.
-    
+
     Example:
         >>> session = EnclaveSession()
         >>> session.start()
@@ -251,7 +251,7 @@ class EnclaveSession:
 
     def __init__(self, storage_path: Path | None = None):
         """Initialize session manager.
-        
+
         Args:
             storage_path: Path to store session data (default: ~/.enclave/sessions/)
         """
@@ -266,7 +266,7 @@ class EnclaveSession:
 
     def start(self) -> str:
         """Start a new session.
-        
+
         Returns:
             Session ID
         """
@@ -285,11 +285,11 @@ class EnclaveSession:
 
     def log_event(self, event_type: str, payload: dict[str, Any]) -> EnclaveEvent:
         """Log an event to the session.
-        
+
         Args:
             event_type: Type of event
             payload: Event payload data
-            
+
         Returns:
             The created event
         """
@@ -316,7 +316,7 @@ class EnclaveSession:
 
     def end(self) -> EnclaveBatch:
         """End the session and create export batch.
-        
+
         Returns:
             Batch ready for QR export
         """
@@ -335,7 +335,7 @@ class EnclaveSession:
 
     def export_batch(self) -> EnclaveBatch:
         """Export current events as a batch.
-        
+
         Returns:
             EnclaveBatch ready for QR encoding
         """
@@ -347,13 +347,13 @@ class EnclaveSession:
 
     def split_into_qr_batches(self, max_bytes: int = 2048) -> list[EnclaveBatch]:
         """Split events into multiple batches if needed.
-        
+
         If the full batch is too large for a single QR code,
         split into multiple smaller batches.
-        
+
         Args:
             max_bytes: Maximum bytes per QR code
-            
+
         Returns:
             List of batches, each fitting in one QR
         """
@@ -396,10 +396,10 @@ class EnclaveSession:
     @staticmethod
     def list_sessions(storage_path: Path | None = None) -> list[dict[str, Any]]:
         """List available sessions.
-        
+
         Args:
             storage_path: Path to session storage
-            
+
         Returns:
             List of session info dicts
         """

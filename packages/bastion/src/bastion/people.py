@@ -21,7 +21,7 @@ class PeopleManager:
 
     def get_all_people(self) -> list[dict]:
         """Get all Identity items from 1Password.
-        
+
         Returns:
             List of Identity items
         """
@@ -40,10 +40,10 @@ class PeopleManager:
 
     def get_person_details(self, person_identifier: str) -> dict | None:
         """Get detailed information about a person (Identity item).
-        
+
         Args:
             person_identifier: Person's name or UUID
-            
+
         Returns:
             Person details or None if not found
         """
@@ -68,14 +68,14 @@ class PeopleManager:
         notes: str | None = None,
     ) -> bool:
         """Create a new person (Identity item) in 1Password.
-        
+
         Args:
             name: Person's full name
             email: Email address (optional)
             phone: Phone number (optional)
             relationship: Relationship description (e.g., "Spouse", "Emergency Contact")
             notes: Additional notes
-            
+
         Returns:
             True if created successfully
         """
@@ -120,7 +120,7 @@ class PeopleManager:
 
     def get_recovery_contacts(self) -> list[dict]:
         """Get all people who can provide account recovery.
-        
+
         Returns:
             List of Identity items with recovery capabilities
         """
@@ -147,12 +147,12 @@ class PeopleManager:
 
     def get_recovery_network(self, person_identifier: str) -> dict[str, list[dict]]:
         """Get the recovery network for a person.
-        
+
         Shows what accounts this person can recover and who can recover their accounts.
-        
+
         Args:
             person_identifier: Person's name or UUID
-            
+
         Returns:
             Dict with "can_recover" and "recovered_by" lists
         """
@@ -177,10 +177,10 @@ class PeopleManager:
 
     def format_person_info(self, person_data: dict) -> str:
         """Format person information for display.
-        
+
         Args:
             person_data: Person details from 1Password
-            
+
         Returns:
             Formatted string
         """
@@ -216,10 +216,10 @@ class PeopleManager:
 
     def list_all_people(self, include_recovery: bool = False) -> str:
         """List all people with optional recovery info.
-        
+
         Args:
             include_recovery: Include recovery relationship counts
-            
+
         Returns:
             Formatted list of people
         """
@@ -251,7 +251,7 @@ class PeopleManager:
 
     def show_recovery_matrix(self) -> str:
         """Generate a recovery matrix showing who can recover what.
-        
+
         Returns:
             Formatted recovery matrix
         """

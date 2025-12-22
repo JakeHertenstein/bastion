@@ -16,7 +16,7 @@ class TagOperations:
     def add_tag(self, account: Account, tag: str) -> tuple[bool, str, list[str]]:
         """
         Add a tag to an account.
-        
+
         Returns:
             (success, message, new_tags)
         """
@@ -40,7 +40,7 @@ class TagOperations:
     def remove_tag(self, account: Account, tag: str) -> tuple[bool, str, list[str]]:
         """
         Remove a tag from an account.
-        
+
         Returns:
             (success, message, new_tags)
         """
@@ -70,7 +70,7 @@ class TagOperations:
     def rename_tag(self, account: Account, old_tag: str, new_tag: str) -> tuple[bool, str, list[str]]:
         """
         Rename a tag in an account.
-        
+
         Returns:
             (success, message, new_tags)
         """
@@ -102,7 +102,7 @@ class TagOperations:
         """
         Replace one tag with another (removes old, adds new).
         Alias for rename_tag.
-        
+
         Returns:
             (success, message, new_tags)
         """
@@ -117,13 +117,13 @@ class TagOperations:
     ) -> dict[str, tuple[bool, str]]:
         """
         Add a tag to multiple accounts.
-        
+
         Args:
             accounts: Dictionary of accounts by UUID
             tag: Tag to add
             filter_fn: Optional filter function to select accounts
             dry_run: If True, don't actually make changes
-        
+
         Returns:
             Dictionary mapping UUID to (success, message)
         """
@@ -156,13 +156,13 @@ class TagOperations:
     ) -> dict[str, tuple[bool, str]]:
         """
         Remove a tag from multiple accounts.
-        
+
         Args:
             accounts: Dictionary of accounts by UUID
             tag: Tag to remove
             filter_fn: Optional filter function to select accounts
             dry_run: If True, don't actually make changes
-        
+
         Returns:
             Dictionary mapping UUID to (success, message)
         """
@@ -195,13 +195,13 @@ class TagOperations:
     ) -> dict[str, tuple[bool, str]]:
         """
         Rename a tag across multiple accounts.
-        
+
         Args:
             accounts: Dictionary of accounts by UUID
             old_tag: Tag to rename
             new_tag: New tag name
             dry_run: If True, don't actually make changes
-        
+
         Returns:
             Dictionary mapping UUID to (success, message)
         """

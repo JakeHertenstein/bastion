@@ -38,7 +38,7 @@ DEFAULT_CALENDARS = [
 
 class OTSProof(BaseModel):
     """An OpenTimestamps proof file.
-    
+
     This represents the .ots file that contains the timestamp proof.
     """
 
@@ -59,7 +59,7 @@ class OTSProof(BaseModel):
 
     def save(self, path: Path) -> None:
         """Save the .ots proof to a file.
-        
+
         Args:
             path: Path to save the proof (should end in .ots)
         """
@@ -69,11 +69,11 @@ class OTSProof(BaseModel):
     @classmethod
     def load(cls, path: Path, digest: str) -> OTSProof:
         """Load a .ots proof from a file.
-        
+
         Args:
             path: Path to the .ots file
             digest: Hex-encoded digest this proof is for
-            
+
         Returns:
             OTSProof instance
         """
@@ -98,16 +98,16 @@ class CalendarResponse:
 
 class OTSCalendar:
     """Client for OpenTimestamps calendar servers.
-    
+
     This class uses the `ots` CLI tool for actual operations,
     providing a Python interface for sigchain integration.
-    
+
     The ots CLI handles:
     - Stamp: Submit data to calendars
     - Upgrade: Check for Bitcoin attestations
     - Verify: Verify timestamp proofs
     - Info: Display proof information
-    
+
     Example:
         >>> client = OTSCalendar()
         >>> proof = client.stamp(merkle_root_bytes)
@@ -121,7 +121,7 @@ class OTSCalendar:
         ots_path: str = "ots",
     ):
         """Initialize the calendar client.
-        
+
         Args:
             calendars: List of calendar servers to use
             ots_path: Path to ots CLI binary
@@ -135,11 +135,11 @@ class OTSCalendar:
         input_data: bytes | None = None,
     ) -> tuple[bool, str, str]:
         """Run an ots CLI command.
-        
+
         Args:
             args: Command arguments
             input_data: Optional stdin data
-            
+
         Returns:
             Tuple of (success, stdout, stderr)
         """
@@ -164,7 +164,7 @@ class OTSCalendar:
 
     def is_available(self) -> bool:
         """Check if ots CLI is available.
-        
+
         Returns:
             True if ots CLI is installed and accessible
         """
@@ -173,13 +173,13 @@ class OTSCalendar:
 
     def stamp(self, data: bytes, output_path: Path | None = None) -> OTSProof | None:
         """Create a timestamp for data.
-        
+
         Submits the SHA256 hash of the data to calendar servers.
-        
+
         Args:
             data: Data to timestamp (typically merkle root)
             output_path: Optional path to save .ots file
-            
+
         Returns:
             OTSProof if successful, None otherwise
         """
@@ -235,13 +235,13 @@ class OTSCalendar:
         output_path: Path | None = None
     ) -> OTSProof | None:
         """Create a timestamp for a hash directly.
-        
+
         Use this when you already have a hash (like a merkle root).
-        
+
         Args:
             hash_hex: Hex-encoded SHA256 hash to timestamp
             output_path: Optional path to save .ots file
-            
+
         Returns:
             OTSProof if successful, None otherwise
         """
@@ -299,13 +299,13 @@ class OTSCalendar:
 
     def upgrade(self, proof: OTSProof) -> OTSProof:
         """Attempt to upgrade a pending proof.
-        
+
         Checks if Bitcoin attestation is available and upgrades
         the proof if so.
-        
+
         Args:
             proof: The proof to upgrade
-            
+
         Returns:
             Updated proof (may still be pending if not yet attested)
         """
@@ -341,11 +341,11 @@ class OTSCalendar:
 
     def verify(self, proof: OTSProof, data: bytes | None = None) -> bool:
         """Verify a timestamp proof.
-        
+
         Args:
             proof: The proof to verify
             data: Optional original data to verify against
-            
+
         Returns:
             True if proof is valid
         """
@@ -386,10 +386,10 @@ class OTSCalendar:
 
     def info(self, proof: OTSProof) -> dict[str, Any]:
         """Get information about a proof.
-        
+
         Args:
             proof: The proof to inspect
-            
+
         Returns:
             Dict with proof information
         """
@@ -417,7 +417,7 @@ class OTSCalendar:
 
     def _parse_attestation_info(self, proof: OTSProof, output: str) -> None:
         """Parse Bitcoin attestation info from ots output.
-        
+
         Args:
             proof: Proof to update
             output: ots command output
@@ -438,7 +438,7 @@ class OTSCalendar:
 
 def check_ots_available() -> tuple[bool, str]:
     """Check if OpenTimestamps CLI is available.
-    
+
     Returns:
         Tuple of (available, message)
     """
@@ -459,17 +459,17 @@ def check_ots_available() -> tuple[bool, str]:
 
 class OTSHttpClient:
     """HTTP-based OpenTimestamps calendar client.
-    
+
     This client communicates directly with calendar servers via HTTP,
     without requiring the ots CLI tool. Useful for:
     - Environments where CLI installation is difficult
     - Programmatic access without subprocess overhead
     - Custom calendar server configurations
-    
+
     Note: This provides basic submission functionality. For full
     proof verification, the ots CLI or opentimestamps library is
     recommended.
-    
+
     Example:
         >>> client = OTSHttpClient()
         >>> response = await client.submit_digest(merkle_root_bytes)
@@ -486,7 +486,7 @@ class OTSHttpClient:
         timeout: float = 30.0,
     ):
         """Initialize HTTP client.
-        
+
         Args:
             calendars: List of calendar servers to use
             timeout: Request timeout in seconds
@@ -500,11 +500,11 @@ class OTSHttpClient:
         calendar: CalendarServer | None = None,
     ) -> CalendarResponse:
         """Submit a digest to a calendar server asynchronously.
-        
+
         Args:
             digest: 32-byte SHA256 digest to timestamp
             calendar: Specific calendar (None = first available)
-            
+
         Returns:
             CalendarResponse with submission result
         """
@@ -560,11 +560,11 @@ class OTSHttpClient:
         calendar: CalendarServer | None = None,
     ) -> CalendarResponse:
         """Submit a digest to a calendar server synchronously.
-        
+
         Args:
             digest: 32-byte SHA256 digest to timestamp
             calendar: Specific calendar (None = first available)
-            
+
         Returns:
             CalendarResponse with submission result
         """
@@ -619,10 +619,10 @@ class OTSHttpClient:
         digest: bytes,
     ) -> list[CalendarResponse]:
         """Submit digest to all configured calendars asynchronously.
-        
+
         Args:
             digest: 32-byte SHA256 digest to timestamp
-            
+
         Returns:
             List of CalendarResponse from each server
         """
@@ -651,10 +651,10 @@ class OTSHttpClient:
         digest: bytes,
     ) -> list[CalendarResponse]:
         """Submit digest to all configured calendars synchronously.
-        
+
         Args:
             digest: 32-byte SHA256 digest to timestamp
-            
+
         Returns:
             List of CalendarResponse from each server
         """
@@ -669,12 +669,12 @@ class OTSHttpClient:
         merkle_root_hex: str,
     ) -> list[CalendarResponse]:
         """Submit a merkle root hash to all calendars.
-        
+
         Convenience method for sigchain anchoring.
-        
+
         Args:
             merkle_root_hex: Hex-encoded merkle root
-            
+
         Returns:
             List of CalendarResponse from each server
         """
@@ -683,7 +683,7 @@ class OTSHttpClient:
 
     def check_calendars_available(self) -> dict[CalendarServer, bool]:
         """Check which calendar servers are reachable.
-        
+
         Returns:
             Dict mapping calendar to availability status
         """

@@ -21,7 +21,7 @@ from pathlib import Path
 
 class QualityThreshold(Enum):
     """Quality thresholds for entropy pools.
-    
+
     Used for filtering in batch collection and validation.
     Values are ordered from highest to lowest quality.
     """
@@ -33,11 +33,11 @@ class QualityThreshold(Enum):
     @classmethod
     def meets_threshold(cls, rating: str, minimum: "QualityThreshold") -> bool:
         """Check if a rating meets the minimum threshold.
-        
+
         Args:
             rating: Quality rating string (e.g., "GOOD")
             minimum: Minimum acceptable threshold
-            
+
         Returns:
             True if rating meets or exceeds minimum threshold
         """
@@ -63,7 +63,7 @@ class EntropyAnalysis:
         serial_correlation: float,
     ):
         """Initialize analysis results.
-        
+
         Args:
             entropy_bits_per_byte: Entropy in bits per byte (ideal: 8.0)
             chi_square: Chi-square value
@@ -83,7 +83,7 @@ class EntropyAnalysis:
 
     def is_acceptable(self) -> bool:
         """Check if entropy meets minimum quality standards.
-        
+
         Returns:
             True if entropy is acceptable for cryptographic use
         """
@@ -95,10 +95,10 @@ class EntropyAnalysis:
 
     def quality_rating(self) -> str:
         """Get human-readable quality rating.
-        
+
         Returns:
             Rating string: EXCELLENT, GOOD, FAIR, or POOR
-        
+
         Thresholds calibrated for Infinite Noise TRNG which produces
         ~7.988 bits/byte entropy at 16KB+ sample sizes. Chi-square p-value
         has high natural variance (3%-98% observed), so we use wider windows.
@@ -114,7 +114,7 @@ class EntropyAnalysis:
 
     def to_dict(self) -> dict[str, float]:
         """Convert to dictionary for storage.
-        
+
         Returns:
             Dictionary of analysis metrics
         """
@@ -131,10 +131,10 @@ class EntropyAnalysis:
     @staticmethod
     def from_dict(data: dict[str, float]) -> "EntropyAnalysis":
         """Create from dictionary.
-        
+
         Args:
             data: Dictionary from to_dict()
-            
+
         Returns:
             EntropyAnalysis instance
         """
@@ -163,11 +163,11 @@ class EntropyPool:
 
     def find_highest_serial_number(self, version: str = "v1", use_cache: bool = False) -> int:
         """Find the highest serial number for entropy pools.
-        
+
         Args:
             version: Version string (e.g., "v1")
             use_cache: If True, return cached value if available (for batch ops)
-            
+
         Returns:
             Highest serial number found, or 0 if none exist
         """
@@ -212,10 +212,10 @@ class EntropyPool:
 
     def set_cached_serial(self, serial: int) -> None:
         """Set the cached max serial number.
-        
+
         Used by batch operations that already know the max serial from
         a previous list operation, avoiding redundant 1Password calls.
-        
+
         Args:
             serial: The highest serial number to cache
         """
@@ -223,7 +223,7 @@ class EntropyPool:
 
     def invalidate_serial_cache(self) -> None:
         """Invalidate the cached max serial number.
-        
+
         Call this if external changes may have modified pool serials.
         """
         self._cached_max_serial = None
@@ -244,7 +244,7 @@ class EntropyPool:
         batch_id: int | None = None,
     ) -> tuple[str, int]:
         """Create entropy pool in 1Password.
-        
+
         Args:
             entropy_bytes: Raw entropy data
             source: Source description (e.g., "yubikey", "dice", "yubikey+dice")
@@ -259,10 +259,10 @@ class EntropyPool:
             device_metadata: Additional metadata dict (serial numbers, OS info, etc.)
             batch_id: Optional batch collection ID (sequential integer for batch runs)
             device_metadata: Additional metadata dict (serial numbers, OS info, etc.)
-            
+
         Returns:
             Tuple of (pool_uuid, serial_number)
-            
+
         Raises:
             RuntimeError: If creation fails
         """
@@ -404,10 +404,10 @@ class EntropyPool:
 
     def get_pool(self, pool_uuid: str) -> tuple[bytes, dict] | None:
         """Retrieve entropy pool from 1Password.
-        
+
         Args:
             pool_uuid: Pool UUID
-            
+
         Returns:
             Tuple of (entropy_bytes, metadata) or None if not found
         """
@@ -481,10 +481,10 @@ class EntropyPool:
 
     def mark_consumed(self, pool_uuid: str) -> None:
         """Mark entropy pool as consumed.
-        
+
         Args:
             pool_uuid: Pool UUID to mark
-            
+
         Raises:
             RuntimeError: If update fails
         """
@@ -511,10 +511,10 @@ class EntropyPool:
 
     def list_pools(self, include_consumed: bool = False) -> list[dict]:
         """List all entropy pools.
-        
+
         Args:
             include_consumed: Whether to include consumed pools
-            
+
         Returns:
             List of pool metadata dictionaries
         """
@@ -595,12 +595,12 @@ class EntropyPool:
         include_consumed: bool = False,
     ) -> list[dict]:
         """List entropy pools filtered by source type.
-        
+
         Args:
             source: Source type to filter (e.g., 'infnoise', 'yubikey', 'system')
             min_bits: Minimum bit count required (default 0 = no minimum)
             include_consumed: Whether to include consumed pools (default False)
-            
+
         Returns:
             List of pool metadata dictionaries matching criteria, sorted by serial number
         """
@@ -632,11 +632,11 @@ class EntropyPool:
         min_bits: int = 0,
     ) -> dict | None:
         """Get the first unconsumed pool matching source and bit requirements.
-        
+
         Args:
             source: Source type to filter
             min_bits: Minimum bit count required
-            
+
         Returns:
             Pool metadata dict or None if no matching pool found
         """
@@ -650,22 +650,22 @@ class EntropyPool:
 
 def combine_entropy_sources(*sources: bytes) -> bytes:
     """Combine multiple entropy sources using XOR with SHAKE256 extension.
-    
+
     Preserves maximum entropy by:
     1. Finding largest source size
     2. Extending smaller sources using SHAKE256 (XOF)
     3. XORing all extended sources together
-    
+
     The XOR operation ensures that if ANY source has good entropy,
     the output will have good entropy. SHAKE256 extension is
     cryptographically secure deterministic expansion.
-    
+
     Args:
         *sources: Variable number of entropy byte strings
-        
+
     Returns:
         Combined entropy with size = max(len(source)) bytes
-        
+
     Raises:
         ValueError: If no sources provided
     """
@@ -703,13 +703,13 @@ def store_and_combine_entropy_sources(
     store_sources: bool = True,
 ) -> tuple[str, list[str]]:
     """Store each entropy source separately, then create derived pool.
-    
+
     This function implements the multi-source entropy workflow:
     1. Store each source entropy separately in 1Password (if store_sources=True)
     2. Combine all sources using XOR+SHAKE256 (preserves max entropy size)
     3. Create a derived pool that references all source UUIDs
     4. Return derived pool UUID and list of source UUIDs
-    
+
     Args:
         source_entropies: List of (source_name, source_type, entropy_bytes, device_metadata)
             Example: [
@@ -719,11 +719,11 @@ def store_and_combine_entropy_sources(
             ]
         vault: 1Password vault name (default: "Private")
         store_sources: If True, store individual sources before combining
-        
+
     Returns:
         Tuple of (derived_pool_uuid, list_of_source_pool_uuids)
         If store_sources=False, source list will be empty
-        
+
     Raises:
         RuntimeError: If creation fails
         ValueError: If no sources provided
@@ -789,16 +789,16 @@ def derive_salt_from_entropy_pool(
     ident: str = "username-generator",
 ) -> tuple[bytes, str, str]:
     """Derive deterministic salt from entropy pool using HKDF-SHA512.
-    
+
     Uses HKDF (HMAC-based Key Derivation Function) with SHA-512 to derive
     a deterministic salt from an entropy pool. The same entropy pool with
     the same info string will always produce the same output.
-    
+
     This function marks the entropy pool as consumed after derivation.
-    
+
     The `info` parameter uses Bastion Label format for domain separation:
         Bastion/SALT/HKDF/SHA2/512:{ident}:{date}#VERSION=1
-    
+
     Args:
         entropy_pool_uuid: UUID of source entropy pool in 1Password
         info: Context string for domain separation. If None, generates a
@@ -806,10 +806,10 @@ def derive_salt_from_entropy_pool(
         output_length: Bytes of output (default: 64 = 512 bits)
         ident: Identifier for the salt purpose (default: "username-generator")
                Used to generate info label if info is None.
-        
+
     Returns:
         Tuple of (derived_salt_bytes, entropy_pool_uuid, derivation_label)
-        
+
     Raises:
         RuntimeError: If entropy pool not found, too small, or derivation fails
     """
@@ -869,13 +869,13 @@ def derive_salt_from_entropy_pool(
 
 def analyze_entropy_with_ent(entropy_bytes: bytes) -> EntropyAnalysis | None:
     """Analyze entropy using ENT tool.
-    
+
     Args:
         entropy_bytes: Entropy data to analyze
-        
+
     Returns:
         EntropyAnalysis instance or None if ENT not available
-        
+
     Raises:
         RuntimeError: If ENT is installed but fails to run
     """
@@ -939,19 +939,19 @@ def attach_visualization_to_pool(
     chi_square_pdf: bytes,
 ) -> bool:
     """Attach visualization PDF files to an entropy pool item in 1Password.
-    
+
     Creates a "Visualization" section with two file attachments:
     - Histogram: Byte frequency distribution and bit pattern grid
     - Chi-Square: Chi-square distribution analysis
-    
+
     Args:
         pool_uuid: UUID of the entropy pool item
         histogram_pdf: PDF bytes for histogram visualization
         chi_square_pdf: PDF bytes for chi-square visualization
-        
+
     Returns:
         True if attachments were successful, False otherwise
-        
+
     Raises:
         RuntimeError: If 1Password CLI fails
     """
@@ -994,10 +994,10 @@ def attach_visualization_to_pool(
 
 def pool_has_visualization(pool_uuid: str) -> bool:
     """Check if an entropy pool already has visualization attachments.
-    
+
     Args:
         pool_uuid: UUID of the entropy pool item
-        
+
     Returns:
         True if pool has Visualization section with files, False otherwise
     """

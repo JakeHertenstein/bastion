@@ -30,7 +30,7 @@ class TokenAnalyzer:
     def __init__(self, item_data: dict):
         """
         Initialize analyzer with 1Password item data.
-        
+
         Args:
             item_data: Item data from op item get --format json
         """
@@ -40,7 +40,7 @@ class TokenAnalyzer:
     def get_tokens(self) -> dict[int, dict]:
         """
         Parse and return all Token N sections from item.
-        
+
         Returns:
             Dict mapping token number to token data
             Example: {1: {"Serial": "123", "Type": "YubiKey", ...}, 2: {...}}
@@ -84,7 +84,7 @@ class TokenAnalyzer:
     def count_tokens_by_type(self) -> dict[str, int]:
         """
         Count tokens grouped by type.
-        
+
         Returns:
             Dict mapping token type to count
             Example: {"YubiKey": 3, "Phone App": 1, "SMS": 1}
@@ -101,7 +101,7 @@ class TokenAnalyzer:
     def get_next_token_number(self) -> int:
         """
         Get next sequential token number.
-        
+
         Returns:
             Next available token number (max + 1, or 1 if no tokens exist)
         """
@@ -117,10 +117,10 @@ class TokenAnalyzer:
     def get_token(self, token_num: int) -> dict | None:
         """
         Get token data by number.
-        
+
         Args:
             token_num: Token number (e.g., 1 for "Token 1")
-            
+
         Returns:
             Token field data or None if not found
         """
@@ -129,7 +129,7 @@ class TokenAnalyzer:
     def detect_gaps(self) -> list[int]:
         """
         Detect gaps in token numbering.
-        
+
         Returns:
             List of missing token numbers
             Example: [3, 4] if tokens are 1, 2, 5, 6
@@ -160,11 +160,11 @@ class TokenAnalyzer:
     def has_serial_conflict(self, serial: str, exclude_token_num: int | None = None) -> tuple[bool, list[int]]:
         """
         Check if serial conflicts with existing tokens.
-        
+
         Args:
             serial: Serial to check
             exclude_token_num: Token number to exclude from check (for updates)
-            
+
         Returns:
             (has_conflict, list of conflicting token numbers)
         """
@@ -183,7 +183,7 @@ class TokenAnalyzer:
     def get_oath_name(self) -> str | None:
         """
         Get OATH Name from first YubiKey or Phone App token.
-        
+
         Returns:
             OATH Name or None if no OATH-based tokens exist
         """
@@ -201,10 +201,10 @@ class TokenAnalyzer:
     def validate_token_type(self, token_type: str) -> tuple[bool, str]:
         """
         Validate token type against canonical types.
-        
+
         Args:
             token_type: Type to validate
-            
+
         Returns:
             (is_valid, error_message)
         """
@@ -220,10 +220,10 @@ class TokenAnalyzer:
     def get_required_fields_for_type(self, token_type: str) -> set:
         """
         Get required fields for a token type.
-        
+
         Args:
             token_type: Token type
-            
+
         Returns:
             Set of required field names
         """
@@ -232,10 +232,10 @@ class TokenAnalyzer:
     def validate_token_fields(self, token_data: dict) -> tuple[bool, list[str]]:
         """
         Validate that token has required fields for its type.
-        
+
         Args:
             token_data: Token field data
-            
+
         Returns:
             (is_valid, list of error messages)
         """
@@ -262,11 +262,11 @@ class TokenAnalyzer:
     def format_token_summary(self, token_num: int, token_data: dict) -> str:
         """
         Format token data as human-readable summary.
-        
+
         Args:
             token_num: Token number
             token_data: Token field data
-            
+
         Returns:
             Formatted string (e.g., "Token 1 (YubiKey): Serial 123, OATH Name Google:user")
         """

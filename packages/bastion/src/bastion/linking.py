@@ -50,10 +50,10 @@ class ItemLinker:
 
     def _get_reverse_relationship(self, relationship: str) -> str:
         """Get the reverse relationship type.
-        
+
         Args:
             relationship: Forward relationship type
-            
+
         Returns:
             Reverse relationship type
         """
@@ -71,19 +71,19 @@ class ItemLinker:
 
     def has_passkey_risk(self, item_data: dict) -> bool:
         """Check if item has a 1Password-stored passkey that would be destroyed by JSON editing.
-        
+
         CRITICAL: The 1Password CLI does not include passkey data in JSON output.
         Items tagged with Bastion/2FA/Passkey/Software have passkeys stored in 1Password
         that would be PERMANENTLY DELETED by JSON stdin editing.
-        
+
         Hardware passkeys (FIDO2-Hardware) store keys on the device, not in 1Password,
         so they are not affected by this bug.
-        
+
         See: bastion/support/1PASSWORD-CLI-PASSKEY-BUG.md
-        
+
         Args:
             item_data: Item JSON data from 1Password
-            
+
         Returns:
             True if item has Bastion/2FA/Passkey/Software tag
         """
@@ -92,17 +92,17 @@ class ItemLinker:
 
     def can_edit_item(self, item_data: dict, allow_passkey_risk: bool = False) -> tuple[bool, str]:
         """Check if an item can be safely edited via JSON stdin.
-        
+
         This validates that the item category is supported and that there are no
         known CLI bugs that would prevent editing.
-        
+
         CRITICAL: Items with Bastion/2FA/Passkey/Software tags have 1Password-stored
         passkeys. JSON editing will PERMANENTLY DELETE the passkey's WebAuthn private key.
-        
+
         Args:
             item_data: Item JSON data from 1Password
             allow_passkey_risk: If True, allow editing despite passkey deletion risk
-            
+
         Returns:
             Tuple of (can_edit, reason_if_cannot)
         """
@@ -140,10 +140,10 @@ class ItemLinker:
 
     def get_item_details(self, item_uuid: str) -> dict | None:
         """Get item details from 1Password.
-        
+
         Args:
             item_uuid: Item UUID
-            
+
         Returns:
             Item data dict or None if not found
         """
@@ -166,12 +166,12 @@ class ItemLinker:
         bidirectional: bool = True,
     ) -> bool:
         """Create a native REFERENCE link between two items using JSON editing.
-        
+
         Args:
             source_uuid: Source item UUID
             target_uuid: Target item UUID
             bidirectional: If True, also creates reverse link
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -225,13 +225,13 @@ class ItemLinker:
 
     def _add_reference_field(self, item_uuid: str, target_uuid: str, target_title: str, target_vault: str) -> bool:
         """Add a REFERENCE field to an item using JSON editing.
-        
+
         Args:
             item_uuid: Item to add reference to
             target_uuid: UUID of target item
             target_title: Title of target item
             target_vault: Vault name of target item
-            
+
         Returns:
             True if successful
         """
@@ -347,10 +347,10 @@ class ItemLinker:
 
     def get_links(self, item_uuid: str) -> dict[str, list[dict]]:
         """Get all links for an item.
-        
+
         Args:
             item_uuid: Item UUID
-            
+
         Returns:
             Dict of relationship types to list of linked items
         """
@@ -379,10 +379,10 @@ class ItemLinker:
 
     def verify_bidirectional_links(self, item_uuid: str) -> dict[str, list[dict]]:
         """Verify that all links have proper bidirectional pairs.
-        
+
         Args:
             item_uuid: Item UUID to check
-            
+
         Returns:
             Dict of issues found: {"missing_reverse": [...], "mismatched": [...]}
         """
@@ -427,7 +427,7 @@ class ItemLinker:
 
     def list_all_links(self, item_uuid: str) -> None:
         """List all links for an item in a readable format.
-        
+
         Args:
             item_uuid: Item UUID
         """

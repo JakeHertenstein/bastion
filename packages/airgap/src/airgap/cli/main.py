@@ -64,7 +64,7 @@ class HardwareCheckResult:
 
 def detect_wireless_interfaces() -> list[str]:
     """Detect wireless network interfaces via /sys/class/net.
-    
+
     Returns:
         List of detected wireless interface descriptions
     """
@@ -96,7 +96,7 @@ def detect_wireless_interfaces() -> list[str]:
 
 def detect_wired_interfaces() -> list[str]:
     """Detect wired (Ethernet) network interfaces via /sys/class/net.
-    
+
     Returns:
         List of detected wired interface descriptions
     """
@@ -152,7 +152,7 @@ def detect_wired_interfaces() -> list[str]:
 
 def detect_rfkill_devices() -> list[str]:
     """Detect RF devices via rfkill.
-    
+
     Returns:
         List of RF device descriptions
     """
@@ -168,7 +168,6 @@ def detect_rfkill_devices() -> list[str]:
 
         if result.returncode == 0 and result.stdout:
             # Parse rfkill output
-            current_device = None
             for line in result.stdout.splitlines():
                 # Device line: "0: phy0: Wireless LAN"
                 if re.match(r'^\d+:', line):
@@ -185,7 +184,7 @@ def detect_rfkill_devices() -> list[str]:
 
 def detect_wireless_usb_devices() -> list[str]:
     """Detect known wireless USB devices via lsusb.
-    
+
     Returns:
         List of USB device descriptions
     """
@@ -214,7 +213,7 @@ def detect_wireless_usb_devices() -> list[str]:
 
 def check_all_wireless() -> HardwareCheckResult:
     """Run all wireless hardware detection checks.
-    
+
     Returns:
         HardwareCheckResult with all detected wireless devices
     """
@@ -256,7 +255,7 @@ def check_all_wireless() -> HardwareCheckResult:
 
 def check_all_wired() -> HardwareCheckResult:
     """Run all wired hardware detection checks.
-    
+
     Returns:
         HardwareCheckResult with all detected wired devices
     """
@@ -271,7 +270,7 @@ def check_all_wired() -> HardwareCheckResult:
 
 def check_entropy_sources() -> dict[str, tuple[bool, str]]:
     """Check availability of entropy sources.
-    
+
     Returns:
         Dict mapping source name to (available, message) tuple
     """
@@ -374,7 +373,7 @@ def main(
     ] = None,
 ) -> None:
     """Bastion Airgap - Air-gapped cryptographic key generation system.
-    
+
     Secure key generation and SLIP-39 secret sharing for air-gapped environments.
     Designed for Tier 1 (highest security) operations with no network connectivity.
     """
@@ -394,9 +393,9 @@ CARDS_CACHE_PATH = Path.home() / ".bsec" / "airgap" / "cards-cache.json"
 
 def _get_cards_from_1password() -> list[dict]:
     """Fetch airgap card inventory from 1Password.
-    
+
     Queries for Secure Notes tagged with Bastion/Airgap/CARD/*.
-    
+
     Returns:
         List of card metadata dicts
     """
@@ -461,7 +460,7 @@ def _get_cards_from_1password() -> list[dict]:
 
 def _load_cards_cache() -> list[dict]:
     """Load cards from local cache file.
-    
+
     Returns:
         List of card metadata dicts, or empty list if cache doesn't exist
     """
@@ -478,7 +477,7 @@ def _load_cards_cache() -> list[dict]:
 
 def _save_cards_cache(cards: list[dict]) -> None:
     """Save cards to local cache file.
-    
+
     Args:
         cards: List of card metadata dicts
     """
@@ -494,7 +493,7 @@ def cards_list(
     offline: Annotated[bool, typer.Option("--offline", help="Use local cache only (no 1Password)")] = False,
 ) -> None:
     """List all provisioned microSD cards.
-    
+
     Card inventory is stored as 1Password Secure Notes tagged with
     Bastion/Airgap/CARD/{DOMAIN}. Use --sync to refresh local cache,
     or --offline to use cached data when air-gapped.
@@ -566,11 +565,11 @@ def cards_provision(
     vault: Annotated[str, typer.Option("--vault", "-v", help="1Password vault")] = "Private",
 ) -> None:
     """Provision a new microSD card and register in 1Password.
-    
+
     Creates a 1Password Secure Note with proper tags and fields to track
     the card in the airgap inventory. The card should be physically
     labeled to match the registered identity.
-    
+
     Domains:
         OS - Live operating system (read-only)
         SCRATCH - Temporary workspace (RAM-based)
@@ -683,7 +682,7 @@ def cards_verify(
     role: Annotated[str | None, typer.Option("--role", "-r", help="Role identifier")] = None,
 ) -> None:
     """Verify card integrity and update Last Verified timestamp.
-    
+
     Updates the 'Last Verified' field in 1Password for the specified card.
     This should be run after physically verifying the card's integrity
     (filesystem check, checksum validation, etc.).
@@ -762,10 +761,10 @@ def entropy_collect(
     raw: Annotated[bool, typer.Option("--raw", help="Output raw bytes instead of base64")] = False,
 ) -> None:
     """Collect entropy from hardware source.
-    
+
     Outputs base64-encoded entropy suitable for air-gapped key generation.
     For Tier 1 operations, use hardware sources (infnoise, yubikey).
-    
+
     Examples:
         airgap entropy collect yubikey --bits 256
         airgap entropy collect infnoise --bits 512 --output entropy.b64
@@ -892,7 +891,7 @@ def entropy_verify(
     raw: Annotated[bool, typer.Option("--raw", help="File contains raw bytes instead of base64")] = False,
 ) -> None:
     """Run ENT analysis on collected entropy.
-    
+
     Analyzes entropy quality using the ENT tool and reports statistical metrics
     including entropy bits per byte, chi-square distribution, and serial correlation.
     """
@@ -978,14 +977,14 @@ def keygen_master(
     inject: Annotated[bool, typer.Option("--inject/--no-inject", help="Inject entropy into kernel pool")] = True,
 ) -> None:
     """Generate a new GPG master (certify) key.
-    
+
     This command:
     1. Collects entropy from hardware source
     2. Verifies entropy quality with ENT analysis
     3. Optionally injects entropy into kernel pool
     4. Generates GPG master key (certify capability only)
     5. Logs key generation to sigchain
-    
+
     Supported algorithms: rsa4096 (default), rsa3072, ed25519
     """
     from ..crypto import (
@@ -1053,14 +1052,11 @@ def keygen_master(
 
     # Build GPG key generation parameters
     if algorithm == "rsa4096":
-        key_type = "RSA"
-        key_length = "4096"
+        pass
     elif algorithm == "rsa3072":
-        key_type = "RSA"
-        key_length = "3072"
+        pass
     elif algorithm == "ed25519":
-        key_type = "EDDSA"
-        key_length = ""  # Ed25519 has fixed size
+        pass  # Ed25519 has fixed size
     else:
         console.print(f"[red]Unsupported algorithm: {algorithm}[/red]")
         raise typer.Exit(1)
@@ -1123,16 +1119,16 @@ def keygen_slip39_generate(
     skip_hardware_check: Annotated[bool, typer.Option("--skip-hardware-check", help="Skip wireless hardware check")] = False,
 ) -> None:
     """Generate SLIP-39 Shamir shares from hardware entropy.
-    
+
     Creates a master secret split into Shamir shares using the SLIP-39 standard.
     Default is 3-of-5 threshold with 20-word shares (128-bit, Cryptosteel compatible).
-    
+
     Word count options:
     - 20 words (--words 20): 128-bit secret, fits Cryptosteel Capsule ← DEFAULT
     - 33 words (--words 33): 256-bit secret, requires larger storage
-    
+
     ⚠️  TIER 1 OPERATION - Requires air-gapped environment
-    
+
     Workflow:
     1. Verify air-gapped environment (no wireless hardware)
     2. Collect entropy from hardware sources
@@ -1140,7 +1136,7 @@ def keygen_slip39_generate(
     4. Display each share one at a time
     5. Verify transcription via re-entry
     6. Show summary with share fingerprints
-    
+
     Shares are NEVER written to disk - display only.
     """
     # Validate word count option
@@ -1374,10 +1370,10 @@ def keygen_slip39_recover(
     use_passphrase: Annotated[bool, typer.Option("--passphrase/--no-passphrase", help="Shares used a passphrase")] = False,
 ) -> None:
     """Recover master secret from SLIP-39 shares.
-    
+
     Interactively enter threshold number of shares to recover
     the original master secret.
-    
+
     ⚠️  TIER 1 OPERATION - Use on air-gapped machine only
     """
     console.print(Panel(
@@ -1460,7 +1456,7 @@ def keygen_slip39_recover(
 @keygen_app.command("slip39-verify")
 def keygen_slip39_verify() -> None:
     """Verify SLIP-39 shares can recover the secret.
-    
+
     Enter threshold number of shares to verify they reconstruct
     correctly. Does NOT display the recovered secret.
     """
@@ -1536,7 +1532,7 @@ def keygen_subkeys(
     expire: Annotated[str, typer.Option("--expire", help="Subkey expiration (e.g., 2y)")] = "2y",
 ) -> None:
     """Create subkeys for an existing master key.
-    
+
     Creates signing [S], encryption [E], and authentication [A] subkeys
     for use on YubiKey. Master key retains only certify [C] capability.
     """
@@ -1610,12 +1606,12 @@ def keygen_transfer_yubikey(
     key_id: Annotated[str | None, typer.Option("--key", "-k", help="Key ID to transfer")] = None,
 ) -> None:
     """Transfer subkeys to YubiKey.
-    
+
     Moves subkeys to YubiKey OpenPGP slots:
     - Slot 1: Signature key
-    - Slot 2: Encryption key  
+    - Slot 2: Encryption key
     - Slot 3: Authentication key
-    
+
     After transfer, subkeys become stubs (private part on YubiKey only).
     """
     console.print(Panel.fit(
@@ -1687,14 +1683,14 @@ def backup_create(
     label: Annotated[str, typer.Option("--label", "-l", help="LUKS volume label")] = "BASTION_BACKUP",
 ) -> None:
     """Create LUKS-encrypted backup of GPG keys.
-    
+
     Creates an encrypted USB backup containing:
     - Master (certify) key
     - Subkeys (before transfer to YubiKey)
     - Public key
     - Revocation certificate
     - Backup manifest with checksums
-    
+
     Requires a USB drive to be connected.
     """
     from ..backup import (
@@ -1784,7 +1780,7 @@ def backup_verify(
     device: Annotated[str | None, typer.Option("--device", "-d", help="Block device to verify")] = None,
 ) -> None:
     """Verify backup integrity and checksums.
-    
+
     Opens a LUKS backup and verifies all files against the manifest checksums.
     """
     from ..backup import (
@@ -1841,7 +1837,7 @@ def backup_verify(
 @check_app.command("wireless")
 def check_wireless_cmd() -> None:
     """Check for wireless hardware (WiFi, Bluetooth).
-    
+
     Scans for wireless network interfaces, RF devices via rfkill, and
     known wireless USB adapters. For air-gapped systems, no wireless
     hardware should be present.
@@ -1877,7 +1873,7 @@ def check_wireless_cmd() -> None:
 @check_app.command("wired")
 def check_wired_cmd() -> None:
     """Check for wired network connections (Ethernet).
-    
+
     Scans for Ethernet interfaces and their connection state.
     For strict air-gap requirements, no wired network connections
     should be present or active.
@@ -1924,7 +1920,7 @@ def check_tier_cmd(
     tier: Annotated[int, typer.Option(help="Tier level to verify (1, 2, or 3)")] = 1,
 ) -> None:
     """Verify system meets tier isolation requirements.
-    
+
     Tier levels:
     - Tier 1 (highest): No wireless, no wired, hardware entropy required
     - Tier 2 (medium): No wireless, wired allowed if disconnected
@@ -2040,7 +2036,7 @@ def check_tier_cmd(
 @check_app.command("entropy")
 def check_entropy_source_cmd() -> None:
     """Check entropy source availability.
-    
+
     Scans for available entropy sources including:
     - Infinite Noise TRNG (hardware)
     - YubiKey (hardware)
@@ -2084,10 +2080,10 @@ def export_salt(
     pdf: Annotated[Path | None, typer.Option("--pdf", help="Output PDF file for printing")] = None,
 ) -> None:
     """Generate and export encrypted salt via QR code.
-    
+
     Creates a username salt with ENT-verified entropy, encrypts it to
     the manager's GPG public key, and displays as QR code(s) for scanning.
-    
+
     The manager machine decrypts the salt and stores it in 1Password
     for deterministic username generation.
     """
@@ -2183,7 +2179,7 @@ def export_pubkey(
     output: Annotated[Path | None, typer.Option("--output", "-o", help="Output file")] = None,
 ) -> None:
     """Export GPG public key for transfer to manager.
-    
+
     Exports the public key in ASCII-armored format. Can display as
     QR code for camera scanning or save to file for USB transfer.
     """
@@ -2258,7 +2254,7 @@ def keys_import(
     keyfile: Annotated[Path, typer.Argument(help="Path to public key file (.asc)")],
 ) -> None:
     """Import a GPG public key.
-    
+
     Imports the manager's public key so that airgap can encrypt data
     (salts, secrets) for secure transfer via QR code.
     """
@@ -2295,7 +2291,7 @@ def keys_list(
     secret: Annotated[bool, typer.Option("--secret", "-s", help="Show secret keys only")] = False,
 ) -> None:
     """List GPG keys in the keyring.
-    
+
     Shows available public or secret keys that can be used for
     encryption and signing operations.
     """
@@ -2335,7 +2331,7 @@ def keys_export(
     secret: Annotated[bool, typer.Option("--secret", help="Export secret key (DANGER)")] = False,
 ) -> None:
     """Export GPG key to file.
-    
+
     Exports public key by default. Use --secret to export secret key
     (only for backup purposes - handle with extreme care).
     """

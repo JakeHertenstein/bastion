@@ -60,7 +60,7 @@ class ENTAnalysis:
 
     def quality_rating(self) -> EntropyQuality:
         """Get quality rating based on statistical analysis.
-        
+
         Thresholds calibrated for Infinite Noise TRNG which produces
         ~7.988 bits/byte entropy at 16KB+ sample sizes.
         """
@@ -116,15 +116,15 @@ class EntropyCollection:
 
 def run_ent_analysis(data: bytes) -> ENTAnalysis:
     """Run ENT statistical analysis on entropy data.
-    
+
     Requires the 'ent' command to be installed.
-    
+
     Args:
         data: Entropy bytes to analyze (minimum 1KB recommended)
-        
+
     Returns:
         ENTAnalysis with statistical metrics
-        
+
     Raises:
         RuntimeError: If ENT analysis fails
     """
@@ -153,7 +153,7 @@ def run_ent_analysis(data: bytes) -> ENTAnalysis:
 
 def _parse_ent_output(output: str) -> ENTAnalysis:
     """Parse ENT command output into structured analysis.
-    
+
     Example ENT output:
         Entropy = 7.999835 bits per byte.
         Chi square distribution for 256 categories was 254.23.
@@ -214,13 +214,13 @@ def _parse_ent_output(output: str) -> ENTAnalysis:
 
 def collect_entropy_infnoise(bits: int = 4096) -> EntropyCollection:
     """Collect entropy from Infinite Noise TRNG.
-    
+
     Args:
         bits: Number of bits to collect
-        
+
     Returns:
         EntropyCollection with data and device info
-        
+
     Raises:
         RuntimeError: If collection fails
     """
@@ -276,10 +276,10 @@ def collect_entropy_infnoise(bits: int = 4096) -> EntropyCollection:
 
 def collect_entropy_system(bits: int = 4096) -> EntropyCollection:
     """Collect entropy from system CSPRNG (/dev/urandom or secrets).
-    
+
     Args:
         bits: Number of bits to collect
-        
+
     Returns:
         EntropyCollection with data
     """
@@ -295,14 +295,14 @@ def collect_entropy_system(bits: int = 4096) -> EntropyCollection:
 
 def collect_entropy_yubikey(bits: int = 160, slot: int = 2) -> EntropyCollection:
     """Collect entropy from YubiKey HMAC-SHA1 challenge-response.
-    
+
     Args:
         bits: Number of bits to collect (multiples of 160)
         slot: YubiKey slot (1 or 2)
-        
+
     Returns:
         EntropyCollection with data and device info
-        
+
     Raises:
         RuntimeError: If collection fails
     """
@@ -359,15 +359,15 @@ def collect_verified_entropy(
     min_quality: EntropyQuality = EntropyQuality.GOOD,
 ) -> EntropyCollection:
     """Collect entropy and verify quality with ENT analysis.
-    
+
     Args:
         bits: Number of bits to collect
         source: Entropy source ("infnoise", "system", "yubikey")
         min_quality: Minimum acceptable quality rating
-        
+
     Returns:
         EntropyCollection with verified quality
-        
+
     Raises:
         RuntimeError: If collection fails or quality is below threshold
     """
@@ -413,18 +413,18 @@ def inject_kernel_entropy(
     require_sudo: bool = True,
 ) -> bool:
     """Inject verified entropy into the Linux kernel entropy pool.
-    
+
     Uses RNDADDENTROPY ioctl to add entropy with credit.
     Requires root/CAP_SYS_ADMIN privileges.
-    
+
     Args:
         data: Entropy bytes to inject
         entropy_bits: Bits of entropy to credit (default: len(data) * 8)
         require_sudo: If True, prompt for sudo if needed
-        
+
     Returns:
         True if injection succeeded
-        
+
     Raises:
         RuntimeError: If injection fails
         PermissionError: If insufficient privileges
@@ -541,16 +541,16 @@ def generate_salt(
     verify: bool = True,
 ) -> SaltPayload:
     """Generate a cryptographic salt with ENT verification.
-    
+
     Args:
         bits: Salt size in bits (default 256)
         source: Entropy source to use
         min_quality: Minimum quality threshold
         verify: If True, run ENT analysis and enforce quality
-        
+
     Returns:
         SaltPayload with salt and metadata
-        
+
     Raises:
         RuntimeError: If entropy quality is below threshold
     """
@@ -594,16 +594,16 @@ def gpg_encrypt(
     gpg_path: str = "gpg",
 ) -> bytes:
     """Encrypt data using GPG.
-    
+
     Args:
         data: Data to encrypt
         recipient: GPG key ID, email, or fingerprint
         armor: If True, output ASCII armor (for QR codes)
         gpg_path: Path to gpg binary
-        
+
     Returns:
         Encrypted data (ASCII armor if requested)
-        
+
     Raises:
         RuntimeError: If encryption fails
     """
@@ -634,14 +634,14 @@ def gpg_encrypt(
 
 def gpg_import_key(key_data: bytes, gpg_path: str = "gpg") -> str:
     """Import a GPG public key.
-    
+
     Args:
         key_data: ASCII-armored or binary key data
         gpg_path: Path to gpg binary
-        
+
     Returns:
         Key ID of imported key
-        
+
     Raises:
         RuntimeError: If import fails
     """
@@ -678,11 +678,11 @@ def gpg_import_key(key_data: bytes, gpg_path: str = "gpg") -> str:
 
 def gpg_list_keys(secret: bool = False, gpg_path: str = "gpg") -> list[dict[str, str]]:
     """List available GPG keys.
-    
+
     Args:
         secret: If True, list secret keys; otherwise public keys
         gpg_path: Path to gpg binary
-        
+
     Returns:
         List of key info dicts with 'keyid', 'uid', 'fingerprint'
     """

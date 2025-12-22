@@ -9,7 +9,7 @@ console = Console()
 
 def update_metadata_show(uuid: str) -> None:
     """Show current Bastion Metadata for an item.
-    
+
     Args:
         uuid: 1Password item UUID
     """
@@ -50,7 +50,7 @@ def update_metadata(
     bastion_notes: str | None = None,
 ) -> None:
     """Update Bastion Metadata for an item.
-    
+
     Args:
         uuid: 1Password item UUID
         password_changed: Password change date YYYY-MM-DD

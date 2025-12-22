@@ -27,7 +27,7 @@ class YubiKeyOpenPGPMetadata:
 
     def to_dict(self) -> dict[str, str]:
         """Convert to dictionary for storage.
-        
+
         Field names use Title Case for 1Password canonical form.
         """
         return {
@@ -46,10 +46,10 @@ class YubiKeyOpenPGPError(Exception):
 
 def get_yubikey_openpgp_info() -> dict[str, str]:
     """Get YubiKey OpenPGP card information.
-    
+
     Returns:
         Dictionary with serial_number, version, manufacturer, application_id
-        
+
     Raises:
         YubiKeyOpenPGPError: If card info cannot be retrieved
     """
@@ -113,20 +113,20 @@ def collect_yubikey_openpgp_entropy(
     require_touch: bool = False
 ) -> tuple[bytes, YubiKeyOpenPGPMetadata]:
     """Collect entropy from YubiKey hardware RNG via OpenPGP.
-    
+
     Uses gpg-connect-agent with the SCD RANDOM command to extract random
     bytes directly from the YubiKey's hardware random number generator.
-    
+
     The YubiKey 5 series has a hardware TRNG (True Random Number Generator)
     that provides high-quality randomness suitable for cryptographic use.
-    
+
     Args:
         bits: Number of bits to collect (must be multiple of 8, max 65535 bytes)
         require_touch: If True, requires physical touch (not implemented in SCD RANDOM)
-        
+
     Returns:
         Tuple of (entropy_bytes, metadata)
-        
+
     Raises:
         YubiKeyOpenPGPError: If collection fails
         ValueError: If bits is invalid
@@ -215,7 +215,7 @@ def collect_yubikey_openpgp_entropy(
 
 def check_yubikey_openpgp_available() -> tuple[bool, str | None]:
     """Check if YubiKey OpenPGP is available.
-    
+
     Returns:
         Tuple of (is_available, error_message)
         If available, error_message is None

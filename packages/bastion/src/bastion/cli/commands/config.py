@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 def show_username_config(services: bool = False) -> None:
     """Show username generator configuration.
-    
+
     Args:
         services: If True, show service rules instead of general config
     """
@@ -62,7 +62,7 @@ def set_username_config(
     length: int | None = None
 ) -> None:
     """Set username generator configuration.
-    
+
     Args:
         owner: Default owner email
         algorithm: Default algorithm (sha256, sha512, sha3-512)
@@ -141,7 +141,7 @@ def list_entropy_pools() -> None:
 
 def analyze_entropy_pool(pool_uuid: str) -> None:
     """Analyze a specific entropy pool.
-    
+
     Args:
         pool_uuid: UUID of the entropy pool to analyze
     """

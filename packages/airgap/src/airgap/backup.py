@@ -72,12 +72,12 @@ class BackupManifest:
 
 def _run_sudo(cmd: list[str], check: bool = True, **kwargs) -> subprocess.CompletedProcess:
     """Run a command with sudo if not already root.
-    
+
     Args:
         cmd: Command to run
         check: If True, raise on non-zero exit
         **kwargs: Additional subprocess.run arguments
-        
+
     Returns:
         CompletedProcess result
     """
@@ -89,7 +89,7 @@ def _run_sudo(cmd: list[str], check: bool = True, **kwargs) -> subprocess.Comple
 
 def check_luks_available() -> bool:
     """Check if LUKS tools are available.
-    
+
     Returns:
         True if cryptsetup is installed
     """
@@ -106,7 +106,7 @@ def check_luks_available() -> bool:
 
 def list_block_devices() -> list[dict[str, Any]]:
     """List available block devices for backup.
-    
+
     Returns:
         List of device info dicts with 'name', 'size', 'type', 'mountpoint'
     """
@@ -151,9 +151,9 @@ def create_luks_container(
     iter_time: int = 5000,
 ) -> bool:
     """Create a LUKS2 encrypted container on a device.
-    
+
     WARNING: This will destroy all data on the device!
-    
+
     Args:
         device: Block device path (e.g., /dev/sdb1)
         label: Label for the encrypted volume
@@ -161,10 +161,10 @@ def create_luks_container(
         key_size: Key size in bits (default: 512 for XTS)
         hash_algo: Hash algorithm for key derivation
         iter_time: PBKDF iteration time in ms
-        
+
     Returns:
         True if container was created successfully
-        
+
     Raises:
         RuntimeError: If creation fails
         PermissionError: If insufficient privileges
@@ -207,14 +207,14 @@ def open_luks_container(
     name: str = "bastion_backup",
 ) -> str:
     """Open a LUKS container for access.
-    
+
     Args:
         device: Block device with LUKS container
         name: Mapper name for opened container
-        
+
     Returns:
         Path to opened device (/dev/mapper/<name>)
-        
+
     Raises:
         RuntimeError: If open fails
     """
@@ -241,10 +241,10 @@ def open_luks_container(
 
 def close_luks_container(name: str = "bastion_backup") -> bool:
     """Close an opened LUKS container.
-    
+
     Args:
         name: Mapper name of opened container
-        
+
     Returns:
         True if closed successfully
     """
@@ -268,12 +268,12 @@ def format_filesystem(
     fstype: str = "ext4",
 ) -> bool:
     """Format a device with a filesystem.
-    
+
     Args:
         device: Device to format (e.g., /dev/mapper/bastion_backup)
         label: Filesystem label
         fstype: Filesystem type (ext4 recommended)
-        
+
     Returns:
         True if formatting succeeded
     """
@@ -293,11 +293,11 @@ def format_filesystem(
 
 def mount_device(device: str, mount_point: Path) -> bool:
     """Mount a device at a mount point.
-    
+
     Args:
         device: Device to mount
         mount_point: Directory to mount at
-        
+
     Returns:
         True if mount succeeded
     """
@@ -314,10 +314,10 @@ def mount_device(device: str, mount_point: Path) -> bool:
 
 def unmount_device(mount_point: Path) -> bool:
     """Unmount a device.
-    
+
     Args:
         mount_point: Mount point to unmount
-        
+
     Returns:
         True if unmount succeeded
     """
@@ -335,10 +335,10 @@ def unmount_device(mount_point: Path) -> bool:
 
 def file_sha256(path: Path) -> str:
     """Calculate SHA256 hash of a file.
-    
+
     Args:
         path: Path to file
-        
+
     Returns:
         Hex-encoded SHA256 hash
     """
@@ -355,21 +355,21 @@ def export_gpg_keys(
     key_id: str | None = None,
 ) -> BackupManifest:
     """Export GPG keys to a directory.
-    
+
     Exports:
     - Master (certify) key
     - Subkeys (sign, encrypt, auth)
     - Public key
     - Revocation certificate
-    
+
     Args:
         gnupghome: Path to GNUPGHOME directory
         output_dir: Directory to export keys to
         key_id: Specific key ID to export (None = all keys)
-        
+
     Returns:
         BackupManifest with exported file info
-        
+
     Raises:
         RuntimeError: If export fails
     """
@@ -491,10 +491,10 @@ def export_gpg_keys(
 
 def verify_backup(backup_dir: Path) -> tuple[bool, list[str]]:
     """Verify backup integrity using manifest checksums.
-    
+
     Args:
         backup_dir: Directory containing backup and manifest
-        
+
     Returns:
         Tuple of (all_valid, list of error messages)
     """
@@ -543,20 +543,20 @@ def create_backup(
     key_id: str | None = None,
 ) -> BackupResult:
     """Create a complete LUKS-encrypted backup of GPG keys.
-    
+
     This is the main entry point for backup creation. It:
     1. Creates LUKS container on device
     2. Opens and formats container
     3. Exports GPG keys with manifest
     4. Verifies backup
     5. Closes container
-    
+
     Args:
         device: Block device to use (e.g., /dev/sdb)
         gnupghome: Path to GNUPGHOME
         label: Label for LUKS container
         key_id: Specific key to backup (None = all)
-        
+
     Returns:
         BackupResult with status and details
     """
@@ -648,11 +648,11 @@ def verify_backup_device(
     mapper_name: str = "bastion_backup",
 ) -> tuple[bool, list[str], BackupManifest | None]:
     """Verify an existing backup on a LUKS device.
-    
+
     Args:
         device: Block device with backup
         mapper_name: Mapper name for opening
-        
+
     Returns:
         Tuple of (valid, errors, manifest)
     """

@@ -27,12 +27,12 @@ DbPathOption = Annotated[
 
 def get_db_manager(db_path: Path | None = None) -> DatabaseManager:
     """Get database manager with default path (LEGACY - plaintext).
-    
+
     DEPRECATED: Use get_encrypted_db_manager() for new code.
-    
+
     Args:
         db_path: Optional path to database file. Defaults to ~/.bsec/cache/password-rotation.json
-        
+
     Returns:
         DatabaseManager instance
     """
@@ -45,10 +45,10 @@ def get_db_manager(db_path: Path | None = None) -> DatabaseManager:
 
 def get_encrypted_db_manager() -> BastionCacheManager:
     """Get encrypted cache manager.
-    
+
     Returns BastionCacheManager which stores encrypted data at ~/.bsec/cache/db.enc
     with key stored in 1Password.
-    
+
     Returns:
         BastionCacheManager instance
     """
@@ -58,10 +58,10 @@ def get_encrypted_db_manager() -> BastionCacheManager:
 
 def format_date(dt: datetime | None) -> str:
     """Format a datetime for display.
-    
+
     Args:
         dt: Datetime to format, or None
-        
+
     Returns:
         Formatted date string or "Never"
     """
@@ -72,10 +72,10 @@ def format_date(dt: datetime | None) -> str:
 
 def format_days(days: int | None) -> str:
     """Format days until rotation for display.
-    
+
     Args:
         days: Number of days, or None
-        
+
     Returns:
         Formatted string with appropriate styling hint
     """
@@ -90,7 +90,7 @@ def format_days(days: int | None) -> str:
 
 def utc_now() -> datetime:
     """Get current UTC datetime.
-    
+
     Returns:
         Current datetime in UTC timezone
     """
@@ -99,7 +99,7 @@ def utc_now() -> datetime:
 
 def get_yubikey_service() -> YubiKeyService:
     """Get YubiKey service for querying 1Password as source of truth.
-    
+
     Returns:
         YubiKeyService instance
     """
@@ -111,10 +111,10 @@ def get_yubikey_service() -> YubiKeyService:
 
 def get_yubikey_cache() -> YubiKeyCache:
     """Get YubiKey cache from encrypted storage.
-    
+
     DEPRECATED: Use get_yubikey_service() for new code. This wrapper
     maintains backward compatibility with existing code during migration.
-    
+
     Returns:
         YubiKeyCache instance loaded from encrypted database
     """

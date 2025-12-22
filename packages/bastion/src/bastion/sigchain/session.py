@@ -40,16 +40,16 @@ class SessionTimeoutError(Exception):
 
 class SessionManager:
     """Manages interactive sigchain sessions.
-    
+
     A session maintains sigchain state, tracks pending events for OTS
     anchoring, and auto-terminates after a configurable inactivity period.
-    
+
     Usage:
         session = SessionManager()
         session.start()
         # ... interactive operations ...
         session.end()
-    
+
     Or as context manager:
         with SessionManager() as session:
             session.record_event(payload)
@@ -64,7 +64,7 @@ class SessionManager:
         device: DeviceType = DeviceType.MANAGER,
     ) -> None:
         """Initialize session manager.
-        
+
         Args:
             timeout_minutes: Inactivity timeout (default: 15)
             sigchain_dir: Path to sigchain git repo (default: ~/.bastion/sigchain)
@@ -96,10 +96,10 @@ class SessionManager:
 
     def start(self) -> Sigchain:
         """Start an interactive session.
-        
+
         Loads existing chain from disk, sets up timeout monitoring,
         and registers cleanup handlers.
-        
+
         Returns:
             The sigchain instance for this session
         """
@@ -145,7 +145,7 @@ class SessionManager:
 
     def end(self, anchor: bool = True, commit: bool = True) -> None:
         """End the session gracefully.
-        
+
         Args:
             anchor: Submit OTS anchor for session events
             commit: GPG-sign and commit to git
@@ -199,9 +199,9 @@ class SessionManager:
 
     def record_event(self, payload: EventPayload) -> None:
         """Record an event to the chain.
-        
+
         Updates last activity time to prevent timeout.
-        
+
         Args:
             payload: Event payload to record
         """
@@ -432,7 +432,7 @@ def run_interactive_session(
     callback: Callable[[SessionManager, str], bool] | None = None,
 ) -> None:
     """Run an interactive sigchain session with REPL.
-    
+
     Args:
         timeout_minutes: Override default timeout
         callback: Function to handle commands (return False to exit)
@@ -477,7 +477,7 @@ def _print_help() -> None:
   help    - Show this help
   status  - Show session status
   quit    - End session
-  
+
 [dim]Activity keeps the session alive. Session auto-ends after timeout.[/dim]
 """)
 

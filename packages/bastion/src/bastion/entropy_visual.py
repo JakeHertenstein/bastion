@@ -18,17 +18,17 @@ def visualize_entropy(
     return_bytes: bool = False,
 ) -> Path | bytes:
     """Create visual representation of entropy data.
-    
+
     Generates two visualizations:
     1. Byte frequency histogram (should be roughly uniform for good entropy)
     2. Bit pattern grid (visual inspection for patterns)
-    
+
     Args:
         entropy_bytes: Entropy data to visualize
         output_path: Optional output file path (default: entropy_visual.png)
         title: Title for the visualization
         return_bytes: If True, return PNG bytes instead of saving to file
-        
+
     Returns:
         Path to saved PNG file, or PNG bytes if return_bytes=True
     """
@@ -114,15 +114,15 @@ def visualize_chi_square(
     return_bytes: bool = False,
 ) -> Path | bytes:
     """Create chi-square distribution visualization.
-    
+
     Compares observed byte frequencies against expected uniform distribution.
-    
+
     Args:
         entropy_bytes: Entropy data to analyze
         output_path: Optional output file path (default: entropy_chisquare.png)
         title: Title for the visualization
         return_bytes: If True, return PNG bytes instead of saving to file
-        
+
     Returns:
         Path to saved PNG file, or PNG bytes if return_bytes=True
     """

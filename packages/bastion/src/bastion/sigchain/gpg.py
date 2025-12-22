@@ -67,12 +67,12 @@ class VerificationResult:
 
 class GPGSigner:
     """GPG signing with mock support for testing.
-    
+
     Example:
         # Real GPG signing
         signer = GPGSigner()
         sig = signer.sign(b"data to sign")
-        
+
         # Mock mode for testing
         mock_signer = GPGSigner(mock=True)
         sig = mock_signer.sign(b"data to sign")
@@ -91,7 +91,7 @@ class GPGSigner:
         gpg_path: str = "gpg",
     ) -> None:
         """Initialize GPG signer.
-        
+
         Args:
             mock: If True, use mock signatures (no real GPG)
             key_id: GPG key ID to use for signing (None = default key)
@@ -107,7 +107,7 @@ class GPGSigner:
 
     def is_available(self) -> bool:
         """Check if GPG is available.
-        
+
         Returns:
             True if GPG binary is accessible
         """
@@ -126,7 +126,7 @@ class GPGSigner:
 
     def get_default_key(self) -> str | None:
         """Get the default GPG signing key ID.
-        
+
         Returns:
             Key ID or None if not found
         """
@@ -157,13 +157,13 @@ class GPGSigner:
 
     def sign(self, data: bytes) -> GPGSignature:
         """Sign data with GPG.
-        
+
         Args:
             data: Data to sign
-            
+
         Returns:
             GPGSignature object
-            
+
         Raises:
             RuntimeError: If signing fails
         """
@@ -176,14 +176,14 @@ class GPGSigner:
 
     def _mock_sign(self, data: bytes, timestamp: datetime) -> GPGSignature:
         """Create a mock signature for testing.
-        
+
         The mock signature is deterministic and verifiable within
         the mock system, but not cryptographically secure.
-        
+
         Args:
             data: Data to sign
             timestamp: Signing timestamp
-            
+
         Returns:
             Mock GPGSignature
         """
@@ -206,14 +206,14 @@ class GPGSigner:
 
     def _real_sign(self, data: bytes, timestamp: datetime) -> GPGSignature:
         """Create a real GPG signature.
-        
+
         Args:
             data: Data to sign
             timestamp: Signing timestamp
-            
+
         Returns:
             GPGSignature object
-            
+
         Raises:
             RuntimeError: If GPG signing fails
         """
@@ -254,11 +254,11 @@ class GPGSigner:
         signature: bytes,
     ) -> VerificationResult:
         """Verify a GPG signature.
-        
+
         Args:
             data: Original data that was signed
             signature: Signature to verify
-            
+
         Returns:
             VerificationResult with status and details
         """
@@ -273,11 +273,11 @@ class GPGSigner:
         signature: bytes,
     ) -> VerificationResult:
         """Verify a mock signature.
-        
+
         Args:
             data: Original data
             signature: Mock signature bytes
-            
+
         Returns:
             VerificationResult
         """
@@ -343,11 +343,11 @@ class GPGSigner:
         signature: bytes,
     ) -> VerificationResult:
         """Verify a real GPG signature.
-        
+
         Args:
             data: Original data
             signature: GPG signature
-            
+
         Returns:
             VerificationResult
         """
@@ -430,10 +430,10 @@ class GPGSigner:
 
 def get_signer(mock: bool | None = None) -> GPGSigner:
     """Get appropriate GPG signer based on environment.
-    
+
     Args:
         mock: Force mock mode (None = auto-detect)
-        
+
     Returns:
         GPGSigner instance
     """

@@ -32,7 +32,7 @@ except ImportError as e:
 
 def _create_enhanced_card_id(card_id: str | None, card_date: str | None) -> str | None:
     """Create enhanced card ID with date labeling for HMAC domain separation.
-    
+
     DEPRECATED: Use create_grid_from_args_v2 with full Argon2 label instead.
     Kept for backward compatibility with legacy SHA-512 mode.
     """
@@ -82,7 +82,7 @@ def create_grid_from_args(
 ) -> tuple[SeederGrid, bytes, str]:
     """
     Create a token grid from command arguments.
-    
+
     Returns: (grid, seed_bytes, label)
         - grid: The SeederGrid object
         - seed_bytes: The derived 64-byte seed
@@ -182,7 +182,7 @@ def create_grid_with_desc(
     base: str = "base90"
 ) -> tuple[SeederGrid, bytes, str]:
     """Create a token grid with seed description for CSV export.
-    
+
     DEPRECATED: Use create_grid_from_args which now returns label as third element.
     """
     grid, seed_bytes, label = create_grid_from_args(

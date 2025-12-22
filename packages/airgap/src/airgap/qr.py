@@ -83,7 +83,7 @@ class MultiQRPart:
     @classmethod
     def from_qr_string(cls, qr_string: str) -> MultiQRPart | None:
         """Parse a scanned QR string into a MultiQRPart.
-        
+
         Returns None if the string doesn't match the multi-QR protocol.
         """
         match = MULTI_QR_PATTERN.match(qr_string)
@@ -99,11 +99,11 @@ class MultiQRPart:
 
 def estimate_qr_size(data: str, error_correction: str = "H") -> QRInfo:
     """Estimate QR code size for given data.
-    
+
     Args:
         data: Data to encode
         error_correction: L/M/Q/H (7%/15%/25%/30% recovery)
-        
+
     Returns:
         QRInfo with version and module count
     """
@@ -126,13 +126,13 @@ def split_for_qr(
     max_bytes: int = DEFAULT_MAX_BYTES,
 ) -> list[MultiQRPart]:
     """Split data into multiple QR-encodable parts if needed.
-    
+
     Uses BASTION:seq/total: prefix protocol for reassembly.
-    
+
     Args:
         data: Data to split
         max_bytes: Maximum bytes per QR code (before prefix overhead)
-        
+
     Returns:
         List of MultiQRPart objects (single item if no split needed)
     """
@@ -182,13 +182,13 @@ def split_for_qr(
 
 def reassemble_qr_parts(parts: Sequence[MultiQRPart]) -> str:
     """Reassemble multi-QR parts into original data.
-    
+
     Args:
         parts: List of MultiQRPart objects (any order)
-        
+
     Returns:
         Reassembled data string
-        
+
     Raises:
         ValueError: If parts are missing or inconsistent
     """
@@ -221,18 +221,18 @@ def generate_qr_terminal(
     invert: bool = True,
 ) -> str:
     """Generate QR code for terminal display using Unicode half-blocks.
-    
+
     Uses Unicode block characters for compact display:
     - █ (full block) for black
     - ▀ (upper half) for top black, bottom white
     - ▄ (lower half) for top white, bottom black
     - (space) for white
-    
+
     Args:
         data: Data to encode
         error_correction: L/M/Q/H (7%/15%/25%/30% recovery)
         invert: If True, dark modules on light background (default for terminals)
-        
+
     Returns:
         String with Unicode QR code for terminal display
     """
@@ -289,14 +289,14 @@ def generate_qr_png(
     border: int = 4,
 ) -> Path:
     """Generate QR code as PNG file.
-    
+
     Args:
         data: Data to encode
         output_path: Path for output PNG file
         error_correction: L/M/Q/H
         box_size: Pixels per module
         border: Border width in modules
-        
+
     Returns:
         Path to generated PNG file
     """
@@ -325,14 +325,14 @@ def generate_qr_image_bytes(
     format: str = "PNG",
 ) -> bytes:
     """Generate QR code as image bytes (for embedding in PDF).
-    
+
     Args:
         data: Data to encode
         error_correction: L/M/Q/H
         box_size: Pixels per module
         border: Border width in modules
         format: Image format (PNG, JPEG, etc.)
-        
+
     Returns:
         Image data as bytes
     """
@@ -360,16 +360,16 @@ def generate_pdf(
     error_correction: str = "H",
 ) -> Path:
     """Generate PDF with multiple QR codes for printing.
-    
+
     Creates a printable document with one QR code per page,
     labeled with sequence numbers.
-    
+
     Args:
         parts: List of MultiQRPart objects
         output_path: Path for output PDF file
         title: Document title
         error_correction: QR error correction level
-        
+
     Returns:
         Path to generated PDF file
     """
@@ -441,17 +441,17 @@ def generate_pdf(
 
 class QRPartCollector:
     """Collector for reassembling multi-QR sequences from scans.
-    
+
     Maintains state across multiple scans and validates completeness.
-    
+
     Example:
         collector = QRPartCollector()
-        
+
         # Scan QR codes in any order
         collector.add_scan("BASTION:2/3:middle_chunk")
         collector.add_scan("BASTION:1/3:first_chunk")
         collector.add_scan("BASTION:3/3:last_chunk")
-        
+
         if collector.is_complete():
             data = collector.reassemble()
     """
@@ -462,10 +462,10 @@ class QRPartCollector:
 
     def add_scan(self, qr_string: str) -> bool:
         """Add a scanned QR code string.
-        
+
         Args:
             qr_string: Raw string from QR scanner
-            
+
         Returns:
             True if this is a valid multi-QR part, False otherwise
         """
@@ -511,7 +511,7 @@ class QRPartCollector:
 
     def reassemble(self) -> str:
         """Reassemble collected parts into original data.
-        
+
         Raises:
             ValueError: If collection is incomplete
         """

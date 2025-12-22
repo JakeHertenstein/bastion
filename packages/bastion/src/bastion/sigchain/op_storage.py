@@ -41,7 +41,7 @@ class SessionSummary:
     def to_display(self) -> str:
         """Format for 1Password display."""
         duration = (self.ended_at - self.started_at).total_seconds() / 60
-        types = ", ".join(set(self.event_types))
+        ", ".join(set(self.event_types))
         anchor = "✓" if self.anchor_submitted else "pending"
         return (
             f"{self.started_at.strftime('%Y-%m-%d %H:%M')} | "
@@ -53,13 +53,13 @@ class SessionSummary:
 
 class SigchainStorage:
     """Store sigchain metadata in 1Password.
-    
+
     This class manages a special 1Password secure note that tracks
     the sigchain state, providing:
     - Persistence across machine restarts
     - Sync across devices via 1Password
     - Human-readable audit trail in 1Password UI
-    
+
     Example:
         >>> storage = SigchainStorage()
         >>> storage.save_chain_head(head)
@@ -77,7 +77,7 @@ class SigchainStorage:
 
     def __init__(self, vault: str | None = None) -> None:
         """Initialize storage.
-        
+
         Args:
             vault: 1Password vault name (default: Private)
         """
@@ -86,10 +86,10 @@ class SigchainStorage:
 
     def _run_op(self, args: list[str]) -> tuple[bool, str, str]:
         """Run an op CLI command.
-        
+
         Args:
             args: Command arguments
-            
+
         Returns:
             Tuple of (success, stdout, stderr)
         """
@@ -114,7 +114,7 @@ class SigchainStorage:
 
     def _find_item(self) -> str | None:
         """Find the sigchain item UUID.
-        
+
         Returns:
             Item UUID or None if not found
         """
@@ -144,7 +144,7 @@ class SigchainStorage:
 
     def _create_item(self) -> str | None:
         """Create the sigchain secure note.
-        
+
         Returns:
             New item UUID or None on failure
         """
@@ -178,7 +178,7 @@ class SigchainStorage:
 
     def _get_or_create_item(self) -> str | None:
         """Get existing item or create new one.
-        
+
         Returns:
             Item UUID or None on failure
         """
@@ -189,10 +189,10 @@ class SigchainStorage:
 
     def save_chain_head(self, head: ChainHead) -> bool:
         """Save chain head state to 1Password.
-        
+
         Args:
             head: ChainHead to save
-            
+
         Returns:
             True if saved successfully
         """
@@ -223,7 +223,7 @@ class SigchainStorage:
 
     def load_chain_head(self) -> ChainHead | None:
         """Load chain head state from 1Password.
-        
+
         Returns:
             ChainHead or None if not found
         """
@@ -262,10 +262,10 @@ class SigchainStorage:
 
     def add_session_summary(self, summary: SessionSummary) -> bool:
         """Add a session summary to the history.
-        
+
         Args:
             summary: Session summary to add
-            
+
         Returns:
             True if added successfully
         """
@@ -313,12 +313,12 @@ class SigchainStorage:
         last_anchor_time: datetime | None = None,
     ) -> bool:
         """Update OTS anchor status.
-        
+
         Args:
             pending_count: Number of pending anchors
             completed_count: Number of completed anchors
             last_anchor_time: Time of last anchor submission
-            
+
         Returns:
             True if updated successfully
         """
@@ -340,10 +340,10 @@ class SigchainStorage:
 
     def _parse_fields(self, item: dict[str, Any]) -> dict[str, str]:
         """Parse fields from 1Password item JSON.
-        
+
         Args:
             item: Raw item JSON
-            
+
         Returns:
             Dict mapping "Section.Label" to value
         """
@@ -367,7 +367,7 @@ class SigchainStorage:
 
     def get_full_state(self) -> dict[str, Any] | None:
         """Get full sigchain state from 1Password.
-        
+
         Returns:
             Dict with all stored state, or None if not found
         """
@@ -402,7 +402,7 @@ class SigchainStorage:
 
     def delete_item(self) -> bool:
         """Delete the sigchain item (for testing/reset).
-        
+
         Returns:
             True if deleted successfully
         """

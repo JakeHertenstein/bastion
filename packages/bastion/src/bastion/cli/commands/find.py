@@ -24,7 +24,7 @@ def find_by_tag(
     missing_tag: str | None = None,
 ) -> None:
     """Find and display accounts with a specific tag.
-    
+
     Args:
         db: Database instance
         name: Tag name to search for

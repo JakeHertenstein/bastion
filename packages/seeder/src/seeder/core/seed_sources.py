@@ -36,10 +36,10 @@ class SeedSources:
     ) -> bytes:
         """
         Derive 64-byte seed using Argon2id (memory-hard KDF).
-        
+
         This provides strong protection against GPU/ASIC brute-force attacks,
         making even weak passphrases more resistant to offline attacks.
-        
+
         Args:
             seed_phrase: Input phrase to derive from
             salt: Salt bytes (typically derived from label)
@@ -47,10 +47,10 @@ class SeedSources:
             memory_cost_kb: Memory in KB (default 1GB = 1048576 KB)
             parallelism: Number of threads (default 4)
             hash_length: Output length in bytes (default 64)
-            
+
         Returns:
             64-byte seed
-            
+
         Raises:
             SeedDerivationError: If derivation fails
         """
@@ -73,16 +73,16 @@ class SeedSources:
     def bip39_to_seed(mnemonic: str, passphrase: str = "", iterations: int = DEFAULT_PBKDF2_ITERATIONS, validate: bool = True) -> bytes:
         """
         Convert BIP-39 mnemonic to 64-byte seed using PBKDF2-HMAC-SHA512.
-        
+
         Args:
             mnemonic: BIP-39 mnemonic words (space-separated)
             passphrase: Optional passphrase for additional security
             iterations: PBKDF2 iteration count
             validate: Whether to validate mnemonic against BIP-39 standard (recommended: True)
-            
+
         Returns:
             64-byte seed
-            
+
         Raises:
             SeedDerivationError: If derivation fails or mnemonic is invalid
         """
@@ -108,13 +108,13 @@ class SeedSources:
     def simple_to_seed(seed_phrase: str) -> bytes:
         """
         Convert simple phrase to 64-byte seed using SHA-512.
-        
+
         Args:
             seed_phrase: Simple text phrase
-            
+
         Returns:
             64-byte seed
-            
+
         Raises:
             SeedDerivationError: If derivation fails
         """
@@ -131,13 +131,13 @@ class SeedSources:
     def slip39_to_seed(shares: list[str]) -> bytes:
         """
         Reconstruct seed from SLIP-39 shares using Shamir's Secret Sharing.
-        
+
         Args:
             shares: List of SLIP-39 share strings
-            
+
         Returns:
             64-byte seed
-            
+
         Raises:
             SLIP39Error: If share reconstruction fails
         """
@@ -178,15 +178,15 @@ class SeedSources:
     def create_test_slip39_shares(secret_phrase: str, threshold: int = 2, total_shares: int = 3) -> list[str]:
         """
         Generate real SLIP-39 test shares using the official library.
-        
+
         Args:
             secret_phrase: Source phrase to split
             threshold: Minimum shares needed for reconstruction
             total_shares: Total shares to generate
-            
+
         Returns:
             List of real SLIP-39 share strings
-            
+
         Raises:
             SLIP39Error: If share generation fails
         """
@@ -228,10 +228,10 @@ class SeedValidator:
     def validate_bip39_mnemonic(mnemonic: str) -> tuple[bool, str]:
         """
         Basic validation of BIP-39 mnemonic format.
-        
+
         Args:
             mnemonic: Space-separated mnemonic words
-            
+
         Returns:
             Tuple of (is_valid, error_message)
         """
@@ -253,10 +253,10 @@ class SeedValidator:
     def validate_slip39_shares(shares: list[str]) -> tuple[bool, str]:
         """
         Basic validation of SLIP-39 share format.
-        
+
         Args:
             shares: List of SLIP-39 share strings
-            
+
         Returns:
             Tuple of (is_valid, error_message)
         """
@@ -274,10 +274,10 @@ class SeedValidator:
     def estimate_entropy(seed_phrase: str) -> float:
         """
         Estimate entropy of a simple seed phrase.
-        
+
         Args:
             seed_phrase: Input phrase
-            
+
         Returns:
             Estimated entropy in bits
         """

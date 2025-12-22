@@ -24,7 +24,7 @@ class YubiKeyEntropyError(Exception):
 
 def check_yubikey_available() -> bool:
     """Check if ykman is installed and YubiKey is accessible.
-    
+
     Returns:
         True if YubiKey can be used for entropy collection
     """
@@ -46,24 +46,24 @@ def collect_yubikey_entropy(
     slot: int = 2,
 ) -> bytes:
     """Collect entropy from YubiKey HMAC-SHA1 challenge-response.
-    
+
     The YubiKey's HMAC function uses a hardware-derived secret key that is
     never exposed. Each challenge produces a cryptographically secure 20-byte
     response based on this secret. Since the key is unknown, responses are
     indistinguishable from random data even when challenges are known.
-    
+
     Entropy per response: ~160 bits (20 bytes of unpredictable output)
-    
+
     Note: Touch requirement is configured when programming the slot, not per-use.
     Configure with: ykman otp chalresp --generate --touch <slot>
-    
+
     Args:
         bits: Target entropy in bits (minimum 256)
         slot: YubiKey OTP slot (1 or 2, default 2)
-        
+
     Returns:
         Concatenated HMAC-SHA1 responses (raw bytes)
-        
+
     Raises:
         YubiKeyEntropyError: If YubiKey is unavailable or collection fails
         ValueError: If bits < 256 (minimum for cryptographic use)
@@ -149,10 +149,10 @@ def collect_yubikey_entropy(
 
 def estimate_collection_time(bits: int) -> tuple[int, float]:
     """Estimate time to collect entropy from YubiKey.
-    
+
     Args:
         bits: Target entropy in bits
-        
+
     Returns:
         Tuple of (num_challenges, estimated_seconds)
     """

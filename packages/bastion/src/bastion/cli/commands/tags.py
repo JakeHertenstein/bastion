@@ -20,14 +20,14 @@ if TYPE_CHECKING:
 
 def replace_item_tags(item_id: str, new_tags: list[str]) -> tuple[bool, str]:
     """Replace all tags on a 1Password item with a new list.
-    
+
     The 1Password CLI `--tags` flag doesn't properly clear tags with empty values.
     Instead, use assignment syntax: `tags=value1,value2` or `tags=` to clear.
-    
+
     Args:
         item_id: The 1Password item UUID
         new_tags: The complete list of tags to set (empty list = clear all)
-        
+
     Returns:
         Tuple of (success: bool, error_message: str)
     """
@@ -62,13 +62,13 @@ def filter_accounts(
     missing_tag: str | None = None,
 ):  # -> dict[str, Account]
     """Filter accounts based on query, has_tag, and missing_tag criteria.
-    
+
     Args:
         db: Database instance containing accounts
         query: Filter string (e.g., 'tier:1', 'vault:Private', 'title:Google')
         has_tag: Only include accounts with this tag
         missing_tag: Only include accounts missing this tag
-        
+
     Returns:
         Dictionary of UUID -> Account for matching accounts
     """
@@ -121,7 +121,7 @@ def execute_tag_bulk_operation(
     yes: bool = False,
 ) -> None:
     """Execute bulk tag operation with preview, confirmation, and result reporting.
-    
+
     Args:
         targets: Dictionary of UUID -> Account to operate on
         tag: Tag name for the operation
@@ -216,14 +216,14 @@ def execute_tag_bulk_operation(
 
 def resolve_account_identifier(identifier: str, op_client: OpClient) -> str:
     """Resolve account identifier (title or UUID) to UUID.
-    
+
     Args:
         identifier: Account title or UUID
         op_client: OpClient instance
-        
+
     Returns:
         UUID string
-        
+
     Raises:
         typer.Exit: If account not found or user cancels selection
     """
@@ -523,7 +523,7 @@ def remove_tag(item_id: str, tag: str) -> None:
 
 def rename_tag(db_path, old_tag: str, new_tag: str, dry_run: bool = False, yes: bool = False) -> None:
     """Rename a tag across all items that have it.
-    
+
     Args:
         db_path: Path to the database file
         old_tag: The tag to rename

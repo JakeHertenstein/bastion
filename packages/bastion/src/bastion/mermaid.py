@@ -3,7 +3,7 @@
 from datetime import datetime
 from pathlib import Path
 
-from .models import Database, TwoFAMethod, RiskLevel
+from .models import Database, RiskLevel, TwoFAMethod
 from .risk_analysis import RiskAnalyzer
 
 

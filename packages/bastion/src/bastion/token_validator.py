@@ -16,10 +16,10 @@ class PhoneNumberValidator:
     def validate(self, phone: str) -> tuple[bool, str, list[str]]:
         """
         Validate phone number.
-        
+
         Args:
             phone: Phone number to validate
-            
+
         Returns:
             (is_valid, normalized, warnings)
         """
@@ -68,10 +68,10 @@ class OATHNameValidator:
     def validate(self, oath_name: str) -> tuple[bool, list[str]]:
         """
         Validate OATH name format.
-        
+
         Args:
             oath_name: OATH name to validate
-            
+
         Returns:
             (is_valid, warnings)
         """
@@ -119,10 +119,10 @@ class TokenCountValidator:
     def validate_count(self, token_count: int) -> tuple[str, str]:
         """
         Validate token count.
-        
+
         Args:
             token_count: Number of tokens
-            
+
         Returns:
             (level, message) where level is "ok", "warning", or "error"
         """
@@ -148,11 +148,11 @@ class SerialValidator:
     def validate(self, serial: str, token_type: str) -> tuple[bool, list[str]]:
         """
         Validate serial format.
-        
+
         Args:
             serial: Serial/identifier to validate
             token_type: Token type
-            
+
         Returns:
             (is_valid, warnings)
         """
@@ -214,12 +214,12 @@ class TokenValidator:
     ) -> tuple[bool, list[str]]:
         """
         Validate complete token data.
-        
+
         Args:
             token_type: Token type
             serial: Serial/identifier
             **kwargs: Type-specific fields
-            
+
         Returns:
             (is_valid, list of error/warning messages)
         """

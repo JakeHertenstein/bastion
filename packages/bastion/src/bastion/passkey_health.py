@@ -24,7 +24,7 @@ from typing import Any
 
 def get_clipboard_json() -> dict | None:
     """Read JSON from clipboard (macOS only via pbpaste).
-    
+
     Returns:
         Parsed JSON dict, or None if clipboard doesn't contain valid JSON
     """
@@ -49,14 +49,14 @@ def get_clipboard_json() -> dict | None:
 
 def is_passkey_healthy(export_json: dict) -> bool:
     """Check if a passkey is healthy (has both public and private key).
-    
+
     A healthy passkey has:
     - overview.passkey (public metadata)
     - details.passkey.privateKey (the actual WebAuthn private key)
-    
+
     Args:
         export_json: Full item export from 1Password UI (overview/details format)
-        
+
     Returns:
         True if passkey is healthy, False if missing or orphaned
     """
@@ -73,17 +73,17 @@ def is_passkey_healthy(export_json: dict) -> bool:
 
 def is_passkey_orphaned(export_json: dict) -> bool:
     """Check if a passkey is orphaned (public key exists but private key deleted).
-    
+
     An orphaned passkey has:
     - overview.passkey (public metadata still present)
     - details.passkey missing OR details.passkey.privateKey missing
-    
+
     This state is created by the 1Password CLI bug where JSON editing
     deletes the passkey private key.
-    
+
     Args:
         export_json: Full item export from 1Password UI (overview/details format)
-        
+
     Returns:
         True if passkey is orphaned (overview exists, private key missing)
     """
@@ -100,10 +100,10 @@ def is_passkey_orphaned(export_json: dict) -> bool:
 
 def has_any_passkey(export_json: dict) -> bool:
     """Check if item has any passkey data (healthy or orphaned).
-    
+
     Args:
         export_json: Full item export from 1Password UI (overview/details format)
-        
+
     Returns:
         True if overview.passkey exists
     """
@@ -113,10 +113,10 @@ def has_any_passkey(export_json: dict) -> bool:
 
 def get_passkey_status(export_json: dict) -> str:
     """Get human-readable passkey status.
-    
+
     Args:
         export_json: Full item export from 1Password UI (overview/details format)
-        
+
     Returns:
         Status string: "healthy", "orphaned", or "none"
     """
@@ -130,16 +130,16 @@ def get_passkey_status(export_json: dict) -> str:
 
 def transform_to_cli_format(export_json: dict) -> dict[str, Any]:
     """Transform UI export JSON to CLI-compatible format for editing.
-    
+
     This transforms the 1Password UI export format (overview/details structure)
     to the CLI format (flat structure with fields array).
-    
+
     The transformed JSON intentionally excludes passkey data, which will
     cause the passkey to be deleted when used with `op item edit`.
-    
+
     Args:
         export_json: Full item export from 1Password UI
-        
+
     Returns:
         CLI-compatible JSON dict ready for `op item edit` stdin
     """
@@ -171,7 +171,7 @@ def transform_to_cli_format(export_json: dict) -> dict[str, Any]:
     fields = []
     for field in details.get("fields", []):
         designation = field.get("designation", "")
-        field_type = field.get("type", "T")
+        field.get("type", "T")
         value = field.get("value", "")
 
         if designation == "username":
@@ -210,15 +210,15 @@ def transform_to_cli_format(export_json: dict) -> dict[str, Any]:
 
 def clean_orphaned_passkey_json(export_json: dict) -> dict:
     """Remove orphaned passkey structure from UI export JSON.
-    
+
     This removes overview.passkey from the export JSON, preparing it
     for transformation and editing.
-    
+
     Note: This modifies a copy, not the original.
-    
+
     Args:
         export_json: Full item export from 1Password UI
-        
+
     Returns:
         Copy of export_json with overview.passkey removed
     """
@@ -230,10 +230,10 @@ def clean_orphaned_passkey_json(export_json: dict) -> dict:
 
 def get_item_info_from_export(export_json: dict) -> dict[str, str]:
     """Extract basic item info from UI export JSON.
-    
+
     Args:
         export_json: Full item export from 1Password UI
-        
+
     Returns:
         Dict with uuid, title, url keys
     """

@@ -24,7 +24,7 @@ console = Console()
 
 def print_grid_table(grid: SeederGrid) -> None:
     """Print matrix as formatted table.
-    
+
     Spreadsheet convention: letter=column (A-J), number=row (0-9)
     """
     table = Table(title="🔢 Token Matrix", show_header=True, header_style="bold cyan")

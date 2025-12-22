@@ -26,10 +26,10 @@ class DiceEntropyError(Exception):
 
 def base6_to_bytes(base6_digits: list[int]) -> bytes:
     """Convert base-6 digits to bytes.
-    
+
     Args:
         base6_digits: List of integers 0-5 (representing dice values 1-6 as 0-5)
-        
+
     Returns:
         Bytes representation of the base-6 number
     """
@@ -51,11 +51,11 @@ def base6_to_bytes(base6_digits: list[int]) -> bytes:
 
 def calculate_rolls_needed(target_bits: int, dice_count: int = 5) -> int:
     """Calculate number of rolls needed for target entropy.
-    
+
     Args:
         target_bits: Target entropy in bits
         dice_count: Number of dice per roll (1-5, default 5)
-        
+
     Returns:
         Number of rolls required
     """
@@ -70,23 +70,23 @@ def collect_dice_entropy(
     dice_count: int = 5,
 ) -> bytes:
     """Collect entropy from physical dice rolls.
-    
+
     Physical dice rolls provide true randomness from chaotic physics.
     Each die face (1-6) has equal probability, providing log2(6) ≈ 2.585 bits
     of entropy per die. Multiple dice multiply the possibilities exponentially.
-    
+
     Entropy per roll:
     - 1 die: ~2.585 bits
     - 2 dice: ~5.170 bits
     - 5 dice: ~12.92 bits
-    
+
     Args:
         bits: Target entropy in bits (minimum 256)
         dice_count: Number of dice per roll (1-5, default 5 for efficiency)
-        
+
     Returns:
         Entropy bytes derived from dice rolls
-        
+
     Raises:
         DiceEntropyError: If collection fails
         ValueError: If bits < 256 or dice_count invalid
@@ -175,11 +175,11 @@ def collect_dice_entropy(
 
 def estimate_collection_time(bits: int, dice_count: int = 5) -> tuple[int, float]:
     """Estimate time to collect entropy from dice.
-    
+
     Args:
         bits: Target entropy in bits
         dice_count: Number of dice per roll
-        
+
     Returns:
         Tuple of (rolls_needed, estimated_minutes)
     """

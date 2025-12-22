@@ -62,7 +62,7 @@ class TestSigchainEnabled:
 
 class TestEventPayloadHelpers:
     """Tests for event creation via helper functions.
-    
+
     These tests verify that the payloads created by integration helpers
     have the correct structure and field names.
     """

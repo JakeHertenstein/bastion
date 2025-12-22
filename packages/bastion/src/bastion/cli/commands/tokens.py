@@ -26,7 +26,7 @@ def token_add_app(
     skip_confirm: bool,
 ) -> None:
     """Add Phone App token.
-    
+
     Args:
         uuid: 1Password item UUID
         item_title: Display title of the item
@@ -165,7 +165,7 @@ def token_add_sms(
     skip_confirm: bool,
 ) -> None:
     """Add SMS token.
-    
+
     Args:
         uuid: 1Password item UUID
         item_title: Display title of the item
@@ -305,7 +305,7 @@ def token_remove(
     skip_confirm: bool,
 ) -> None:
     """Remove token by number.
-    
+
     Args:
         uuid: 1Password item UUID
         item_title: Display title of the item
@@ -435,7 +435,7 @@ def token_renumber(
     skip_confirm: bool,
 ) -> None:
     """Renumber tokens to close gaps.
-    
+
     Args:
         uuid: 1Password item UUID
         item_title: Display title of the item
@@ -544,7 +544,7 @@ def add_token_to_account(
     yes: bool = False,
 ) -> None:
     """Add a token to an account.
-    
+
     Args:
         uuid: Account UUID or title
         token_type: "app" or "sms"
@@ -595,7 +595,7 @@ def remove_token_from_account(
     yes: bool = False,
 ) -> None:
     """Remove a token from an account.
-    
+
     Args:
         uuid: Account UUID or title
         token_number: Token number to remove
@@ -634,7 +634,7 @@ def renumber_tokens_on_account(
     yes: bool = False,
 ) -> None:
     """Renumber tokens on an account to close gaps.
-    
+
     Args:
         uuid: Account UUID or title
         dry_run: Show what would be done

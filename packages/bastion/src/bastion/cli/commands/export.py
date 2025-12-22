@@ -12,7 +12,7 @@ console = Console()
 
 def export_tagging_candidates(output_path: Path) -> None:
     """Find and export items without Bastion/* tags.
-    
+
     Args:
         output_path: Path to write JSON output
     """

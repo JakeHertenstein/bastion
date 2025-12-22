@@ -83,7 +83,7 @@ DEFAULT_CONFIG = {
 
 class BastionConfig:
     """Bastion configuration manager.
-    
+
     Loads configuration from ~/.bastion/config.toml with fallback to defaults.
     Configuration can be modified via the 'bastion config' commands.
     """
@@ -127,12 +127,12 @@ class BastionConfig:
 
     def get(self, section: str, key: str, default: Any = None) -> Any:
         """Get a configuration value.
-        
+
         Args:
             section: Configuration section (e.g., "entropy", "username")
             key: Key within section
             default: Default value if not found
-            
+
         Returns:
             Configuration value or default
         """
@@ -142,10 +142,10 @@ class BastionConfig:
 
     def get_section(self, section: str) -> dict[str, Any]:
         """Get entire configuration section.
-        
+
         Args:
             section: Configuration section name
-            
+
         Returns:
             Dictionary of section values
         """
@@ -230,7 +230,7 @@ class BastionConfig:
     @staticmethod
     def save_config(config: dict[str, Any]) -> None:
         """Save configuration to ~/.bastion/config.toml.
-        
+
         Args:
             config: Configuration dictionary to save
         """
@@ -260,7 +260,7 @@ class BastionConfig:
 # Global config instance
 def get_config() -> BastionConfig:
     """Get the global configuration instance.
-    
+
     Returns:
         BastionConfig singleton instance
     """
@@ -269,12 +269,12 @@ def get_config() -> BastionConfig:
 
 def ensure_cache_infrastructure() -> None:
     """Create ~/.bastion/cache directory structure if needed.
-    
+
     Creates:
         ~/.bastion/
         ~/.bastion/cache/
         ~/.bastion/backups/
-    
+
     All directories are created with mode 0o700 (owner-only access).
     """
     BASTION_DIR.mkdir(mode=0o700, exist_ok=True)
@@ -284,9 +284,9 @@ def ensure_cache_infrastructure() -> None:
 
 def get_yubikey_cache_path() -> Path:
     """Get the YubiKey cache file path.
-    
+
     Auto-migrates from legacy ./yubikey-slots-cache.json if needed.
-    
+
     Returns:
         Path to ~/.bastion/cache/yubikey-slots.json
     """
@@ -301,7 +301,7 @@ def get_yubikey_cache_path() -> Path:
 
 def get_encrypted_db_path() -> Path:
     """Get the encrypted database file path.
-    
+
     Returns:
         Path to ~/.bastion/cache/db.enc
     """
@@ -311,9 +311,9 @@ def get_encrypted_db_path() -> Path:
 
 def get_password_rotation_db_path() -> Path:
     """Get the password rotation database path.
-    
+
     Auto-migrates from legacy ./password-rotation-database.json if needed.
-    
+
     Returns:
         Path to ~/.bastion/cache/password-rotation.json
     """
@@ -328,12 +328,12 @@ def get_password_rotation_db_path() -> Path:
 
 def migrate_legacy_cache_files() -> dict[str, bool]:
     """Migrate cache files from legacy locations to ~/.bastion/cache/.
-    
+
     Migrates:
         - ~/.bastion/cache.db.enc → ~/.bastion/cache/db.enc
         - ./yubikey-slots-cache.json → ~/.bastion/cache/yubikey-slots.json
         - ./password-rotation-database.json → ~/.bastion/cache/password-rotation.json
-    
+
     Returns:
         Dictionary of {filename: migrated} indicating which files were moved
     """
@@ -366,12 +366,12 @@ def migrate_legacy_cache_files() -> dict[str, bool]:
 
 def ensure_sigchain_infrastructure() -> None:
     """Create sigchain directory structure if needed.
-    
+
     Creates:
         ~/.bastion/sigchain/
         ~/.bastion/sigchain/ots/pending/
         ~/.bastion/sigchain/ots/completed/
-    
+
     All directories are created with mode 0o700 (owner-only access).
     """
     SIGCHAIN_DIR.mkdir(mode=0o700, exist_ok=True)
@@ -381,7 +381,7 @@ def ensure_sigchain_infrastructure() -> None:
 
 def get_sigchain_dir() -> Path:
     """Get the sigchain directory path.
-    
+
     Returns:
         Path to ~/.bastion/sigchain/
     """
@@ -391,7 +391,7 @@ def get_sigchain_dir() -> Path:
 
 def get_sigchain_log_path() -> Path:
     """Get the sigchain events log path.
-    
+
     Returns:
         Path to ~/.bastion/sigchain/events.jsonl
     """
@@ -401,7 +401,7 @@ def get_sigchain_log_path() -> Path:
 
 def get_sigchain_head_path() -> Path:
     """Get the sigchain head state path.
-    
+
     Returns:
         Path to ~/.bastion/sigchain/head.json
     """
@@ -411,7 +411,7 @@ def get_sigchain_head_path() -> Path:
 
 def get_ots_pending_dir() -> Path:
     """Get the OTS pending anchors directory.
-    
+
     Returns:
         Path to ~/.bastion/sigchain/ots/pending/
     """
@@ -421,7 +421,7 @@ def get_ots_pending_dir() -> Path:
 
 def get_ots_completed_dir() -> Path:
     """Get the OTS completed anchors directory.
-    
+
     Returns:
         Path to ~/.bastion/sigchain/ots/completed/
     """

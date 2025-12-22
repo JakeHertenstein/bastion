@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import BaseModel, Field, computed_field
 
@@ -226,10 +226,10 @@ class Account(BaseModel):
     def compute_risk_score(self, dependency_count: int = 0) -> tuple[int, RiskLevel]:
         """
         Compute risk score based on attributes.
-        
+
         Args:
             dependency_count: Number of accounts this can reset/recover
-            
+
         Returns:
             Tuple of (raw_score, risk_level)
         """

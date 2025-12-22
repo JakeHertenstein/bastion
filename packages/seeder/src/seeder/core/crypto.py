@@ -31,13 +31,13 @@ LUHN_BASE = 36
 def luhn_mod36_check(body: str) -> str:
     """
     Compute Luhn mod-36 check digit for a label body.
-    
+
     Uses the Luhn mod N algorithm with N=36 and alphabet [0-9A-Z].
     The check digit detects single-character errors and adjacent transpositions.
-    
+
     Args:
         body: Label string to compute check digit for
-        
+
     Returns:
         Single character check digit from LUHN_ALPHABET
     """
@@ -71,13 +71,13 @@ def luhn_mod36_check(body: str) -> str:
 def luhn_mod36_validate(label: str) -> tuple[bool, str]:
     """
     Validate and strip Luhn mod-36 check digit from a label.
-    
+
     Labels with check digit have format: BODY|CHECK
     Labels without check digit are returned as-is (valid but unverified).
-    
+
     Args:
         label: Full label string, optionally with |CHECK suffix
-        
+
     Returns:
         Tuple of (is_valid, body_without_check)
         - If label has check digit: validates it, returns (valid, body)
@@ -103,10 +103,10 @@ def luhn_mod36_validate(label: str) -> tuple[bool, str]:
 def build_label_with_check(body: str) -> str:
     """
     Append Luhn mod-36 check digit to a label body.
-    
+
     Args:
         body: Label body (colon-separated fields)
-        
+
     Returns:
         Complete label with |CHECK suffix
     """
@@ -119,10 +119,10 @@ def build_label_with_check(body: str) -> str:
 def generate_nonce(num_bytes: int = NONCE_BYTES) -> str:
     """
     Generate a cryptographically random nonce encoded as URL-safe Base64.
-    
+
     Args:
         num_bytes: Number of random bytes (default 6 = 48 bits)
-        
+
     Returns:
         URL-safe Base64 encoded string (no padding, no +/)
     """
@@ -143,14 +143,14 @@ def build_label(
 ) -> str:
     """
     Build a complete v1 label string for deterministic derivation (Argon2 salt).
-    
+
     Bastion Label Format: Bastion/TOKEN/ALGO:IDENT:DATE#PARAMS|CHECK
-    
+
     Uses URL-style parameter encoding with & separator and = assignment.
     Parameter order is canonical: VERSION, TIME, MEMORY, PARALLELISM, NONCE, ENCODING
-    
+
     Example: Bastion/TOKEN/SIMPLE-ARGON2ID:banking.A0:2025-11-28#VERSION=1&TIME=3&MEMORY=2048&PARALLELISM=8&NONCE=Kx7mQ9bL&ENCODING=90|X
-    
+
     Args:
         seed_type: SIMPLE, BIP39, or SLIP39
         kdf: KDF algorithm (ARGON2ID, PBKDF2, SHA512)
@@ -160,7 +160,7 @@ def build_label(
         nonce: URL-safe Base64 nonce (optional, auto-generated if None)
         card_id: User-defined card identifier (lowercase recommended)
         card_index: Card index as grid coordinate A0-J9 (default "A0")
-        
+
     Returns:
         Complete label string with Luhn check digit
     """
@@ -196,17 +196,17 @@ def build_label(
 def build_hmac_label(card_index: str, token_coord: str) -> str:
     """
     Build HMAC info label for per-token domain separation.
-    
+
     Bastion Format: Bastion/TOKEN/HMAC:{card_index}.{token_coord}#VERSION=1|CHECK
-    
+
     Example: Bastion/TOKEN/HMAC:A0.B3#VERSION=1|Y
-    
+
     This ensures each token position derives unique bytes even with same seed.
-    
+
     Args:
         card_index: Card index as grid coordinate (A0-J9)
         token_coord: Token coordinate within the card (A0-J9)
-        
+
     Returns:
         HMAC info label string with Luhn check digit
     """
@@ -223,15 +223,15 @@ def build_hmac_label(card_index: str, token_coord: str) -> str:
 def parse_hmac_label(label: str) -> dict[str, str]:
     """
     Parse an HMAC info label.
-    
+
     Bastion format only: Bastion/TOKEN/HMAC:A0.B3:#VERSION=1|Y
-    
+
     Args:
         label: HMAC label string
-        
+
     Returns:
         Dictionary with version, card_index, token_coord
-        
+
     Raises:
         ValueError: If label format is invalid
     """
@@ -280,15 +280,15 @@ def parse_hmac_label(label: str) -> dict[str, str]:
 def parse_label(label: str) -> dict[str, Any]:
     """
     Parse a label string into its components.
-    
+
     Bastion format only: Bastion/TOKEN/ALGO:IDENT:DATE#PARAMS|CHECK
-    
+
     Args:
         label: Complete label string
-        
+
     Returns:
         Dictionary with parsed components
-        
+
     Raises:
         ValueError: If label format is invalid
     """
@@ -301,12 +301,12 @@ def parse_label(label: str) -> dict[str, Any]:
 def _parse_new_bastion_label(label: str) -> dict[str, Any]:
     """
     Parse the Bastion format label.
-    
+
     Format: Bastion/TOKEN/ALGO:IDENT:DATE#PARAMS|CHECK
     - ALGO: SEED_TYPE-KDF (e.g., SIMPLE-ARGON2ID)
     - IDENT: {card_id}.{card_index}
     - PARAMS: URL-style VERSION=1&TIME=3&MEMORY=2048&PARALLELISM=8&NONCE=Kx7mQ9bL&ENCODING=90
-    
+
     Example: Bastion/TOKEN/SIMPLE-ARGON2ID:banking.A0:2025-11-28#VERSION=1&TIME=3&MEMORY=2048&PARALLELISM=8&NONCE=Kx7mQ9bL&ENCODING=90|X
     """
     # Validate and strip Luhn check digit
@@ -385,10 +385,10 @@ def _parse_new_bastion_label(label: str) -> dict[str, Any]:
 def _parse_url_params(params_str: str) -> dict[str, Any]:
     """
     Parse URL-style parameters.
-    
+
     Format: KEY=value&KEY=value&...
     Example: VERSION=1&TIME=3&MEMORY=2048&PARALLELISM=8&NONCE=Kx7mQ9bL&ENCODING=90
-    
+
     Returns dict with lowercase keys and appropriate value types.
     """
     result: dict[str, Any] = {}
@@ -418,18 +418,18 @@ class SeedCardCrypto:
     def hkdf_expand(prk: bytes, info: bytes, length: int) -> bytes:
         """
         HKDF-Expand function per RFC 5869.
-        
+
         Expands a pseudorandom key (PRK) into output keying material using
         HMAC-SHA512. This is the standard HKDF expand phase with chained blocks.
-        
+
         Args:
             prk: Pseudorandom key (should be at least hash_len bytes)
             info: Context/application-specific info (can be empty)
             length: Desired output length in bytes
-            
+
         Returns:
             Output keying material of specified length
-            
+
         Raises:
             ValueError: If length exceeds maximum (255 * hash_len)
         """
@@ -457,17 +457,17 @@ class SeedCardCrypto:
     def hkdf_stream(seed_bytes: bytes, info_label: bytes, needed_bytes: int, card_id: str | None = None) -> bytes:
         """
         Generate deterministic byte stream using standard HKDF-Expand (RFC 5869).
-        
+
         Note: We skip HKDF-Extract because our seed is already a uniformly random
         64-byte value from Argon2id (which produces indistinguishable-from-random output).
         Using the Argon2 output directly as PRK is cryptographically safe.
-        
+
         Args:
             seed_bytes: 64-byte seed from Argon2id (used directly as PRK)
             info_label: Context label for domain separation
             needed_bytes: Number of bytes to generate
             card_id: Optional card ID to incorporate into info_label
-            
+
         Returns:
             Deterministic byte stream of requested length
         """
@@ -486,16 +486,16 @@ class SeedCardCrypto:
     def hkdf_like_stream(seed_bytes: bytes, info_label: bytes, needed_bytes: int, card_id: str | None = None) -> bytes:
         """
         Generate deterministic byte stream using standard HKDF-Expand (RFC 5869).
-        
+
         This method is an alias for hkdf_stream() maintained for backward compatibility.
         The implementation now uses standard HKDF-Expand with chained HMAC-SHA512.
-        
+
         Args:
             seed_bytes: 64-byte seed from Argon2id
             info_label: Context label (e.g., b"v1|A0|TOKEN|B3")
             needed_bytes: Number of bytes to generate
             card_id: Optional card ID for domain separation
-            
+
         Returns:
             Deterministic byte stream of requested length
         """
@@ -505,11 +505,11 @@ class SeedCardCrypto:
     def byte_to_symbol(byte_value: int, alphabet_size: int) -> int | None:
         """
         Map byte value to alphabet index using rejection sampling.
-        
+
         Args:
             byte_value: Single byte value (0-255)
             alphabet_size: Size of target alphabet
-            
+
         Returns:
             Alphabet index if byte is usable, None if rejected
         """
@@ -529,14 +529,14 @@ class SeedCardCrypto:
                                    alphabet: list[str] | None = None) -> str:
         """
         Generate a single token from byte stream using rejection sampling.
-        
+
         Args:
             byte_stream_iter: Iterator over byte values
             alphabet: List of characters to map to (defaults to BASE90 ALPHABET)
-            
+
         Returns:
             Token string of length CHARS_PER_TOKEN
-            
+
         Raises:
             RuntimeError: If insufficient entropy bytes available
         """
@@ -565,18 +565,18 @@ class SeedCardCrypto:
                             card_index: str = "A0") -> list[str]:
         """
         Generate a stream of tokens from seed material using per-token HMAC labels.
-        
+
         Each token is generated with a unique HMAC info label for domain separation:
         - Format: v1|{card_index}|TOKEN|{token_coord}
         - This matches the web app's token generation for cross-platform compatibility
-        
+
         Args:
             seed_bytes: 64-byte seed material
             num_tokens: Number of tokens to generate (typically 100 for 10x10 grid)
             card_id: Optional card ID (unused, kept for backward compatibility)
             alphabet: List of characters to use (defaults to BASE90 ALPHABET)
             card_index: Card index for batch generation (A0-J9), default "A0"
-            
+
         Returns:
             List of generated tokens in row-major order (A0, B0, ..., J0, A1, ..., J9)
         """
@@ -638,10 +638,10 @@ class PasswordEntropyAnalyzer:
     def calculate_token_entropy(alphabet_size: int | None = None) -> float:
         """
         Calculate bits of entropy per token.
-        
+
         Args:
             alphabet_size: Size of alphabet (defaults to BASE90)
-            
+
         Returns:
             Bits of entropy per 4-character token
         """
@@ -653,11 +653,11 @@ class PasswordEntropyAnalyzer:
     def calculate_password_entropy(num_tokens: int, alphabet_size: int | None = None) -> float:
         """
         Calculate total entropy for a password with given number of tokens.
-        
+
         Args:
             num_tokens: Number of tokens in password
             alphabet_size: Size of alphabet (defaults to BASE90)
-            
+
         Returns:
             Total bits of entropy
         """
@@ -678,7 +678,7 @@ class PasswordEntropyAnalyzer:
     def calculate_rolling_token_entropy(rotation_period_days: int = 90) -> float:
         """
         Calculate additional entropy from rolling/rotating tokens.
-        
+
         Args:
             rotation_period_days: How often the rolling component changes
         """
@@ -698,7 +698,7 @@ class PasswordEntropyAnalyzer:
     ) -> dict[str, str | int | bool]:
         """
         Analyze composite password formats like: TokenA-TokenB-TokenC-MemWord!
-        
+
         Args:
             num_fixed_tokens: Number of static tokens from grid
             num_rolling_tokens: Number of tokens that change periodically
@@ -788,14 +788,14 @@ class PasswordEntropyAnalyzer:
     ) -> dict[str, str | float]:
         """
         Analyze security when the physical card is compromised but secrets remain.
-        
+
         This models the threat scenario where an attacker has:
         - COMPROMISED: Physical card with all token values visible
         - SECRET: Memorized word, component order, rotation schedule, coordinate selection
-        
+
         Args:
             Same as analyze_composite_password
-            
+
         Returns:
             Dictionary with both total entropy and "card compromised" entropy
         """
@@ -894,12 +894,12 @@ class PasswordEntropyAnalyzer:
     def estimate_crack_time(entropy_bits: float, guesses_per_second: int = 1000) -> dict[str, str]:
         """
         Estimate time to crack password given entropy and attack rate.
-        
+
         Args:
             entropy_bits: Password entropy in bits
             guesses_per_second: Attack rate (default: 1000 for rate-limited online attacks)
                                Modern hardware: 7B+ guesses/sec (GPU), 100K+ guesses/sec (CPU)
-            
+
         Returns:
             Dictionary with time estimates for 50% and 99% probability of cracking
         """
@@ -944,10 +944,10 @@ class PasswordEntropyAnalyzer:
     def analyze_coordinate_pattern(coordinates: list[str]) -> dict[str, Any]:
         """
         Analyze the entropy and security properties of a coordinate pattern.
-        
+
         Args:
             coordinates: List of coordinate strings like ["A0", "B1", "C2", "D3"]
-            
+
         Returns:
             Dictionary with comprehensive analysis
         """
@@ -1007,7 +1007,7 @@ class PasswordEntropyAnalyzer:
 def analyze_rejection_rate(alphabet_size: int = ALPHABET_SIZE) -> dict[str, int | float | str]:
     """
     Analyze rejection sampling statistics for given alphabet size.
-    
+
     Returns:
         Dictionary with rejection rate analysis
     """

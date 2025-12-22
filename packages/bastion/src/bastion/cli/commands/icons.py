@@ -24,7 +24,7 @@ def icons_attach_auto(
     force: bool = False,
 ) -> None:
     """Auto-match and attach icons to all YubiKey OATH accounts.
-    
+
     Args:
         icon_manager: IconManager instance
         dry_run: If True, show what would be done without making changes
@@ -54,7 +54,7 @@ def icons_attach_single(
     icon_file: str | None,
 ) -> None:
     """Attach an icon to a specific 1Password item.
-    
+
     Args:
         icon_manager: IconManager instance
         item_uuid: UUID of the 1Password item
@@ -96,7 +96,7 @@ def icons_export(
     output_path: Path,
 ) -> None:
     """Export all attached icons to a directory.
-    
+
     Args:
         icon_manager: IconManager instance
         output_path: Directory to export icons to
@@ -109,7 +109,7 @@ def icons_export(
 
 def icons_list(icon_manager: IconManager) -> None:
     """List all YubiKey OATH accounts with their icon status.
-    
+
     Args:
         icon_manager: IconManager instance
     """

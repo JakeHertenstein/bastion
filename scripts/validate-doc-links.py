@@ -18,12 +18,11 @@ Examples:
 from __future__ import annotations
 
 import argparse
-import os
 import re
 import sys
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Iterator, List, Tuple
 
 LINK_PATTERN = re.compile(r"!?(?:\[.*?\])\((.*?)\)")
 CODE_FENCE_PATTERN = re.compile(r"^\s*```")
@@ -61,7 +60,7 @@ def has_unpublished_front_matter(path: Path) -> bool:
     return "published:" in header and "published: false" in header
 
 
-def iter_markdown_files(root: Path, ignore_prefixes: List[str]) -> Iterator[Path]:
+def iter_markdown_files(root: Path, ignore_prefixes: list[str]) -> Iterator[Path]:
     # Always ignore generated site and private docs
     default_ignores = [
         (root / "_site").as_posix(),
@@ -116,8 +115,8 @@ def exists_case_sensitive(path: Path) -> bool:
         return False
 
 
-def validate_file_links(file_path: Path, repo_root: Path) -> List[LinkIssue]:
-    issues: List[LinkIssue] = []
+def validate_file_links(file_path: Path, repo_root: Path) -> list[LinkIssue]:
+    issues: list[LinkIssue] = []
     state = {"code": False}
     try:
         lines = file_path.read_text(encoding="utf-8", errors="replace").splitlines()
@@ -161,7 +160,7 @@ def main() -> int:
         print(f"Error: root '{docs_root}' not found", file=sys.stderr)
         return 2
 
-    all_issues: List[LinkIssue] = []
+    all_issues: list[LinkIssue] = []
     files = list(iter_markdown_files(docs_root, args.ignore))
     for md in files:
         issues = validate_file_links(md, repo_root)
@@ -175,7 +174,7 @@ def main() -> int:
         # Summary
         print(f"\nBroken links found: {len(all_issues)}")
         # Group by file
-        by_file: dict[Path, List[LinkIssue]] = {}
+        by_file: dict[Path, list[LinkIssue]] = {}
         for iss in all_issues:
             by_file.setdefault(iss.file, []).append(iss)
         for f, items in sorted(by_file.items(), key=lambda kv: kv[0].as_posix()):

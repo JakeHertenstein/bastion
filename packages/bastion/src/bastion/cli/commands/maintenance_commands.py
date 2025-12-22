@@ -3,20 +3,20 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 
 import typer
 from rich.console import Console
 
-from .validate import validate_migration, validate_rules
-from .rollback import rollback_migration, rollback_yubikey_migration
 from .cleanup import cleanup_duplicate_tags, cleanup_orphaned_passkeys
+from .rollback import rollback_migration, rollback_yubikey_migration
+from .validate import validate_migration, validate_rules
 
 console = Console()
 
 # Type alias for common db option
 DbPathOption = Annotated[
-    Optional[Path],
+    Path | None,
     typer.Option(
         "--db",
         help="Database file path",
@@ -27,7 +27,7 @@ DbPathOption = Annotated[
 
 def register_commands(app: typer.Typer) -> None:
     """Register maintenance-related commands with the app."""
-    
+
     @app.command("validate")
     def validate_migration_command(
         noun: Annotated[str, typer.Argument(help="'migration' or 'rules'")] = "migration",
@@ -51,19 +51,20 @@ def register_commands(app: typer.Typer) -> None:
             typer.Argument(help="Object type: migration, yubikey"),
         ],
         account_name: Annotated[
-            Optional[str],
+            str | None,
             typer.Argument(help="[yubikey] Account name to rollback"),
         ] = None,
         db_path: DbPathOption = None,
     ) -> None:
-        """Rollback migration from backup or rollback failed YubiKey TOTP migration.
-        
-        Examples:
+        """
+        \bRollback migration from backup or rollback failed YubiKey TOTP migration.
+
+        \bExamples:
             bastion rollback migration
             bastion rollback yubikey "Google"
             bastion rollback yubikey "Amazon"
         """
-        
+
         if object_type == "migration":
             rollback_migration(db_path)
         elif object_type == "yubikey":
@@ -81,11 +82,12 @@ def register_commands(app: typer.Typer) -> None:
         noun: Annotated[str, typer.Argument(help="'tags' or 'passkeys'")] = "tags",
         db_path: DbPathOption = None,
         batch: Annotated[bool, typer.Option("--batch", "--yes", help="Non-interactive mode")] = False,
-        only_uuid: Annotated[Optional[str], typer.Option("--uuid", help="Process single item by UUID")] = None,
+        only_uuid: Annotated[str | None, typer.Option("--uuid", help="Process single item by UUID")] = None,
     ) -> None:
-        """Clean up duplicate tags or orphaned passkeys.
-        
-        Examples:
+        """
+        \bClean up duplicate tags or orphaned passkeys.
+
+        \bExamples:
             bastion cleanup tags              # Remove duplicate tags
             bastion cleanup passkeys          # Fix orphaned passkeys
             bastion cleanup passkeys --uuid <id>  # Fix single item

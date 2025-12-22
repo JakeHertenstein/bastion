@@ -1,3 +1,6 @@
+---
+published: false
+---
 # Username Generator Guide
 
 ## Overview
@@ -535,7 +538,7 @@ A: Negligible. HMAC-SHA256 produces 256-bit hashes. Even truncated to 16 charact
 
 - [BASTION-TAGGING-GUIDE.md](./BASTION-TAGGING-GUIDE.md): Tag organization for username items
 - [RISK-ANALYSIS.md](./RISK-ANALYSIS.md): Risk scoring algorithm and analysis system
-- [bastion/username_generator.py](./bastion/username_generator.py): Implementation details
+- [packages/bastion/src/bastion/username_generator.py](../packages/bastion/src/bastion/username_generator.py): Implementation details
 
 ## Support
 

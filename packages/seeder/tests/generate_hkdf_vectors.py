@@ -12,6 +12,7 @@ sys.path.insert(0, 'src')
 
 from seeder.core.crypto import SeedCardCrypto, luhn_mod36_check
 
+
 # Helper to build test HMAC labels
 def test_hmac_label(card_idx: str, token_coord: str) -> str:
     """Build HMAC label with Luhn check for test vectors."""
@@ -30,7 +31,7 @@ output1 = SeedCardCrypto.hkdf_expand(prk1, info1, 32)
 print('Test Vector 1 (zeros PRK):')
 print(f'  PRK (hex): {prk1.hex()}')
 print(f'  Info: {info1.decode()}')
-print(f'  Length: 32')
+print('  Length: 32')
 print(f'  Output (hex): {output1.hex()}')
 print()
 
@@ -41,7 +42,7 @@ output2 = SeedCardCrypto.hkdf_expand(prk2, info2, 64)
 print('Test Vector 2 (sequential PRK):')
 print(f'  PRK (hex): {prk2.hex()}')
 print(f'  Info: {info2.decode()}')
-print(f'  Length: 64')
+print('  Length: 64')
 print(f'  Output (hex): {output2.hex()}')
 print()
 
@@ -52,7 +53,7 @@ output3 = SeedCardCrypto.hkdf_expand(prk3, info3, 128)
 print('Test Vector 3 (realistic PRK):')
 print(f'  PRK (hex): {prk3.hex()}')
 print(f'  Info: {info3.decode()}')
-print(f'  Length: 128')
+print('  Length: 128')
 print(f'  Output (hex): {output3.hex()}')
 print()
 
@@ -63,5 +64,5 @@ output4 = SeedCardCrypto.hkdf_expand(prk4, info4, 192)
 print('Test Vector 4 (multi-block):')
 print(f'  PRK (hex): {prk4.hex()}')
 print(f'  Info: {info4.decode()}')
-print(f'  Length: 192')
+print('  Length: 192')
 print(f'  Output (hex): {output4.hex()}')

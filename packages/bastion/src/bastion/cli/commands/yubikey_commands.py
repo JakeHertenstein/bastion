@@ -9,22 +9,24 @@ Commands:
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 
 import typer
 from rich.console import Console
 from rich.table import Table
 
+from ...yubikey_service import PasswordRequiredError, YubiKeyService, sync_yubikey_items
 from ..helpers import get_encrypted_db_manager, get_yubikey_service
-from ...yubikey_service import YubiKeyService, sync_yubikey_items, PasswordRequiredError
 from .update import update_metadata, update_metadata_show
 
 console = Console()
+logger = logging.getLogger(__name__)
 
 # Type alias for common db option
 DbPathOption = Annotated[
-    Optional[Path],
+    Path | None,
     typer.Option(
         "--db",
         help="Database file path",
@@ -35,50 +37,78 @@ DbPathOption = Annotated[
 
 def register_commands(app: typer.Typer) -> None:
     """Register yubikey-related commands with the app."""
-    
+
     @app.command("yubikey")
     def yubikey_command(
-        action: Annotated[str, typer.Argument(help="Action: 'scan', 'list', or 'status'")],
+        action: Annotated[str, typer.Argument(help="Action: 'scan', 'list', 'status', or 'provision'")],
         serial: Annotated[str | None, typer.Option("--serial", "-s", help="Specific YubiKey serial")] = None,
         update: Annotated[bool, typer.Option("--update", "-u", help="Update 1Password with scan results")] = False,
         force_sync: Annotated[bool, typer.Option("--force-sync", help="Force sync YubiKey items before operation")] = False,
+        verbose: Annotated[int, typer.Option("-v", "--verbose", count=True, help="Increase verbosity (v/vv/vvv)")] = 0,
+        # Provision-specific options
+        profile: Annotated[str | None, typer.Option("--profile", help="[provision] Override profile name")] = None,
+        dry_run: Annotated[bool, typer.Option("--dry-run", help="[provision] Show plan without executing (default: execute)")] = False,
+        no_touch: Annotated[bool, typer.Option("--no-touch", help="[provision] Disable touch requirement")] = False,
     ) -> None:
         """
-        YubiKey management commands.
-        
-        Actions:
-          scan    - Scan connected YubiKeys to compare with 1Password
-          list    - List all YubiKey items from sync cache
-          status  - Show sync status of all known YubiKeys
-        
-        Examples:
-          bsec 1p yubikey list                    # List all YubiKeys from 1Password
-          bsec 1p yubikey scan                    # Scan connected YubiKeys
-          bsec 1p yubikey scan --update           # Scan and update 1Password
-          bsec 1p yubikey scan --serial 12345678  # Scan specific YubiKey
-          bsec 1p yubikey status                  # Show status overview
+        \bYubiKey management commands.
+
+        \bActions:
+            scan      - Scan connected YubiKeys to compare with 1Password
+            list      - List all YubiKey items from sync cache
+            status    - Show sync status of all known YubiKeys
+            provision - Provision TOTP accounts to YubiKey from 1Password
+
+        \bExamples:
+            bsec 1p yubikey list                    # List all YubiKeys from 1Password
+            bsec 1p yubikey scan                    # Scan connected YubiKeys
+            bsec 1p yubikey scan --update           # Scan and update 1Password
+            bsec 1p yubikey scan --serial 12345678  # Scan specific YubiKey
+            bsec 1p yubikey status                  # Show status overview
+            bsec 1p yubikey scan -vv                # Scan with debug output
+            bsec 1p yubikey provision --serial 12345678 --dry-run  # Show provisioning plan
+            bsec 1p yubikey provision --serial 12345678            # Provision TOTP accounts
         """
+        # Configure logging BEFORE creating service
+        if verbose >= 1:
+            logging.basicConfig(
+                level=logging.INFO,
+                format="%(message)s",
+                force=True
+            )
+        if verbose >= 2:
+            logging.basicConfig(
+                level=logging.DEBUG,
+                format="%(message)s",
+                force=True
+            )
+
         cache_mgr = get_encrypted_db_manager()
-        
+
         # Auto-sync YubiKey items if forced or cache seems stale
         if force_sync:
             sync_yubikey_items(cache_mgr)
-        
+
         service = YubiKeyService(cache_mgr)
-        
+
         if action == "list":
             _yubikey_list(service)
         elif action == "scan":
-            _yubikey_scan(service, serial, update)
+            _yubikey_scan(service, serial, update, verbose)
         elif action == "status":
-            _yubikey_status(service)
+            _yubikey_status(service, verbose)
+        elif action == "provision":
+            if not serial:
+                console.print("[red]Error:[/red] --serial required for provision")
+                raise typer.Exit(1)
+            _yubikey_provision(service, serial, profile, dry_run, not no_touch, verbose)
         # Legacy aliases
         elif action in ("cache-slots", "sync"):
             console.print("[yellow]Note:[/yellow] 'cache-slots' is deprecated. Use 'scan --update' instead.")
-            _yubikey_scan(service, serial, update=True)
+            _yubikey_scan(service, serial, update=True, verbose=verbose)
         else:
             console.print(f"[red]Error:[/red] Unknown action '{action}'")
-            console.print("Valid actions: scan, list, status")
+            console.print("Valid actions: scan, list, status, provision")
             raise typer.Exit(1)
 
     @app.command("update")
@@ -98,19 +128,20 @@ def register_commands(app: typer.Typer) -> None:
         bastion_notes: Annotated[str | None, typer.Option(help="[metadata] Security notes")] = None,
         show: Annotated[bool, typer.Option("--show", help="[metadata] Show current metadata")] = False,
     ) -> None:
-        """Update YubiKey items or Bastion Metadata section in login items.
-        
-        YubiKey examples:
-          bsec 1p update yubikey --serial 12345678    # Update specific YubiKey from scan
-          bsec 1p update yubikey --all                # Update all connected YubiKeys
-        
-        Metadata examples:
-          bsec 1p update metadata <UUID> --show       # Show current metadata
-          bsec 1p update metadata <UUID> --password-changed 2025-11-27
+        """
+        \bUpdate YubiKey items or Bastion Metadata section in login items.
+
+        \bYubiKey examples:
+            bsec 1p update yubikey --serial 12345678    # Update specific YubiKey from scan
+            bsec 1p update yubikey --all                # Update all connected YubiKeys
+
+        \bMetadata examples:
+            bsec 1p update metadata <UUID> --show       # Show current metadata
+            bsec 1p update metadata <UUID> --password-changed 2025-11-27
         """
         if noun in ("yubikey", "yubikeys"):
             service = get_yubikey_service()
-            
+
             if all_yubikeys:
                 serials = service.list_connected_serials()
                 if not serials:
@@ -121,15 +152,15 @@ def register_commands(app: typer.Typer) -> None:
             else:
                 console.print("[red]Must specify --serial or --all[/red]")
                 raise typer.Exit(1)
-            
-            _update_yubikeys(service, serials)
-        
+
+            _update_yubikeys(service, serials, verbose=0)
+
         elif noun == "metadata":
             if not uuid:
                 console.print("[red]Error: UUID required for metadata operations[/red]")
                 console.print("Usage: bsec 1p update metadata <UUID> [OPTIONS]")
                 raise typer.Exit(1)
-            
+
             if show:
                 update_metadata_show(uuid)
             else:
@@ -137,7 +168,7 @@ def register_commands(app: typer.Typer) -> None:
                     uuid, password_changed, password_expires, totp_issued,
                     last_review, next_review, breach_detected, risk_level, bastion_notes
                 )
-        
+
         else:
             console.print(f"[red]Unknown resource type: {noun}[/red]")
             console.print("Valid types: yubikey, metadata")
@@ -147,19 +178,19 @@ def register_commands(app: typer.Typer) -> None:
 def _yubikey_list(service: YubiKeyService) -> None:
     """List all YubiKey items from sync cache."""
     devices = service.get_all_devices()
-    
+
     if not devices:
         console.print("[yellow]No YubiKey/Token items found in sync cache[/yellow]")
         console.print("[dim]Run 'bsec 1p sync vault' to sync from 1Password[/dim]")
         return
-    
+
     table = Table(title="YubiKey Devices (from 1Password)")
     table.add_column("Serial", style="cyan")
     table.add_column("Title", style="white")
     table.add_column("Vault", style="dim")
     table.add_column("OATH Slots", justify="right")
     table.add_column("Last Synced", style="dim")
-    
+
     for device in devices:
         table.add_row(
             device.serial,
@@ -168,20 +199,20 @@ def _yubikey_list(service: YubiKeyService) -> None:
             f"{device.slot_count}/32",
             device.updated_at[:10] if device.updated_at else "Never",
         )
-    
+
     console.print(table)
     console.print(f"\n[dim]Total: {len(devices)} YubiKey(s)[/dim]")
 
 
-def _yubikey_scan(service: YubiKeyService, serial: str | None, update: bool) -> None:
+def _yubikey_scan(service: YubiKeyService, serial: str | None, update: bool, verbose: int = 0) -> None:
     """Scan connected YubiKeys and compare with 1Password."""
     connected = sorted(service.list_connected_serials(), key=lambda s: int(s) if s.isdigit() else 0)  # Sort numerically
-    
+
     if not connected:
         console.print("[yellow]No YubiKeys connected[/yellow]")
         console.print("Connect a YubiKey and try again.")
         return
-    
+
     # Filter to specific serial if provided
     if serial:
         if serial not in connected:
@@ -189,34 +220,38 @@ def _yubikey_scan(service: YubiKeyService, serial: str | None, update: bool) -> 
             console.print(f"Connected: {', '.join(connected)}")
             raise typer.Exit(1)
         connected = [serial]
-    
+
     console.print(f"[cyan]Scanning {len(connected)} YubiKey(s)...[/cyan]\n")
-    
+
     results = []
     for sn in connected:
         console.print(f"[bold]{sn}[/bold]")
-        
+
         # Check if in 1Password
         device = service.get_yubikey_device(sn)
         if not device:
             console.print(f"  [yellow]⚠ Not found in 1Password (no YubiKey/Token item with SN={sn})[/yellow]")
             continue
-        
+
         console.print(f"  Title: {device.title}")
-        
+
         # Get password if needed
         password = None
-        if service.is_oath_password_required(sn):
-            password = service.get_oath_password(sn)
+        password_required = service.is_oath_password_required(sn, verbose=verbose)
+
+        if password_required:
+            password = service.get_oath_password(sn, verbose=verbose)
             if not password:
-                console.print(f"  [yellow]⚠ OATH password required but not found in 1Password[/yellow]")
+                console.print("  [yellow]⚠ OATH password required but not found in 1Password[/yellow]")
+                if verbose >= 1:
+                    console.print("  [dim]Run with -vv to see password lookup details[/dim]")
                 continue
-        
+
         # Scan and compare
         try:
-            result = service.compare_device(sn, password)
+            result = service.compare_device(sn, password, verbose=verbose)
             results.append(result)
-            
+
             if result.in_sync:
                 console.print(f"  [green]✓ In sync ({len(result.matched)} accounts)[/green]")
             else:
@@ -226,32 +261,32 @@ def _yubikey_scan(service: YubiKeyService, serial: str | None, update: bool) -> 
                         console.print(f"    + {name}")
                     if len(result.on_device_only) > 5:
                         console.print(f"    ... and {len(result.on_device_only) - 5} more")
-                
+
                 if result.in_1p_only:
                     console.print(f"  [red]✗ In 1P but not on device ({len(result.in_1p_only)}):[/red]")
                     for name in result.in_1p_only[:5]:
                         console.print(f"    - {name}")
                     if len(result.in_1p_only) > 5:
                         console.print(f"    ... and {len(result.in_1p_only) - 5} more")
-                
+
                 if update:
-                    console.print(f"  [cyan]Updating 1Password...[/cyan]")
+                    console.print("  [cyan]Updating 1Password...[/cyan]")
                     # Get full account list from device
                     accounts = service.scan_oath_accounts(sn, password)
                     if service.update_1p_oath_slots(sn, accounts):
                         console.print(f"  [green]✓ Updated 1Password with {len(accounts)} slots[/green]")
                     else:
-                        console.print(f"  [red]✗ Failed to update 1Password[/red]")
+                        console.print("  [red]✗ Failed to update 1Password[/red]")
                 else:
-                    console.print(f"  [dim]Run with --update to sync to 1Password[/dim]")
-        
+                    console.print("  [dim]Run with --update to sync to 1Password[/dim]")
+
         except PasswordRequiredError:
-            console.print(f"  [yellow]⚠ OATH password required[/yellow]")
+            console.print("  [yellow]⚠ OATH password required[/yellow]")
         except Exception as e:
             console.print(f"  [red]✗ Error: {e}[/red]")
-        
+
         console.print()
-    
+
     # Summary
     if results:
         in_sync = sum(1 for r in results if r.in_sync)
@@ -259,31 +294,36 @@ def _yubikey_scan(service: YubiKeyService, serial: str | None, update: bool) -> 
         console.print(f"[bold]Summary:[/bold] {in_sync} in sync, {out_of_sync} need attention")
 
 
-def _yubikey_status(service: YubiKeyService) -> None:
+def _yubikey_status(service: YubiKeyService, verbose: int = 0) -> None:
     """Show status overview of all YubiKeys."""
     devices = service.get_all_devices()
     connected = service.list_connected_serials()
-    
+
     if not devices:
         console.print("[yellow]No YubiKey/Token items found[/yellow]")
         console.print("[dim]Run 'bsec 1p sync vault' to sync from 1Password[/dim]")
         return
-    
+
     table = Table(title="YubiKey Status")
     table.add_column("Serial", style="cyan")
     table.add_column("Title")
     table.add_column("Connected", justify="center")
     table.add_column("Slots (1P)")
     table.add_column("Status")
-    
+
     for device in devices:
         is_connected = device.serial in connected
-        
+
         status = "[dim]Unknown[/dim]"
         if is_connected:
             try:
-                password = service.get_oath_password(device.serial) if service.is_oath_password_required(device.serial) else None
-                result = service.compare_device(device.serial, password)
+                password = None
+                if service.is_oath_password_required(device.serial):
+                    password = service.get_oath_password(device.serial, verbose=verbose)
+                    if not password:
+                        status = "[yellow]⚠ Password required[/yellow]"
+                        continue
+                result = service.compare_device(device.serial, password, verbose=verbose)
                 if result.in_sync:
                     status = "[green]✓ In sync[/green]"
                 else:
@@ -295,7 +335,7 @@ def _yubikey_status(service: YubiKeyService) -> None:
                     status = f"[yellow]⚠ {', '.join(issues)}[/yellow]"
             except Exception:
                 status = "[yellow]⚠ Scan failed[/yellow]"
-        
+
         table.add_row(
             device.serial,
             device.title,
@@ -303,9 +343,9 @@ def _yubikey_status(service: YubiKeyService) -> None:
             f"{device.slot_count}/32",
             status,
         )
-    
+
     console.print(table)
-    
+
     # Show connected but unknown YubiKeys
     known_serials = {d.serial for d in devices}
     unknown = [s for s in connected if s not in known_serials]
@@ -314,44 +354,125 @@ def _yubikey_status(service: YubiKeyService) -> None:
         console.print("[dim]Create a YubiKey/Token item with SN field to track these[/dim]")
 
 
-def _update_yubikeys(service: YubiKeyService, serials: list[str]) -> None:
+def _update_yubikeys(service: YubiKeyService, serials: list[str], verbose: int = 0) -> None:
     """Update 1Password with current OATH slots from physical YubiKeys."""
     console.print(f"[cyan]Updating {len(serials)} YubiKey(s) in 1Password...[/cyan]\n")
-    
+
     success = 0
     failed = 0
-    
+
     for sn in serials:
         console.print(f"[bold]{sn}[/bold]")
-        
+
         # Check if connected
         connected = service.list_connected_serials()
         if sn not in connected:
-            console.print(f"  [red]✗ Not connected[/red]")
+            console.print("  [red]✗ Not connected[/red]")
             failed += 1
             continue
-        
+
         # Get password if needed
         password = None
         if service.is_oath_password_required(sn):
-            password = service.get_oath_password(sn)
+            password = service.get_oath_password(sn, verbose=verbose)
             if not password:
-                console.print(f"  [yellow]⚠ OATH password required but not found[/yellow]")
+                console.print("  [yellow]⚠ OATH password required but not found[/yellow]")
                 failed += 1
                 continue
-        
+
         try:
-            accounts = service.scan_oath_accounts(sn, password)
+            accounts = service.scan_oath_accounts(sn, password, verbose=verbose)
             console.print(f"  Scanned {len(accounts)} OATH accounts")
-            
+
             if service.update_1p_oath_slots(sn, accounts):
-                console.print(f"  [green]✓ Updated 1Password[/green]")
+                console.print("  [green]✓ Updated 1Password[/green]")
                 success += 1
             else:
-                console.print(f"  [red]✗ Failed to update[/red]")
+                console.print("  [red]✗ Failed to update[/red]")
                 failed += 1
         except Exception as e:
             console.print(f"  [red]✗ Error: {e}[/red]")
             failed += 1
-    
+
     console.print(f"\n[bold]Summary:[/bold] {success} updated, {failed} failed")
+
+
+def _yubikey_provision(
+    service: YubiKeyService,
+    serial: str,
+    profile_override: str | None,
+    dry_run: bool,
+    require_touch: bool,
+    verbose: int = 0,
+) -> None:
+    """Provision TOTP accounts to YubiKey from 1Password."""
+    from rich.prompt import Confirm
+
+    console.print(f"[bold]Provisioning YubiKey {serial}[/bold]\n")
+
+    # Get provisioning plan
+    try:
+        plan = service.build_provision_plan(serial, profile_override, verbose)
+    except ValueError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1)
+    except Exception as e:
+        console.print(f"[red]Unexpected error:[/red] {e}")
+        if verbose >= 2:
+            import traceback
+            traceback.print_exc()
+        raise typer.Exit(1)
+
+    # Display plan
+    table = Table(title=f"Provisioning Plan: {plan['profile']} Profile")
+    table.add_column("#", style="dim", justify="right")
+    table.add_column("Issuer", style="cyan")
+    table.add_column("Username", style="white")
+    table.add_column("Touch", justify="center")
+
+    for idx, acc in enumerate(plan['accounts'], 1):
+        table.add_row(
+            str(idx),
+            acc['issuer'],
+            acc['username'],
+            "✓" if require_touch else "",
+        )
+
+    console.print(table)
+    console.print(f"\n[bold]Capacity:[/bold] {plan['count']}/{plan['capacity']} slots")
+
+    if plan['count'] > plan['capacity']:
+        console.print(f"[red]Error:[/red] Too many accounts ({plan['count']}) for device capacity ({plan['capacity']})")
+        console.print("Refine profile inclusion/exclusion tags to fit within capacity.")
+        raise typer.Exit(1)
+
+    if dry_run:
+        console.print("\n[dim]Dry-run mode: No changes made[/dim]")
+        console.print("\n[bold]ykman commands:[/bold]")
+        for cmd in plan['ykman_commands']:
+            console.print(f"  {cmd}")
+        console.print("\n[dim]Remove --dry-run to execute provisioning[/dim]")
+        return
+
+    # Confirm execution
+    console.print(f"\n[yellow]⚠ This will DELETE all existing OATH accounts on YubiKey {serial}[/yellow]")
+    if not Confirm.ask("Proceed with provisioning?", default=False):
+        console.print("[dim]Cancelled[/dim]")
+        raise typer.Exit(0)
+
+    # Execute provisioning
+    console.print("\n[bold]Executing provisioning...[/bold]")
+    try:
+        success = service.execute_provision(serial, plan, require_touch, verbose)
+        if success:
+            console.print(f"\n[green]✓ Provisioned {plan['count']} accounts to YubiKey {serial}[/green]")
+            console.print(f"\n[dim]Run 'bsec 1p yubikey scan --serial {serial} --update' to verify[/dim]")
+        else:
+            console.print("\n[red]✗ Provisioning failed[/red]")
+            raise typer.Exit(1)
+    except Exception as e:
+        console.print(f"\n[red]Error during provisioning:[/red] {e}")
+        if verbose >= 2:
+            import traceback
+            traceback.print_exc()
+        raise typer.Exit(1)

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" aria-labelledby="title desc" role="img">
+  <defs>
+    <linearGradient id="shieldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e40af;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <title>Bastion Logo</title>
+  <desc>A simple bastion turret on a shield, distinct from Watchtower.</desc>
+  
+  <!-- Shield base with gradient -->
+  <path d="M128 16 L208 64 V160 C208 208 168 240 128 248 C88 240 48 208 48 160 V64 Z" 
+        fill="url(#shieldGradient)" stroke="#1e40af" stroke-width="2"/>
+  
+  <!-- Shield highlight (left side light) -->
+  <path d="M128 16 L80 50 V140 C80 185 100 220 128 230 C110 215 90 185 90 145 V80 Z" 
+        fill="#3b82f6" opacity="0.4"/>
+  
+    <!-- Keyhole accent - centered, top-only rounded, seamless vertical join into circle -->
+    <!-- Slot uses curved top corners and square bottom edges; slight overlap into circle to avoid any seam -->
+    <path d="M122 88 Q122 82 128 82 Q134 82 134 88 V148 H122 Z" fill="#fbbf24" opacity="1.0"/>
+    <circle cx="128" cy="164" r="18" fill="#fbbf24" opacity="1.0"/>
+</svg>

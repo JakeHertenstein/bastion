@@ -26,6 +26,21 @@ This module extends the existing `bastion` project, reusing:
 
 ---
 
+## QR Transfer Data Flows (Manager ↔ Airgap)
+
+- **Manager ➜ Airgap (pubkey)**: `bastion sigchain import pubkey --file manager.asc` (or paste QR) → `airgap keys import manager.asc` → airgap encrypts salts with manager key.
+- **Airgap ➜ Manager (salt)**: `airgap export salt --recipient <manager-key>` → scan/paste QR into `bastion sigchain import salt --vault Private` → GPG decrypts locally and stores salt in 1Password.
+- **Sigchain snapshots via QR**: `bastion sigchain export-qr --max-bytes 2000` to display multi-part QR payloads; `bastion sigchain import-qr --apply` to decode and overwrite local `chain.json` (or `--output` to save decoded JSON without applying).
+- **Isolation rule**: Encryption stays in airgap; manager only decrypts with its private key. QR payloads use the shared `BASTION:seq/total:<data>` framing.
+
+### QR Protocol
+
+**Protocol prefix**: `BASTION:` — identifies Bastion-specific QR payloads; implementation in [packages/bastion/src/bastion/qr.py](https://github.com/jakehertenstein/bastion/blob/main/packages/bastion/src/bastion/qr.py).
+
+**Default payload limit**: ~2000 bytes per QR code; larger payloads automatically chunked with sequence numbering (e.g., `BASTION:1/3:<chunk1>`).
+
+---
+
 ## 1. Label Format
 
 ### Decision: Bastion-Prefixed Hierarchical Labels
@@ -537,5 +552,5 @@ bastion airgap recovery plan   # Display recovery procedures
 - [ ] Implement `cards.py` with xattr-based detection
 - [ ] Add `airgap_commands.py` to CLI
 - [ ] Copy documentation to `bastion/docs/airgap/`
-- [ ] Merge copilot-instructions into bastion's instructions
+- [x] Merge copilot-instructions into bastion's instructions
 - [ ] Archive standalone air-gap workspace

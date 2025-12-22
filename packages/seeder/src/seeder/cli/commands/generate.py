@@ -9,7 +9,6 @@ import csv
 import sys
 from datetime import date
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 import typer
 from rich.console import Console
@@ -43,38 +42,38 @@ generate_app = typer.Typer(help="🔄 Generate tokens, matrices, and patterns")
 
 @generate_app.command("grid")
 def generate_grid(
-    simple: Optional[str] = typer.Option(None, "--simple", "-s", help="Simple seed phrase"),
-    bip39: Optional[str] = typer.Option(None, "--bip39", "-b", help="BIP-39 mnemonic phrase"),
-    slip39: Optional[List[str]] = typer.Option(None, "--slip39", help="SLIP-39 shares"),
+    simple: str | None = typer.Option(None, "--simple", "-s", help="Simple seed phrase"),
+    bip39: str | None = typer.Option(None, "--bip39", "-b", help="BIP-39 mnemonic phrase"),
+    slip39: list[str] | None = typer.Option(None, "--slip39", help="SLIP-39 shares"),
     passphrase: str = typer.Option("", "--passphrase", "-p", help="BIP-39 passphrase"),
     iterations: int = typer.Option(2048, "--iterations", "-i", help="PBKDF2 iterations"),
     output_format: str = typer.Option("table", "--format", "-f", help="Output format: table, plain, compact"),
     save: bool = typer.Option(False, "--save", help="Auto-save to 1Password"),
-    export: Optional[str] = typer.Option(None, "--export", help="Export to CSV file (specify filename)"),
-    card_id: Optional[str] = typer.Option(None, "--id", help="Custom card ID (default: YYYY-MM-DD)"),
-    card_date: Optional[str] = typer.Option(None, "--date", help="Card date/label for tracking (e.g., 2025, 2025-03, PROD-2025-A)"),
+    export: str | None = typer.Option(None, "--export", help="Export to CSV file (specify filename)"),
+    card_id: str | None = typer.Option(None, "--id", help="Custom card ID (default: YYYY-MM-DD)"),
+    card_date: str | None = typer.Option(None, "--date", help="Card date/label for tracking (e.g., 2025, 2025-03, PROD-2025-A)"),
     base: str = typer.Option("base90", "--base", help="Base system: base10, base62, or base90"),
     # Argon2 options
-    nonce: Optional[str] = typer.Option(None, "--nonce", help="8-character nonce for unique derivation (auto-generated if not specified)"),
+    nonce: str | None = typer.Option(None, "--nonce", help="8-character nonce for unique derivation (auto-generated if not specified)"),
     memory: int = typer.Option(2048, "--memory", "-m", help="Argon2 memory cost in MB (default: 2048 = 2GB)"),
     time_cost: int = typer.Option(3, "--time-cost", "-t", help="Argon2 time cost / iterations (default: 3)"),
-    parallelism: Optional[int] = typer.Option(None, "--parallelism", "-P", help="Argon2 parallelism / lanes (default: auto-detect CPU cores, max 16)"),
+    parallelism: int | None = typer.Option(None, "--parallelism", "-P", help="Argon2 parallelism / lanes (default: auto-detect CPU cores, max 16)"),
     card_index: str = typer.Option("A0", "--card-index", help="Card index for batch generation (A0-J9)"),
     no_argon2: bool = typer.Option(False, "--no-argon2", help="Use legacy SHA-512 instead of Argon2 for --simple"),
 ):
     """🔄 Generate a 10×10 token grid from seed material."""
-    
+
     # Display security warning for first-time users
     show_security_warning()
-    
+
     try:
         grid, seed_bytes, label = create_grid_from_args(
-            simple, bip39, slip39, passphrase, iterations, 
+            simple, bip39, slip39, passphrase, iterations,
             card_id, card_date, base,
             nonce=nonce, memory_mb=memory, use_argon2=not no_argon2,
             time_cost=time_cost, parallelism=parallelism, card_index=card_index
         )
-        
+
         if output_format == "table":
             print_grid_table(grid)
         elif output_format == "plain":
@@ -89,10 +88,10 @@ def generate_grid(
                     coord = f"{chr(ord('A') + r)}{c}"
                     tokens.append(grid.get_token(coord))
             typer.echo(" ".join(tokens))
-        
+
         # Show integrity hash
         print_hash_info(seed_bytes)
-        
+
         # Auto-save to 1Password if requested
         if save:
             from ...integrations.onepassword_integration import (
@@ -100,7 +99,7 @@ def generate_grid(
                 OnePasswordSession,
                 validate_seed_for_1password,
             )
-            
+
             async def auto_save():
                 try:
                     # Determine seed type and phrase
@@ -112,24 +111,24 @@ def generate_grid(
                         seed_phrase, seed_type = " | ".join(slip39), "SLIP-39"
                     else:
                         seed_phrase, seed_type = "unknown", "unknown"
-                    
+
                     # Validate seed data
                     if not validate_seed_for_1password(seed_phrase, seed_type):
                         print_error_message("Invalid seed data for 1Password storage")
                         return
-                    
+
                     # Generate hash for integrity
                     sha512_hash = SeedCardDigest.generate_sha512_hash(seed_bytes)
-                    
+
                     # Create card ID - use custom ID or default to simple ISO date
                     if card_id:
                         final_card_id = card_id
                     else:
                         final_card_id = f"{date.today().strftime('%Y-%m-%d')}"
-                    
+
                     console.print(f"🎴 Generated seed card: {final_card_id}", style="green")
                     console.print(f"🔑 SHA-512: {sha512_hash[:16]}...", style="dim")
-                    
+
                     # Save to 1Password
                     async with OnePasswordSession() as op:
                         # Get the first available vault (or use a default)
@@ -137,24 +136,24 @@ def generate_grid(
                         if not vaults:
                             raise OnePasswordError("No vaults available")
                         default_vault_id = vaults[0]["id"]
-                        
+
                         await op.save_seed_card(
                             card_id=final_card_id,
-                            seed_phrase=seed_phrase, 
+                            seed_phrase=seed_phrase,
                             seed_type=seed_type,
                             sha512_hash=sha512_hash,
                             vault_id=default_vault_id
                         )
                         print_success_message(f"Saved seed card {final_card_id} to 1Password")
-                        
+
                 except OnePasswordError as e:
                     print_error_message(f"1Password error: {e}")
                 except Exception as e:
                     print_error_message(f"Error: {e}")
-            
+
             # Run the async auto-save
             asyncio.run(auto_save())
-        
+
         # Auto-export to CSV if requested
         if export:
             try:
@@ -163,38 +162,38 @@ def generate_grid(
                     final_card_id = card_id
                 else:
                     final_card_id = f"{date.today().strftime('%Y-%m-%d')}"
-                
+
                 # Check if file exists to determine if we need header
                 file_exists = Path(export).exists()
-                
+
                 with open(export, 'a', newline='', encoding='utf-8') as f:
                     writer = csv.writer(f)
-                    
+
                     if not file_exists:
                         # New CSV format with Label column for Argon2 parameters
                         writer.writerow(['ID', 'Date', 'Label', 'SHORT_HASH', 'SHA512', 'Tokens'])
-                    
+
                     # Format tokens for CSV (newline-separated rows)
                     token_rows = []
                     for r in range(10):  # r is row index 0-9, which maps to rows A-J
                         row_tokens = [grid.get_token(f"{chr(ord('A') + r)}{c}") for c in range(10)]
                         token_rows.append(" ".join(row_tokens))
-                    
+
                     tokens_csv = "\n".join(token_rows)
-                    
+
                     # Write row with new Label column
                     today = date.today().strftime('%Y-%m-%d')
                     hash_value = SeedCardDigest.generate_sha512_hash(seed_bytes)
                     short_hash = hash_value[:6].upper()  # First 6 chars in uppercase for Code39 barcode
                     writer.writerow([final_card_id, today, label, short_hash, hash_value, tokens_csv])
-                
+
                 print_success_message(f"Exported to CSV: {export}")
                 console.print(f"📋 Card ID: {final_card_id}", style="dim")
                 console.print(f"🏷️  Label: {label}", style="dim")
-                
+
             except Exception as e:
                 print_error_message(f"Export error: {e}")
-        
+
     except Exception as e:
         print_error_message(f"Error: {e}")
         raise typer.Exit(1)
@@ -202,20 +201,20 @@ def generate_grid(
 
 @generate_app.command("batch")
 def generate_batch(
-    simple: Optional[str] = typer.Option(None, "--simple", "-s", help="Simple seed phrase"),
-    bip39: Optional[str] = typer.Option(None, "--bip39", "-b", help="BIP-39 mnemonic phrase"),
-    slip39: Optional[List[str]] = typer.Option(None, "--slip39", help="SLIP-39 shares"),
+    simple: str | None = typer.Option(None, "--simple", "-s", help="Simple seed phrase"),
+    bip39: str | None = typer.Option(None, "--bip39", "-b", help="BIP-39 mnemonic phrase"),
+    slip39: list[str] | None = typer.Option(None, "--slip39", help="SLIP-39 shares"),
     passphrase: str = typer.Option("", "--passphrase", "-p", help="BIP-39 passphrase"),
     iterations: int = typer.Option(2048, "--iterations", "-i", help="PBKDF2 iterations"),
     output: str = typer.Option("batch_cards.csv", "--output", "-o", help="Output CSV file"),
-    card_id: Optional[str] = typer.Option(None, "--id", help="Base card ID (will be suffixed with card index)"),
-    card_date: Optional[str] = typer.Option(None, "--date", help="Card date/label for tracking"),
+    card_id: str | None = typer.Option(None, "--id", help="Base card ID (will be suffixed with card index)"),
+    card_date: str | None = typer.Option(None, "--date", help="Card date/label for tracking"),
     base: str = typer.Option("base90", "--base", help="Base system: base10, base62, or base90"),
     # Argon2 options
-    nonce: Optional[str] = typer.Option(None, "--nonce", help="8-character batch nonce (auto-generated if not specified)"),
+    nonce: str | None = typer.Option(None, "--nonce", help="8-character batch nonce (auto-generated if not specified)"),
     memory: int = typer.Option(2048, "--memory", "-m", help="Argon2 memory cost in MB (default: 2048 = 2GB)"),
     time_cost: int = typer.Option(3, "--time-cost", "-t", help="Argon2 time cost / iterations (default: 3)"),
-    parallelism: Optional[int] = typer.Option(None, "--parallelism", "-P", help="Argon2 parallelism / lanes (default: auto-detect CPU cores, max 16)"),
+    parallelism: int | None = typer.Option(None, "--parallelism", "-P", help="Argon2 parallelism / lanes (default: auto-detect CPU cores, max 16)"),
 ):
     """📦 Generate a batch of 100 cards (A0-J9) with unique labels per card index.
     
@@ -235,7 +234,7 @@ def generate_batch(
     # Auto-detect parallelism if not specified
     if parallelism is None:
         parallelism = get_auto_parallelism()
-    
+
     # Determine seed source type
     if simple:
         source_type = "SIMPLE"
@@ -252,29 +251,29 @@ def generate_batch(
     else:
         print_error_message("Must specify a seed source (--simple, --bip39, or --slip39)")
         raise typer.Exit(1)
-    
+
     # Generate batch nonce if not provided
     if nonce is None:
         nonce = gen_nonce()
-    
+
     # Use today's date if not specified
     card_date_val = card_date or date.today().strftime('%Y-%m-%d')
     base_card_id = card_id or "BATCH"
-    
-    console.print(f"📦 Generating batch of 100 cards (A0-J9)...", style="bold")
+
+    console.print("📦 Generating batch of 100 cards (A0-J9)...", style="bold")
     console.print(f"🔑 Seed type: {source_type}", style="dim")
     console.print(f"🎲 Batch nonce: {nonce}", style="dim")
     console.print(f"💾 Output: {output}", style="dim")
-    
+
     # Generate all 100 cards
     cards = []
-    
+
     with console.status("[bold green]Generating cards...") as status:
         for row in range(TOKENS_TALL):  # 0-9
             for col in range(TOKENS_WIDE):  # A-J
                 card_index = f"{chr(ord('A') + col)}{row}"
                 status.update(f"[bold green]Generating card {card_index}...")
-                
+
                 if use_argon2:
                     # Build the v1 label for this card
                     kdf_params = encode_argon2_params(time_cost, memory, parallelism)
@@ -288,7 +287,7 @@ def generate_batch(
                         card_id=base_card_id,
                         card_index=card_index,
                     )
-                    
+
                     # Derive seed using label as salt
                     memory_kb = memory * 1024
                     seed_bytes = SeedSources.argon2_to_seed(
@@ -305,21 +304,21 @@ def generate_batch(
                     elif slip39:
                         seed_bytes = SeedSources.slip39_to_seed(slip39)
                     label = f"legacy|{source_type}|{base.upper()}|{card_date_val}|{base_card_id}|{card_index}"
-                
+
                 # Generate grid
                 grid = SeederGrid(seed_bytes, base_card_id, base, card_index)
-                
+
                 # Format tokens
                 token_rows = []
                 for r in range(10):
                     row_tokens = [grid.get_token(f"{chr(ord('A') + c)}{r}") for c in range(10)]
                     token_rows.append(" ".join(row_tokens))
                 tokens_csv = "\n".join(token_rows)
-                
+
                 # Generate hashes
                 hash_value = SeedCardDigest.generate_sha512_hash(seed_bytes)
                 short_hash = hash_value[:6].upper()
-                
+
                 cards.append({
                     "card_index": card_index,
                     "card_id": f"{base_card_id}-{card_index}",
@@ -329,13 +328,13 @@ def generate_batch(
                     "sha512": hash_value,
                     "tokens": tokens_csv,
                 })
-    
+
     # Write CSV
     try:
         with open(output, 'w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             writer.writerow(['CARD_INDEX', 'ID', 'Date', 'Label', 'SHORT_HASH', 'SHA512', 'Tokens'])
-            
+
             for card in cards:
                 writer.writerow([
                     card["card_index"],
@@ -346,10 +345,10 @@ def generate_batch(
                     card["sha512"],
                     card["tokens"],
                 ])
-        
+
         print_success_message(f"Generated {len(cards)} cards to {output}")
-        console.print(f"📊 CSV columns: CARD_INDEX, ID, Date, Label, SHORT_HASH, SHA512, Tokens", style="dim")
-        
+        console.print("📊 CSV columns: CARD_INDEX, ID, Date, Label, SHORT_HASH, SHA512, Tokens", style="dim")
+
     except Exception as e:
         print_error_message(f"Error writing CSV: {e}")
         raise typer.Exit(1)
@@ -357,9 +356,9 @@ def generate_batch(
 
 @generate_app.command("patterns")
 def generate_patterns(
-    simple: Optional[str] = typer.Option(None, "--simple", "-s", help="Simple seed phrase"),
-    bip39: Optional[str] = typer.Option(None, "--bip39", "-b", help="BIP-39 mnemonic phrase"),
-    slip39: Optional[List[str]] = typer.Option(None, "--slip39", help="SLIP-39 shares"),
+    simple: str | None = typer.Option(None, "--simple", "-s", help="Simple seed phrase"),
+    bip39: str | None = typer.Option(None, "--bip39", "-b", help="BIP-39 mnemonic phrase"),
+    slip39: list[str] | None = typer.Option(None, "--slip39", help="SLIP-39 shares"),
     passphrase: str = typer.Option("", "--passphrase", "-p", help="BIP-39 passphrase"),
     iterations: int = typer.Option(2048, "--iterations", "-i", help="PBKDF2 iterations"),
     count: int = typer.Option(6, "--count", "-c", help="Number of patterns to show")
@@ -367,7 +366,7 @@ def generate_patterns(
     """🎯 Generate password patterns from grid coordinates."""
     try:
         grid, _, _ = create_grid_from_args(simple, bip39, slip39, passphrase, iterations)
-        
+
         # Simple predefined patterns for demo
         patterns = [
             ("A0 B1 C2 D3", "Top-left diagonal"),
@@ -377,13 +376,13 @@ def generate_patterns(
             ("A0 B0 C0 D0", "Left column"),
             ("B3 F7 D1 H5", "Scattered pattern"),
         ]
-        
+
         table = create_patterns_table(patterns, grid, count)
         console.print(table)
-        
+
         console.print("\n💡 Usage: Select coordinates from your card using patterns you can remember")
         console.print(f"Example: For banking, always use pattern 1: '{patterns[0][0]}'")
-        
+
     except Exception as e:
         print_error_message(f"Error: {e}")
         raise typer.Exit(1)
@@ -399,13 +398,13 @@ def generate_shares(
     try:
         console.print(f"🔧 Generating {total} SLIP-39 shares (threshold: {threshold})")
         shares = SeedSources.create_test_slip39_shares(phrase, threshold, total)
-        
+
         table = create_shares_table(shares)
         console.print(table)
-        
+
         console.print("\n💡 Example usage:")
         console.print(f"[cyan]seeder generate grid --slip39 \"{shares[0]}\" \"{shares[1]}\"[/cyan]")
-        
+
     except Exception as e:
         print_error_message(f"Error: {e}")
         raise typer.Exit(1)
@@ -416,12 +415,12 @@ def generate_words(
     length: int = typer.Argument(..., help="Word length (3-12 characters for pronounceable, 3-15 for dictionary)"),
     count: int = typer.Option(10, "--count", "-c", help="Number of words to generate"),
     word_type: str = typer.Option("pronounceable", "--type", "-t", help="Word type: pronounceable, common, nouns, verbs, adjectives, all"),
-    simple: Optional[str] = typer.Option(None, "--simple", "-s", help="Simple seed phrase"),
-    bip39: Optional[str] = typer.Option(None, "--bip39", "-b", help="BIP-39 mnemonic phrase"),
-    slip39: Optional[List[str]] = typer.Option(None, "--slip39", help="SLIP-39 shares"),
+    simple: str | None = typer.Option(None, "--simple", "-s", help="Simple seed phrase"),
+    bip39: str | None = typer.Option(None, "--bip39", "-b", help="BIP-39 mnemonic phrase"),
+    slip39: list[str] | None = typer.Option(None, "--slip39", help="SLIP-39 shares"),
     passphrase: str = typer.Option("", "--passphrase", "-p", help="BIP-39 passphrase"),
     iterations: int = typer.Option(2048, "--iterations", "-i", help="PBKDF2 iterations"),
-    max_length: Optional[int] = typer.Option(None, "--max-length", help="Maximum length for dictionary words (default: same as length)")
+    max_length: int | None = typer.Option(None, "--max-length", help="Maximum length for dictionary words (default: same as length)")
 ):
     """🎲 Generate pronounceable or dictionary words for memorized password components.
     
@@ -441,7 +440,7 @@ def generate_words(
         if count < 1 or count > 50:
             print_error_message(f"Count must be 1-50, got {count}")
             raise typer.Exit(1)
-        
+
         # Validate word type and length
         if word_type == "pronounceable":
             supported_lengths = WordGenerator.get_supported_lengths()
@@ -455,17 +454,17 @@ def generate_words(
                 print_error_message("Dictionary word generation not available")
                 console.print("💡 Install the required dictionary package for dictionary words")
                 raise typer.Exit(1)
-            
+
             supported_types = DictionaryWordGenerator.get_supported_types()
             if word_type not in supported_types:
                 print_error_message(f"Unsupported word type: {word_type}")
                 console.print(f"💡 Supported types: {', '.join(supported_types)}")
                 raise typer.Exit(1)
-            
+
             if length < 3 or length > 15:
                 print_error_message(f"Word length must be 3-15 for dictionary words, got {length}")
                 raise typer.Exit(1)
-        
+
         # Get seed bytes using same logic as grid generation
         if simple:
             console.print("🔑 Using simple SHA-512 seed derivation", style="dim")
@@ -479,13 +478,13 @@ def generate_words(
         else:
             print_error_message("Must specify a seed source")
             raise typer.Exit(1)
-        
+
         # Generate words based on type
         if word_type == "pronounceable":
             words = WordGenerator.generate_word_list(seed_bytes, length, count)
             entropy = WordGenerator.calculate_word_entropy(length)
             word_type_display = "Pronounceable"
-            
+
             # Create display table for pronounceable words
             table = Table(
                 title=f"🎲 {length}-Character {word_type_display} Words",
@@ -495,44 +494,44 @@ def generate_words(
             table.add_column("Index", style="bold yellow", width=8)
             table.add_column("Word", style="bright_green", width=15)
             table.add_column("Pattern", style="cyan", width=12)
-            
+
             for i, word in enumerate(words, 1):
                 pattern = WordGenerator.get_pattern(word)
                 table.add_row(str(i), word, pattern)
-                
+
         else:
             # Dictionary words
             actual_max_length = max_length if max_length else length
             if actual_max_length < length:
                 print_error_message("Max length cannot be less than minimum length")
                 raise typer.Exit(1)
-            
+
             try:
                 words = DictionaryWordGenerator.generate_word_list(
                     seed_bytes, count, length, actual_max_length, word_type
                 )
                 entropy = DictionaryWordGenerator.calculate_word_entropy(length, actual_max_length, word_type)
                 word_type_display = word_type.title()
-                
+
                 # Create display table for dictionary words
                 table = Table(
                     title=f"🎲 {length}-{actual_max_length} Character {word_type_display} Words",
-                    show_header=True, 
+                    show_header=True,
                     header_style="bold blue"
                 )
                 table.add_column("Index", style="bold yellow", width=8)
                 table.add_column("Word", style="bright_green", width=15)
                 table.add_column("Length", style="cyan", width=8)
-                
+
                 for i, word in enumerate(words, 1):
                     table.add_row(str(i), word, str(len(word)))
-                
+
             except Exception as e:
                 print_error_message(f"Dictionary word generation failed: {e}")
                 raise typer.Exit(1)
-        
+
         console.print(table)
-        
+
         # Show entropy information
         from rich.panel import Panel
         entropy_panel = Panel(
@@ -543,14 +542,14 @@ def generate_words(
             border_style="green"
         )
         console.print(entropy_panel)
-        
+
         # Usage suggestions
         console.print("\n💡 [bold]Usage Tips:[/bold]")
         console.print("   • Use these words as memorized components in composite passwords")
         console.print(f"   • Combine with tokens: [cyan]Token1-Token2-{words[0]}![/cyan]")
         console.print("   • Longer words provide more entropy but may be harder to remember")
         console.print(f"   • Consider {length}-char words for {entropy:.0f}-bit memorized component")
-        
+
     except Exception as e:
         print_error_message(f"Error: {e}")
         raise typer.Exit(1)
@@ -558,9 +557,9 @@ def generate_words(
 
 @generate_app.command("examples")
 def generate_password_examples(
-    simple: Optional[str] = typer.Option(None, "--simple", "-s", help="Simple seed phrase"),
-    bip39: Optional[str] = typer.Option(None, "--bip39", "-b", help="BIP-39 mnemonic phrase"),
-    slip39: Optional[List[str]] = typer.Option(None, "--slip39", help="SLIP-39 shares"),
+    simple: str | None = typer.Option(None, "--simple", "-s", help="Simple seed phrase"),
+    bip39: str | None = typer.Option(None, "--bip39", "-b", help="BIP-39 mnemonic phrase"),
+    slip39: list[str] | None = typer.Option(None, "--slip39", help="SLIP-39 shares"),
     passphrase: str = typer.Option("", "--passphrase", "-p", help="BIP-39 passphrase"),
     iterations: int = typer.Option(2048, "--iterations", "-i", help="PBKDF2 iterations"),
     format_type: str = typer.Option("card", "--format", "-f", help="Format type: card, sheet, compact, text"),
@@ -577,7 +576,7 @@ def generate_password_examples(
     """🎯 Generate example passwords for reference cheat sheet."""
     try:
         grid, seed_bytes, _ = create_grid_from_args(simple, bip39, slip39, passphrase, iterations)
-        
+
         # Define pattern categories for comprehensive examples - reuse analyzer patterns
         pattern_categories = {
             "Basic Patterns": [
@@ -596,7 +595,7 @@ def generate_password_examples(
                 ("A0 J0 A9 J9", "Corner points", "Card corners"),
             ]
         }
-        
+
         if format_type == "card":
             # Compact format suitable for card back
             _print_card_format_examples(grid, pattern_categories, include_memorized, memorized_length, separators, seed_bytes, fixed, rolling, separator_count, rotation_days, no_order)
@@ -612,18 +611,18 @@ def generate_password_examples(
         else:
             print_error_message(f"Unknown format type: {format_type}")
             raise typer.Exit(1)
-            
+
     except Exception as e:
         print_error_message(f"Error: {e}")
         raise typer.Exit(1)
 
 
 def _print_card_format_examples(
-    grid: SeederGrid, 
-    pattern_categories: Dict[str, List[Tuple[str, str, str]]], 
-    include_memorized: bool, 
-    memorized_length: int, 
-    separators: bool, 
+    grid: SeederGrid,
+    pattern_categories: dict[str, list[tuple[str, str, str]]],
+    include_memorized: bool,
+    memorized_length: int,
+    separators: bool,
     seed_bytes: bytes,
     fixed: int,
     rolling: int,
@@ -633,46 +632,46 @@ def _print_card_format_examples(
 ) -> None:
     """Print examples formatted for card back."""
     console.print("\n[bold blue]🎯 Password Examples for Card Reference[/bold blue]")
-    
+
     # Show key patterns with actual passwords
     table = Table(title="Quick Reference", show_header=True, header_style="bold green", width=70)
     table.add_column("Type", style="cyan", width=12)
     table.add_column("Pattern", style="white", width=15)
     table.add_column("Password", style="green", width=15)
     table.add_column("Use Case", style="dim", width=20)
-    
+
     # Add examples from each category (limited for card space)
     for category, patterns in pattern_categories.items():
         for pattern_coords, _, use_case in patterns[:1]:  # Just first from each category
             coords = pattern_coords.split()
             password = "".join([grid.get_token(coord) for coord in coords])
-            
+
             if separators:
                 # Add separators between tokens
                 formatted_password = "-".join([grid.get_token(coord) for coord in coords])
             else:
                 formatted_password = password
-                
+
             table.add_row(category.split()[0], pattern_coords, formatted_password, use_case)
-    
+
     console.print(table)
-    
+
     if include_memorized:
         # Generate sample memorized words
         from ...core.word_generator import WordGenerator
         sample_words = WordGenerator.generate_word_list(seed_bytes, memorized_length, 3)
-        
+
         console.print(f"\n[bold]📝 Memorized Components ({memorized_length} chars):[/bold]")
         console.print(f"Examples: [green]{sample_words[0]}[/green], [green]{sample_words[1]}[/green], [green]{sample_words[2]}[/green]")
         console.print(f"Format: [cyan]A0-B1-{sample_words[0]}![/cyan] or [cyan]{sample_words[0]}A0B1[/cyan]")
 
 
 def _print_sheet_format_examples(
-    grid: SeederGrid, 
-    pattern_categories: Dict[str, List[Tuple[str, str, str]]], 
-    include_memorized: bool, 
-    memorized_length: int, 
-    separators: bool, 
+    grid: SeederGrid,
+    pattern_categories: dict[str, list[tuple[str, str, str]]],
+    include_memorized: bool,
+    memorized_length: int,
+    separators: bool,
     seed_bytes: bytes,
     fixed: int,
     rolling: int,
@@ -682,58 +681,58 @@ def _print_sheet_format_examples(
 ) -> None:
     """Print detailed examples for reference sheet."""
     console.print("\n[bold blue]📋 Comprehensive Password Reference Sheet[/bold blue]")
-    
+
     for category, patterns in pattern_categories.items():
         console.print(f"\n[bold cyan]== {category} ==[/bold cyan]")
-        
+
         table = Table(show_header=True, header_style="bold yellow")
         table.add_column("Pattern", style="white", width=15)
         table.add_column("Password", style="green", width=20)
         table.add_column("With Separators", style="blue", width=25)
         table.add_column("Description", style="dim", width=25)
-        
+
         for pattern_coords, name, description in patterns:
             coords = pattern_coords.split()
             password = "".join([grid.get_token(coord) for coord in coords])
-            
+
             if separators:
                 with_seps = "-".join([grid.get_token(coord) for coord in coords])
             else:
                 with_seps = "N/A"
-                
+
             table.add_row(pattern_coords, password, with_seps, f"{name} - {description}")
-        
+
         console.print(table)
-    
+
     if include_memorized:
-        console.print(f"\n[bold magenta]🧠 Memorized Word Integration[/bold magenta]")
+        console.print("\n[bold magenta]🧠 Memorized Word Integration[/bold magenta]")
         from ...core.word_generator import WordGenerator
         sample_words = WordGenerator.generate_word_list(seed_bytes, memorized_length, 5)
-        
+
         # Show different combination formats
         example_pattern = "A0 B1 C2"
         example_tokens = [grid.get_token(coord) for coord in example_pattern.split()]
         base_password = "".join(example_tokens)
-        
+
         formats_table = Table(title="Memorized Word Formats", show_header=True, header_style="bold green")
         formats_table.add_column("Format", style="cyan", width=20)
         formats_table.add_column("Example", style="green", width=30)
         formats_table.add_column("Description", style="dim", width=30)
-        
+
         formats_table.add_row("Tokens + Word", f"{base_password}{sample_words[0]}", "Concatenated format")
         formats_table.add_row("Word + Tokens", f"{sample_words[0]}{base_password}", "Word first format")
         formats_table.add_row("Separated", f"{'-'.join(example_tokens)}-{sample_words[0]}", "Dash-separated format")
         formats_table.add_row("Mixed Case", f"{sample_words[0].upper()}{base_password.lower()}", "Case variation")
         formats_table.add_row("With Symbols", f"{sample_words[0]}!{base_password}?", "Symbol padding")
-        
+
         console.print(formats_table)
 
 
 def _print_compact_format_examples(
-    grid: SeederGrid, 
-    pattern_categories: Dict[str, List[Tuple[str, str, str]]], 
-    include_memorized: bool, 
-    memorized_length: int, 
+    grid: SeederGrid,
+    pattern_categories: dict[str, list[tuple[str, str, str]]],
+    include_memorized: bool,
+    memorized_length: int,
     separators: bool,
     fixed: int,
     rolling: int,
@@ -743,28 +742,28 @@ def _print_compact_format_examples(
 ) -> None:
     """Print very compact examples for minimal space."""
     console.print("\n[bold]🎯 Quick Examples[/bold]")
-    
+
     # Just show the most essential patterns
     essential_patterns = [
         ("A0 B1 C2", "Diagonal"),
         ("A0 A1 A2", "Row"),
         ("B3 F7 D1", "Scattered"),
     ]
-    
+
     for pattern_coords, name in essential_patterns:
         coords = pattern_coords.split()
         password = "".join([grid.get_token(coord) for coord in coords])
         console.print(f"[cyan]{pattern_coords}[/cyan] → [green]{password}[/green] ({name})")
-    
+
     if include_memorized:
         console.print(f"\n[dim]+ Add {memorized_length}-char word: wordA0B1 or A0B1word[/dim]")
 
 
 def _print_text_format_examples(
-    grid: SeederGrid, 
-    pattern_categories: Dict[str, List[Tuple[str, str, str]]], 
-    include_memorized: bool, 
-    memorized_length: int, 
+    grid: SeederGrid,
+    pattern_categories: dict[str, list[tuple[str, str, str]]],
+    include_memorized: bool,
+    memorized_length: int,
     separators: bool,
     seed_bytes: bytes,
     fixed: int,
@@ -774,20 +773,20 @@ def _print_text_format_examples(
     no_order: bool
 ) -> None:
     """Print plain text examples for copy/paste into card designer."""
-    
+
     print("PASSWORD EXAMPLES")
     print("================")
     print()
-    
+
     # Print all patterns as plain text
     for category, patterns in pattern_categories.items():
         print(f"{category.upper()}:")
         print("-" * len(category))
-        
+
         for pattern_coords, _, description in patterns:
             coords = pattern_coords.split()
             password = "".join([grid.get_token(coord) for coord in coords])
-            
+
             if separators:
                 password_with_sep = "-".join([grid.get_token(coord) for coord in coords])
                 print(f"{pattern_coords:<12} = {password:<16} (or {password_with_sep})")
@@ -795,30 +794,30 @@ def _print_text_format_examples(
                 print(f"{pattern_coords:<12} = {password:<16}")
             print(f"             {description}")
         print()
-    
+
     if include_memorized:
         # Generate sample memorized words
         from ...core.word_generator import WordGenerator
         sample_words = WordGenerator.generate_word_list(seed_bytes, memorized_length, 3)
-        
+
         print(f"MEMORIZED WORDS ({memorized_length} characters):")
         print("-" * 25)
         for i, word in enumerate(sample_words, 1):
             print(f"{i}. {word}")
         print()
-        
+
         print("COMBINATION FORMATS:")
         print("-------------------")
         example_pattern = "A0 B1 C2"
         example_tokens = [grid.get_token(coord) for coord in example_pattern.split()]
         base_password = "".join(example_tokens)
-        
+
         print(f"Tokens first:    {base_password}{sample_words[0]}")
         print(f"Word first:      {sample_words[0]}{base_password}")
         print(f"With dashes:     {'-'.join(example_tokens)}-{sample_words[0]}")
         print(f"With symbols:    {sample_words[0]}!{base_password}?")
         print()
-    
+
     print("USAGE INSTRUCTIONS:")
     print("==================")
     print("1. Choose a pattern you can remember")
@@ -834,11 +833,11 @@ def _print_text_format_examples(
     print("• Scattered patterns > predictable rows/columns")
     print("• Add memorized words for maximum security")
     print()
-    
+
     # Show comprehensive composite password examples using the options
     print("COMPOSITE PASSWORD VARIATIONS:")
     print("=============================")
-    
+
     # Add password structure explanation
     print("PASSWORD STRUCTURE EXPLAINED:")
     print("----------------------------")
@@ -849,25 +848,25 @@ def _print_text_format_examples(
         # Get actual tokens for a concrete example
         example_fixed = ["A0", "B1"] if fixed >= 2 else ["A0"]
         example_rolling = ["C2"] if rolling >= 1 else []
-        
+
         fixed_tokens = [grid.get_token(coord) for coord in example_fixed]
         rolling_tokens = [grid.get_token(coord) for coord in example_rolling] if example_rolling else []
-        
+
         from ...core.word_generator import WordGenerator
         sample_words = WordGenerator.generate_word_list(seed_bytes, memorized_length, 1)
         word = sample_words[0]
-        
+
         # Build concrete example
         all_tokens = fixed_tokens + rolling_tokens
         if separators:
             concrete_example = "-".join(all_tokens) + f"-{word}!"
-            shorthand_example = "-".join([f"F{i+1}" for i in range(len(fixed_tokens))] + 
+            shorthand_example = "-".join([f"F{i+1}" for i in range(len(fixed_tokens))] +
                                        [f"R{i+1}" for i in range(len(rolling_tokens))]) + "-MW!"
         else:
             concrete_example = "".join(all_tokens) + word
-            shorthand_example = "".join([f"F{i+1}" for i in range(len(fixed_tokens))] + 
+            shorthand_example = "".join([f"F{i+1}" for i in range(len(fixed_tokens))] +
                                       [f"R{i+1}" for i in range(len(rolling_tokens))]) + "MW"
-        
+
         print(f"Example:   {concrete_example}")
         print(f"Shorthand: {shorthand_example}")
         print()
@@ -875,7 +874,7 @@ def _print_text_format_examples(
         print(f"  • Fixed Tokens (F1, F2...): Always use same coordinates ({', '.join(example_fixed)})")
         print(f"  • Rolling Token (R1...): Changes every {rotation_days} days ({example_rolling[0] if example_rolling else 'none'})")
         print(f"  • Memorized Word (MW): Your chosen word ({word})")
-        print(f"  • Separators: Dashes (-) and symbols (!) for readability")
+        print("  • Separators: Dashes (-) and symbols (!) for readability")
     else:
         print("Structure: [FixedToken1][Sep1][FixedToken2][Sep2][RollingToken]")
         print("Shorthand: F1-F2-R1")
@@ -883,20 +882,20 @@ def _print_text_format_examples(
         # Simpler example without memorized words
         example_fixed = ["A0", "B1"] if fixed >= 2 else ["A0"]
         example_rolling = ["C2"] if rolling >= 1 else []
-        
+
         fixed_tokens = [grid.get_token(coord) for coord in example_fixed]
         rolling_tokens = [grid.get_token(coord) for coord in example_rolling] if example_rolling else []
-        
+
         all_tokens = fixed_tokens + rolling_tokens
         if separators:
             concrete_example = "-".join(all_tokens)
-            shorthand_example = "-".join([f"F{i+1}" for i in range(len(fixed_tokens))] + 
+            shorthand_example = "-".join([f"F{i+1}" for i in range(len(fixed_tokens))] +
                                        [f"R{i+1}" for i in range(len(rolling_tokens))])
         else:
             concrete_example = "".join(all_tokens)
-            shorthand_example = "".join([f"F{i+1}" for i in range(len(fixed_tokens))] + 
+            shorthand_example = "".join([f"F{i+1}" for i in range(len(fixed_tokens))] +
                                       [f"R{i+1}" for i in range(len(rolling_tokens))])
-        
+
         print(f"Example:   {concrete_example}")
         print(f"Shorthand: {shorthand_example}")
         print()
@@ -904,20 +903,20 @@ def _print_text_format_examples(
         print(f"  • Fixed Tokens (F1, F2...): Always use same coordinates ({', '.join(example_fixed)})")
         if example_rolling:
             print(f"  • Rolling Token (R1...): Changes every {rotation_days} days ({example_rolling[0]})")
-        print(f"  • Separators: Dashes (-) for readability")
+        print("  • Separators: Dashes (-) for readability")
     print()
-    
+
     # Show different pattern combinations based on fixed/rolling configuration
     print(f"Configuration: {fixed} fixed + {rolling} rolling tokens, {separator_count} separators")
     print()
-    
+
     # Generate examples with different patterns
     fixed_patterns = [
         ("A0 B1", "Top-left start"),
-        ("E5 F5", "Center row"), 
+        ("E5 F5", "Center row"),
         ("H3 I4", "Right side"),
     ]
-    
+
     # Adjust patterns based on the fixed token count
     if fixed == 1:
         fixed_patterns = [
@@ -937,8 +936,8 @@ def _print_text_format_examples(
             ("E4 E5 E6 E7", "Center line"),
             ("G7 H7 I7 J7", "Bottom line"),
         ]
-    
-    # Adjust rolling patterns based on rolling token count  
+
+    # Adjust rolling patterns based on rolling token count
     if rolling == 1:
         rolling_patterns = [
             ("C2", "Today"),
@@ -957,31 +956,31 @@ def _print_text_format_examples(
             ("F4 G4 H4", "Next rotation"),
             ("I6 J6 A7", "Alternative"),
         ]
-    
+
     print("PATTERN COMBINATIONS:")
     print("--------------------")
-    
+
     for i, (fixed_pattern, fixed_desc) in enumerate(fixed_patterns, 1):
         fixed_tokens = [grid.get_token(coord) for coord in fixed_pattern.split()]
-        
+
         for _, (rolling_pattern, rolling_desc) in enumerate(rolling_patterns[:1], 1):  # Show first rolling option
             rolling_tokens = [grid.get_token(coord) for coord in rolling_pattern.split()]
-            
+
             base_password = "".join(fixed_tokens + rolling_tokens)
             separators_str = "!" * separator_count
-            
+
             print(f"{i}. Fixed: {fixed_pattern} = {''.join(fixed_tokens)} ({fixed_desc})")
             print(f"   Rolling: {rolling_pattern} = {''.join(rolling_tokens)} ({rolling_desc})")
-            
+
             if include_memorized:
                 from ...core.word_generator import WordGenerator
                 sample_words = WordGenerator.generate_word_list(seed_bytes, memorized_length, 1)
                 word = sample_words[0]
-                
+
                 print(f"   Memorized: {word}")
                 print(f"   Separators: {separators_str}")
                 print()
-                print(f"   Examples:")
+                print("   Examples:")
                 print(f"     Simple:     {base_password}{word}")
                 print(f"     Separated:  {'!'.join(fixed_tokens)}!{''.join(rolling_tokens)}!{word}")
                 print(f"     Word first: {word}!{base_password}")
@@ -989,27 +988,27 @@ def _print_text_format_examples(
             else:
                 print(f"   Separators: {separators_str}")
                 print()
-                print(f"   Examples:")
+                print("   Examples:")
                 print(f"     Simple:     {base_password}")
                 print(f"     Separated:  {'!'.join(fixed_tokens)}!{''.join(rolling_tokens)}")
                 print(f"     With seps:  {base_password}{separators_str}")
                 print(f"     Complex:    {separators_str}{'!'.join(fixed_tokens)}!{''.join(rolling_tokens)}")
             print()
-    
+
     print("ROTATION SCHEDULE:")
     print("-----------------")
     print(f"• Rolling tokens change every {rotation_days} days")
-    print(f"• Fixed tokens stay the same (memorize these coordinates)")
-    print(f"• Separators and memorized words stay the same")
-    print(f"• Only the rolling token positions change")
+    print("• Fixed tokens stay the same (memorize these coordinates)")
+    print("• Separators and memorized words stay the same")
+    print("• Only the rolling token positions change")
     print()
-    
+
     print("EXAMPLE ROTATION:")
     print("----------------")
     example_fixed = "A0 B1"
     example_rolling_positions = ["C2", "D3", "E4", "F5"]
     fixed_tokens = [grid.get_token(coord) for coord in example_fixed.split()]
-    
+
     print(f"Fixed part (always): {example_fixed} = {''.join(fixed_tokens)}")
     print("Rolling part rotates:")
     for i, pos in enumerate(example_rolling_positions):

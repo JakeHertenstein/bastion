@@ -4,6 +4,8 @@
 
 The Security Architecture Tool (Bastion) now includes a comprehensive entropy generation system for creating cryptographic-quality randomness from multiple sources. This system is designed to generate high-entropy salts for the username generator and other cryptographic operations.
 
+Seeder consumes verified entropy to produce deterministic offline password token grids—high‑entropy passwords without a manager—with usage validated by entropy analysis and modeled attack‑costs.
+
 ## Implementation Summary
 
 ### Completed Components

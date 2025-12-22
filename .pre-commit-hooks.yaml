@@ -1,0 +1,7 @@
+- id: validate-doc-links
+  name: Validate documentation links
+  entry: python3 scripts/validate-doc-links.py --ignore docs/private/
+  language: script
+  types: [markdown]
+  pass_filenames: false
+  stages: [commit]

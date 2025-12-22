@@ -109,21 +109,21 @@ def wait_for_auth(
     """
     if is_authenticated():
         return
-    
+
     # Alert user
     if bell:
         print("\a", end="", flush=True)  # Terminal bell
-    
+
     if notify:
         send_notification(
             "Bastion: 1Password Locked",
             "Please unlock 1Password to continue entropy collection"
         )
-    
+
     # Poll for auth
     while not is_authenticated():
         time.sleep(check_interval)
-    
+
     # Second bell when unlocked
     if bell:
         print("\a", end="", flush=True)
@@ -212,7 +212,7 @@ class OpClient:
             return json.loads(result.stdout) if result.stdout else []
         except (subprocess.CalledProcessError, json.JSONDecodeError):
             return []
-    
+
     def list_items_with_prefix(self, prefix: str, vault: str | None = None) -> list[dict[str, Any]]:
         """List all items that have any tag starting with the given prefix.
         
@@ -234,18 +234,18 @@ class OpClient:
                 check=True,
             )
             all_items = json.loads(result.stdout) if result.stdout else []
-            
+
             # Filter for items with tags matching prefix
             filtered = []
             for item in all_items:
                 tags = item.get("tags", [])
                 if any(tag.startswith(prefix) for tag in tags):
                     filtered.append(item)
-            
+
             return filtered
         except (subprocess.CalledProcessError, json.JSONDecodeError):
             return []
-    
+
     def list_items_with_tag(self, tag: str, vault: str | None = None) -> list[dict[str, Any]]:
         """List all items with a specific tag (exact match).
         
@@ -271,7 +271,7 @@ class OpClient:
             return json.loads(result.stdout) if result.stdout else []
         except (subprocess.CalledProcessError, json.JSONDecodeError):
             return []
-    
+
     def list_all_items(self, vault: str | None = None) -> list[dict[str, Any]]:
         """List all items in 1Password (no filtering).
         
@@ -319,11 +319,11 @@ class OpClient:
         """
         if not items:
             return []
-        
+
         try:
             # Convert items to JSON for stdin (op reads 'id' field from each object)
             items_json = json.dumps(items)
-            
+
             result = subprocess.run(
                 ["op", "item", "get", "-", "--format", "json"],
                 input=items_json,
@@ -331,14 +331,14 @@ class OpClient:
                 text=True,
                 check=True,
             )
-            
+
             # op outputs concatenated JSON objects (not an array, not NDJSON)
             # e.g., {"id": "a", ...}\n{\n  "id": "b"...\n}
             # Use JSONDecoder.raw_decode to parse each object sequentially
             output = result.stdout.strip()
             if not output:
                 return []
-            
+
             results = []
             decoder = json.JSONDecoder()
             idx = 0
@@ -354,7 +354,7 @@ class OpClient:
                 results.append(obj)
                 idx = end_idx  # Move to end of parsed object
             return results
-            
+
         except subprocess.CalledProcessError as e:
             # Don't silently fallback - this would cause many auth prompts
             # Log the error and return empty (caller will see missing items)
@@ -388,17 +388,17 @@ class OpClient:
             if is_legacy_tag(tag):
                 # Allow for now but flag for migration
                 pass
-        
+
         # Deduplicate tags before sending to op CLI (case-insensitive)
         seen_lower = {}
         for tag in tags:
             tag_lower = tag.lower()
             if tag_lower not in seen_lower:
                 seen_lower[tag_lower] = tag
-        
+
         unique_tags = sorted(seen_lower.values())
         tags_str = ",".join(unique_tags)
-        
+
         try:
             # Use assignment syntax (tags=value) which replaces instead of appends
             # UUID is from 1Password, tags_str is validated above

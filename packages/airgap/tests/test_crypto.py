@@ -1,13 +1,11 @@
 """Tests for the airgap crypto module."""
 
-import json
-import pytest
-from unittest.mock import patch, MagicMock
-from pathlib import Path
-import tempfile
 import base64
-from datetime import datetime, timezone
+import json
+from datetime import UTC, datetime
+from unittest.mock import MagicMock, patch
 
+import pytest
 from airgap.crypto import (
     ENTAnalysis,
     EntropyQuality,
@@ -185,7 +183,7 @@ class TestSaltPayload:
             "purpose": "username-generator",
             "salt": base64.b64encode(salt_bytes).decode(),
             "bits": 64,
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
             "device_id": "test",
             "entropy_source": "system",
             "entropy_quality": "FAIR",
@@ -230,10 +228,10 @@ Monte Carlo value for Pi is 3.141592653 (error 0.00 percent).
 Serial correlation coefficient is 0.000234 (totally uncorrelated = 0.0).
 """,
         )
-        
+
         data = b'\x00' * 1000  # Dummy data
         analysis = run_ent_analysis(data)
-        
+
         assert analysis is not None
         assert analysis.entropy_bits_per_byte == pytest.approx(7.999835, rel=1e-4)
         mock_run.assert_called_once()
@@ -246,7 +244,7 @@ Serial correlation coefficient is 0.000234 (totally uncorrelated = 0.0).
             stdout="",
             stderr="ent: command not found",
         )
-        
+
         data = b'\x00' * 1000
         with pytest.raises(RuntimeError, match="ENT analysis failed"):
             run_ent_analysis(data)
@@ -255,7 +253,7 @@ Serial correlation coefficient is 0.000234 (totally uncorrelated = 0.0).
     def test_run_ent_analysis_exception(self, mock_run):
         """Test ENT analysis handles exceptions by raising RuntimeError."""
         mock_run.side_effect = FileNotFoundError("ent not found")
-        
+
         data = b'\x00' * 1000
         with pytest.raises(RuntimeError, match="ENT tool not installed"):
             run_ent_analysis(data)

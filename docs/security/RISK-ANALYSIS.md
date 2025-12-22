@@ -140,14 +140,23 @@ bsec 1p analyze risk --has-tag Bastion/2FA/SMS
 
 # Find money-transfer accounts with weak 2FA
 bsec 1p analyze risk --has-capability Money-Transfer --weakest-2fa sms
+
+# Show a specific account by title or UUID
+bsec 1p analyze risk --account "Google"
+bsec 1p analyze risk --account-uuid 123e4567-e89b-12d3-a456-426614174000
 ```
 
 ### `bsec 1p analyze dependencies`
 
 ```bash
-# Show dependency tree for account
-bsec 1p analyze dependencies --account Gmail
+# Show dependency tree for an account (title match or UUID)
+bsec 1p analyze dependencies --account "Google"
+
+# Prefer UUID to avoid title ambiguity
+bsec 1p analyze dependencies --account-uuid 123e4567-e89b-12d3-a456-426614174000
 ```
+
+**Tip:** The risk table's Issues column shows `🔗 N deps` when an account can recover others. Use `bsec 1p analyze dependencies` (with `--account` or `--account-uuid`) to see the full list.
 
 ### `bsec 1p check breaches`
 
@@ -211,4 +220,4 @@ Account Risk Analysis
 ## Related Documentation
 
 - [BASTION-TAGGING-GUIDE.md](./BASTION-TAGGING-GUIDE.md) - Complete tag reference
-- [LABEL-FORMAT-SPECIFICATION.md](./LABEL-FORMAT-SPECIFICATION.md) - Label format details
+ - [LABEL-FORMAT-SPECIFICATION.md](../reference/LABEL-FORMAT-SPECIFICATION.md) - Label format details

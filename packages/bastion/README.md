@@ -59,7 +59,7 @@ Bastion implements a **trust-from-the-ground-up** security model:
 | Tool | Role in Trust Chain |
 |------|--------------------|
 | **bastion-security** | Day-to-day security operations: entropy collection, username generation, 1Password sync, rotation tracking, breach detection. The command center. |
-| **seeder** | Generates deterministic backup tokens from passphrases. Creates credit-card-sized physical cards for air-gapped recovery when all else fails. |
+| **seeder** | Produces deterministic seed cards for high‑entropy offline passwords without a manager; strength validated via entropy and attack‑cost analysis. |
 | **airgap** | Performs critical operations in isolation: master entropy generation, SLIP-39 share splitting, GPG key creation. The secure foundation. |
 
 ### The Critical Gaps Bastion Fills
@@ -121,7 +121,7 @@ flowchart LR
 | Package | Purpose | Install |
 |---------|---------|---------|
 | **bastion-security** | Core CLI: rotation tracking, usernames, entropy, YubiKey | `pip install bastion-security` |
-| **seeder** | Credit-card-sized seed card generation (10×10 token matrices) | `pip install -e packages/seeder` |
+| **seeder** | Deterministic seed cards for high‑entropy offline passwords; validated by entropy and attack‑cost analysis | `pip install -e packages/seeder` |
 | **airgap** | Air-gapped key generation, SLIP-39 shares, GPG setup | `pip install -e packages/airgap` |
 | **core** | Shared utilities: platform, hardware, and network detection | Used by other packages |
 
@@ -133,7 +133,7 @@ flowchart LR
 - **1Password Integration** — Native CLI integration for secure storage and retrieval
 - **YubiKey Management** — Track YubiKey devices, OATH slots, and sync with 1Password
 - **Infinite Noise TRNG** — Hardware true random number generator support
-- **Seed Card Generation** — Credit-card-sized password token matrices for offline use
+- **Seed Card Generation** — Deterministic token matrices for high‑entropy offline passwords; outcome validated by entropy and attack‑cost analysis
 
 ## Architecture
 
@@ -508,7 +508,7 @@ Shared cryptographic primitives used by other packages. Not installed directly�
 - Optional: YubiKey with HMAC-SHA1 challenge-response configured
 - Optional: [Infinite Noise TRNG](https://github.com/leetronics/infnoise)
 
-> **Note (Python 3.14 + iCloud):** If your project lives in iCloud Drive, you must symlink `.venv` outside iCloud due to a macOS hidden flag issue with Python 3.14. See [Development Setup](.github/copilot-instructions.md#development-environment-setup) for details.
+> **Note (Python 3.14 + iCloud):** If your project lives in iCloud Drive, you must symlink `.venv` outside iCloud due to a macOS hidden flag issue with Python 3.14. See [Development Setup](../../docs/GETTING-STARTED.md#development-environment-setup) for details.
 
 ## Installation
 

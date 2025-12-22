@@ -11,8 +11,8 @@ Both sources are cryptographically secure on modern systems (Linux, macOS, *BSD)
 
 import platform
 import subprocess
-from pathlib import Path
 from dataclasses import dataclass
+from pathlib import Path
 
 
 @dataclass
@@ -24,7 +24,7 @@ class SystemRNGMetadata:
     kernel_version: str
     source_device: str  # "/dev/urandom" or "/dev/random"
     byte_count: int
-    
+
     def to_dict(self) -> dict:
         """Convert to dictionary for storage.
         
@@ -56,7 +56,7 @@ def get_system_info() -> dict:
         "os_release": platform.release(),
         "kernel_version": "",
     }
-    
+
     # Try to get kernel version on Unix systems
     try:
         if system_info["os_name"] in ["Darwin", "Linux"]:
@@ -70,7 +70,7 @@ def get_system_info() -> dict:
             system_info["kernel_version"] = result.stdout.strip()
     except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
         system_info["kernel_version"] = "unknown"
-    
+
     return system_info
 
 
@@ -94,24 +94,24 @@ def collect_urandom_entropy(bits: int = 512) -> tuple[bytes, SystemRNGMetadata]:
     """
     if bits % 8 != 0:
         raise ValueError(f"Bits must be multiple of 8, got {bits}")
-    
+
     byte_count = bits // 8
-    
+
     # Check if /dev/urandom exists
     urandom_path = Path("/dev/urandom")
     if not urandom_path.exists():
         raise SystemRNGError("/dev/urandom not found (non-Unix system?)")
-    
+
     try:
         # Read from /dev/urandom
         with open(urandom_path, "rb") as f:
             entropy_bytes = f.read(byte_count)
-        
+
         if len(entropy_bytes) != byte_count:
             raise SystemRNGError(
                 f"Expected {byte_count} bytes, got {len(entropy_bytes)}"
             )
-        
+
         # Collect system metadata
         system_info = get_system_info()
         metadata = SystemRNGMetadata(
@@ -122,10 +122,10 @@ def collect_urandom_entropy(bits: int = 512) -> tuple[bytes, SystemRNGMetadata]:
             source_device="/dev/urandom",
             byte_count=byte_count,
         )
-        
+
         return (entropy_bytes, metadata)
-        
-    except IOError as e:
+
+    except OSError as e:
         raise SystemRNGError(f"Failed to read /dev/urandom: {e}") from e
 
 
@@ -153,14 +153,14 @@ def collect_random_entropy(
     """
     if bits % 8 != 0:
         raise ValueError(f"Bits must be multiple of 8, got {bits}")
-    
+
     byte_count = bits // 8
-    
+
     # Check if /dev/random exists
     random_path = Path("/dev/random")
     if not random_path.exists():
         raise SystemRNGError("/dev/random not found (non-Unix system?)")
-    
+
     try:
         # Use dd to read with timeout
         # dd if=/dev/random of=/dev/stdout bs=64 count=1 2>/dev/null
@@ -176,14 +176,14 @@ def collect_random_entropy(
             timeout=timeout_seconds,
             check=True,
         )
-        
+
         entropy_bytes = result.stdout
-        
+
         if len(entropy_bytes) != byte_count:
             raise SystemRNGError(
                 f"Expected {byte_count} bytes, got {len(entropy_bytes)}"
             )
-        
+
         # Collect system metadata
         system_info = get_system_info()
         metadata = SystemRNGMetadata(
@@ -194,9 +194,9 @@ def collect_random_entropy(
             source_device="/dev/random",
             byte_count=byte_count,
         )
-        
+
         return (entropy_bytes, metadata)
-        
+
     except subprocess.TimeoutExpired:
         raise SystemRNGError(
             f"/dev/random blocked for more than {timeout_seconds}s. "

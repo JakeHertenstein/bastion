@@ -1,0 +1,102 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "🐍 Debug Seeder CLI",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/seeder",
+            "args": ["generate", "grid", "--simple", "test phrase"],
+            "console": "integratedTerminal",
+            "python": "${workspaceFolder}/venv/bin/python",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src"
+            }
+        },
+        {
+            "name": "🔑 Debug BIP-39 Generation",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/seeder",
+            "args": [
+                "generate", 
+                "grid", 
+                "--bip39", 
+                "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+            ],
+            "console": "integratedTerminal",
+            "python": "${workspaceFolder}/venv/bin/python",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src"
+            }
+        },
+        {
+            "name": "📊 Debug CSV Export",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/seeder",
+            "args": ["export", "csv", "--simple", "test phrase", "--id", "DEBUG.01.01"],
+            "console": "integratedTerminal",
+            "python": "${workspaceFolder}/venv/bin/python",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src"
+            }
+        },
+        {
+            "name": "🧪 Run Unit Tests",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "tests/",
+                "-v",
+                "--tb=short"
+            ],
+            "console": "integratedTerminal",
+            "python": "${workspaceFolder}/venv/bin/python",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src"
+            }
+        },
+        {
+            "name": "🔍 Debug Specific Test",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "${file}",
+                "-v",
+                "-s"
+            ],
+            "console": "integratedTerminal",
+            "python": "${workspaceFolder}/venv/bin/python",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src"
+            }
+        },
+        {
+            "name": "🔧 Debug Core Module",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "python": "${workspaceFolder}/venv/bin/python",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src",
+                "DEBUG_MODE": "true"
+            }
+        },
+        {
+            "name": "📋 Debug 1Password Integration",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/seeder/integrations/onepassword_integration.py",
+            "console": "integratedTerminal",
+            "python": "${workspaceFolder}/venv/bin/python",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src",
+                "OP_SERVICE_ACCOUNT_TOKEN": "debug_token"
+            }
+        }
+    ]
+}

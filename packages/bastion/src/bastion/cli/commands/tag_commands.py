@@ -3,18 +3,18 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 
 import typer
 from rich.console import Console
 
 from ..helpers import get_db_manager, get_yubikey_cache
+from .find import find_by_tag
 from .tags import (
     add_tag_to_accounts,
     remove_tag_from_accounts,
     rename_tag_on_accounts,
 )
-from .find import find_by_tag
 from .tokens import (
     add_token_to_account,
     remove_token_from_account,
@@ -26,7 +26,7 @@ console = Console()
 
 # Type alias for common db option
 DbPathOption = Annotated[
-    Optional[Path],
+    Path | None,
     typer.Option(
         "--db",
         help="Database file path",
@@ -37,7 +37,7 @@ DbPathOption = Annotated[
 
 def register_commands(app: typer.Typer) -> None:
     """Register tag-related commands with the app."""
-    
+
     @app.command("add")
     def add_command(
         object_type: Annotated[
@@ -45,37 +45,37 @@ def register_commands(app: typer.Typer) -> None:
             typer.Argument(help="Object type: tag, app, sms, totp"),
         ],
         second_arg: Annotated[
-            Optional[str],
+            str | None,
             typer.Argument(help="For tags: tag name. For tokens: 'token'. For totp: account name or leave empty with --all"),
         ] = None,
         third_arg: Annotated[
-            Optional[str],
+            str | None,
             typer.Argument(help="For tokens: Account UUID or title"),
         ] = None,
         # Tag-specific options
         db_path: DbPathOption = None,
-        query: Annotated[Optional[str], typer.Option("--query", "-q", help="[Tags] Filter accounts (e.g., 'tier:1', 'vault:Private', 'title:Google')")] = None,
-        has_tag: Annotated[Optional[str], typer.Option("--has-tag", help="[Tags] Filter to accounts with this tag")] = None,
-        missing_tag: Annotated[Optional[str], typer.Option("--missing-tag", help="[Tags] Filter to accounts missing this tag")] = None,
+        query: Annotated[str | None, typer.Option("--query", "-q", help="[Tags] Filter accounts (e.g., 'tier:1', 'vault:Private', 'title:Google')")] = None,
+        has_tag: Annotated[str | None, typer.Option("--has-tag", help="[Tags] Filter to accounts with this tag")] = None,
+        missing_tag: Annotated[str | None, typer.Option("--missing-tag", help="[Tags] Filter to accounts missing this tag")] = None,
         # Token-specific options
         app: Annotated[
-            Optional[str],
+            str | None,
             typer.Option("--app", help="[Tokens] App name for Phone App tokens (e.g., 'Google Authenticator')"),
         ] = None,
         identifier: Annotated[
-            Optional[str],
+            str | None,
             typer.Option("--identifier", help="[Tokens] Unique identifier/serial for token"),
         ] = None,
         oath_name: Annotated[
-            Optional[str],
+            str | None,
             typer.Option("--oath-name", help="[Tokens] OATH account name (Issuer:Account format)"),
         ] = None,
         phone: Annotated[
-            Optional[str],
+            str | None,
             typer.Option("--phone", help="[Tokens] Phone number for SMS tokens"),
         ] = None,
         carrier: Annotated[
-            Optional[str],
+            str | None,
             typer.Option("--carrier", help="[Tokens] Carrier name for SMS tokens (e.g., 'Verizon')"),
         ] = None,
         # TOTP-specific options
@@ -93,29 +93,30 @@ def register_commands(app: typer.Typer) -> None:
             typer.Option("--yes", "-y", help="Skip confirmation prompts"),
         ] = False,
     ) -> None:
-        """Add tags, authenticator tokens, or TOTP to YubiKeys.
-        
-        Examples:
+        """
+        \bAdd tags, authenticator tokens, or TOTP to YubiKeys.
+
+        \bExamples:
             # Add tag to multiple accounts
             bastion add tag Bastion/Capability/Money-Transfer --has-tag Bastion/Type/Bank
             bastion add tag Bastion/Tier/2 --query 'vault:Private'
-            
+
             # Add tokens to single account
             bastion add app token <uuid> --app 'Google Authenticator' --identifier 'Phone-2025'
             bastion add sms token <uuid> --phone '+1-555-123-4567' --carrier 'Verizon'
-            
+
             # Add TOTP to YubiKey(s)
             bastion add totp "Google" --yubikey 12345678
             bastion add totp --all --yubikey 12345678
             bastion add totp "Amazon" --all-yubikeys
         """
-        
+
         # Route based on object type
         if object_type == "totp":
             # TOTP operation: bastion add totp [account_name]
             db_manager = get_db_manager(db_path)
             cache = get_yubikey_cache()
-            
+
             # Determine target YubiKeys
             if all_yubikeys:
                 target_serials = list(cache.serials.keys())
@@ -127,7 +128,7 @@ def register_commands(app: typer.Typer) -> None:
             else:
                 console.print("[red]Must specify --yubikey or --all-yubikeys[/red]")
                 raise typer.Exit(1)
-            
+
             # Add accounts
             if all_accounts:
                 add_totp_bulk(tag_totp, target_serials, db_manager, cache)
@@ -137,28 +138,28 @@ def register_commands(app: typer.Typer) -> None:
                 console.print("[red]Must specify account name or use --all[/red]")
                 raise typer.Exit(1)
             return
-        
+
         elif object_type == "tag":
             # Tag operation: bastion add tag <tagname>
             if not second_arg:
                 console.print("[red]Missing tag name[/red]")
                 raise typer.Exit(1)
             add_tag_to_accounts(db_path, second_arg, query, has_tag, missing_tag, dry_run, yes)
-            
+
         elif object_type in ("app", "sms"):
             # Token operation: bastion add app token <uuid> OR bastion add sms token <uuid>
             token_type = object_type
-            
+
             if second_arg != "token":
                 console.print(f"[red]Expected 'token' as second argument, got '{second_arg}'[/red]")
                 console.print(f"Usage: bastion add {token_type} token <uuid>")
                 raise typer.Exit(1)
-            
+
             if not third_arg:
                 console.print("[red]Missing account UUID or title[/red]")
                 console.print(f"Usage: bastion add {token_type} token <uuid>")
                 raise typer.Exit(1)
-            
+
             add_token_to_account(third_arg, token_type, app, identifier, oath_name, phone, carrier, dry_run, yes)
         else:
             console.print(f"[red]Invalid object type: {object_type}[/red]")
@@ -180,14 +181,14 @@ def register_commands(app: typer.Typer) -> None:
             typer.Argument(help="For tags: tag name. For tokens: Account UUID or title"),
         ],
         token_number: Annotated[
-            Optional[int],
+            int | None,
             typer.Argument(help="[Tokens only] Token number to remove"),
         ] = None,
         # Tag-specific options
         db_path: DbPathOption = None,
-        query: Annotated[Optional[str], typer.Option("--query", "-q", help="[Tags] Filter accounts (e.g., 'tier:1', 'vault:Private', 'title:Google')")] = None,
-        has_tag: Annotated[Optional[str], typer.Option("--has-tag", help="[Tags] Filter to accounts with this tag")] = None,
-        missing_tag: Annotated[Optional[str], typer.Option("--missing-tag", help="[Tags] Filter to accounts missing this tag")] = None,
+        query: Annotated[str | None, typer.Option("--query", "-q", help="[Tags] Filter accounts (e.g., 'tier:1', 'vault:Private', 'title:Google')")] = None,
+        has_tag: Annotated[str | None, typer.Option("--has-tag", help="[Tags] Filter to accounts with this tag")] = None,
+        missing_tag: Annotated[str | None, typer.Option("--missing-tag", help="[Tags] Filter to accounts missing this tag")] = None,
         # Token-specific options
         renumber: Annotated[
             bool,
@@ -203,29 +204,30 @@ def register_commands(app: typer.Typer) -> None:
             typer.Option("--yes", "-y", help="Skip confirmation prompts"),
         ] = False,
     ) -> None:
-        """Remove tags or authenticator tokens.
-        
-        Examples:
+        """
+        \bRemove tags or authenticator tokens.
+
+        \bExamples:
             # Remove tag from multiple accounts
             bastion remove tag old-tag --query 'title:Google'
             bastion remove tag Bastion/Tier/3 --has-tag Bastion/Type/Bank
-            
+
             # Remove token from single account
             bastion remove token <uuid> 2
             bastion remove token <uuid> 3 --renumber
         """
-        
+
         if object_type == "tag":
             # Tag operation: bastion remove tag <tagname>
             remove_tag_from_accounts(db_path, second_arg, query, has_tag, missing_tag, dry_run, yes)
-            
+
         elif object_type == "token":
             # Token operation: bastion remove token <uuid> <number>
             if token_number is None:
                 console.print("[red]Missing token number to remove[/red]")
                 console.print("Usage: bastion remove token <uuid> <token_number>")
                 raise typer.Exit(1)
-            
+
             remove_token_from_account(second_arg, token_number, renumber, dry_run, yes)
         else:
             console.print(f"[red]Invalid object type: {object_type}[/red]")
@@ -250,19 +252,20 @@ def register_commands(app: typer.Typer) -> None:
             typer.Argument(help="New name"),
         ],
         db_path: DbPathOption = None,
-        query: Annotated[Optional[str], typer.Option("--query", "-q", help="Filter accounts (e.g., 'tier:1', 'vault:Private', 'title:Google')")] = None,
-        has_tag: Annotated[Optional[str], typer.Option("--has-tag", help="Filter to accounts with this tag")] = None,
-        missing_tag: Annotated[Optional[str], typer.Option("--missing-tag", help="Filter to accounts missing this tag")] = None,
+        query: Annotated[str | None, typer.Option("--query", "-q", help="Filter accounts (e.g., 'tier:1', 'vault:Private', 'title:Google')")] = None,
+        has_tag: Annotated[str | None, typer.Option("--has-tag", help="Filter to accounts with this tag")] = None,
+        missing_tag: Annotated[str | None, typer.Option("--missing-tag", help="Filter to accounts missing this tag")] = None,
         dry_run: Annotated[bool, typer.Option("--dry-run", help="Show what would be changed without making changes")] = False,
         yes: Annotated[bool, typer.Option("--yes", "-y", help="Skip confirmation prompt")] = False,
     ) -> None:
-        """Rename tags across multiple accounts.
-        
-        Examples:
+        """
+        \bRename tags across multiple accounts.
+
+        \bExamples:
             bastion rename tag Bastion/2FA/Passkey Bastion/2FA/FIDO2-Hardware
             bastion rename tag old-tag new-tag --query 'tier:1'
         """
-        
+
         if object_type == "tag":
             rename_tag_on_accounts(db_path, old_name, new_name, query, has_tag, missing_tag, dry_run, yes)
         else:
@@ -283,17 +286,18 @@ def register_commands(app: typer.Typer) -> None:
             typer.Argument(help="Name to find"),
         ],
         db_path: DbPathOption = None,
-        query: Annotated[Optional[str], typer.Option("--query", "-q", help="Filter accounts (e.g., 'tier:1', 'vault:Private', 'title:Google')")] = None,
-        has_tag: Annotated[Optional[str], typer.Option("--has-tag", help="Filter to accounts with this tag")] = None,
-        missing_tag: Annotated[Optional[str], typer.Option("--missing-tag", help="Filter to accounts missing this tag")] = None,
+        query: Annotated[str | None, typer.Option("--query", "-q", help="Filter accounts (e.g., 'tier:1', 'vault:Private', 'title:Google')")] = None,
+        has_tag: Annotated[str | None, typer.Option("--has-tag", help="Filter to accounts with this tag")] = None,
+        missing_tag: Annotated[str | None, typer.Option("--missing-tag", help="Filter to accounts missing this tag")] = None,
     ) -> None:
-        """Find accounts with specific tags.
-        
-        Examples:
+        """
+        \bFind accounts with specific tags.
+
+        \bExamples:
             bastion find tag Bastion/Capability/Identity
             bastion find tag Bastion/Type/Bank --query 'tier:1'
         """
-        
+
         if object_type == "tag":
             db_mgr = get_db_manager(db_path)
             db = db_mgr.load()
@@ -324,9 +328,10 @@ def register_commands(app: typer.Typer) -> None:
             typer.Option("--yes", "-y", help="Skip confirmation prompts"),
         ] = False,
     ) -> None:
-        """Renumber tokens to close gaps.
-        
-        Examples:
+        """
+        \bRenumber tokens to close gaps.
+
+        \bExamples:
             bastion renumber token <uuid>
             bastion renumber token <uuid> --dry-run
         """
@@ -335,5 +340,5 @@ def register_commands(app: typer.Typer) -> None:
             console.print(f"[red]Invalid object type: {object_type}[/red]")
             console.print("Valid object type: token")
             raise typer.Exit(1)
-        
+
         renumber_tokens_on_account(uuid, dry_run, yes)

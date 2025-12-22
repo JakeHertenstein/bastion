@@ -23,13 +23,13 @@ def show_username_config(services: bool = False) -> None:
         services: If True, show service rules instead of general config
     """
     from bastion.username_generator import UsernameGeneratorConfig
-    
+
     try:
         config = UsernameGeneratorConfig()
     except RuntimeError as e:
         console.print(f"[red]Error loading config:[/red] {e}")
         raise typer.Exit(1)
-    
+
     if services:
         console.print("\n[cyan]Service Rules:[/cyan]")
         service_rules = config.get_service_rules()
@@ -48,7 +48,7 @@ def show_username_config(services: bool = False) -> None:
         console.print(f"  Default owner:     {config.get_default_owner()}")
         console.print(f"  Default algorithm: {config.get_default_algorithm()}")
         console.print(f"  Default length:    {config.get_default_length()}")
-        
+
         # Show service count
         service_rules = config.get_service_rules()
         console.print(f"  Service rules:     {len(service_rules)} defined")
@@ -69,20 +69,20 @@ def set_username_config(
         length: Default username length
     """
     from bastion.username_generator import UsernameGeneratorConfig
-    
+
     try:
         config = UsernameGeneratorConfig()
     except RuntimeError as e:
         console.print(f"[red]Error loading config:[/red] {e}")
         raise typer.Exit(1)
-    
+
     modified = False
-    
+
     if owner:
         config.set_default_owner(owner)
         console.print(f"[green]✅ Set default owner:[/green] {owner}")
         modified = True
-    
+
     if algorithm:
         if algorithm not in ["sha256", "sha512", "sha3-512"]:
             console.print(f"[red]Error:[/red] Invalid algorithm '{algorithm}'")
@@ -91,7 +91,7 @@ def set_username_config(
         config.set_default_algorithm(algorithm)
         console.print(f"[green]✅ Set default algorithm:[/green] {algorithm}")
         modified = True
-    
+
     if length:
         if length < 1 or length > 100:
             console.print("[red]Error:[/red] Length must be 1-100")
@@ -99,7 +99,7 @@ def set_username_config(
         config.set_default_length(length)
         console.print(f"[green]✅ Set default length:[/green] {length}")
         modified = True
-    
+
     if not modified:
         console.print("[yellow]No changes specified. Use --owner, --algorithm, or --length[/yellow]")
 
@@ -107,12 +107,13 @@ def set_username_config(
 def list_entropy_pools() -> None:
     """List all unconsumed entropy pools."""
     from rich.table import Table
+
     from bastion.entropy import EntropyPool
-    
+
     console.print("[cyan]Entropy Pools:[/cyan]\n")
     pool = EntropyPool()
     pools = pool.list_pools(include_consumed=False)
-    
+
     if not pools:
         console.print("[yellow]No unconsumed entropy pools found[/yellow]")
         console.print("Generate one with: bastion generate entropy yubikey --bits 512")
@@ -124,7 +125,7 @@ def list_entropy_pools() -> None:
         table.add_column("Quality", style="magenta")
         table.add_column("Created", style="dim")
         table.add_column("UUID", style="dim")
-        
+
         for pool_info in pools:
             table.add_row(
                 pool_info.get("serial", "?"),
@@ -134,7 +135,7 @@ def list_entropy_pools() -> None:
                 pool_info.get("created_at", "?")[:19] if pool_info.get("created_at") else "?",
                 pool_info.get("uuid", "?")[:8] + "...",
             )
-        
+
         console.print(table)
 
 
@@ -145,27 +146,27 @@ def analyze_entropy_pool(pool_uuid: str) -> None:
         pool_uuid: UUID of the entropy pool to analyze
     """
     from bastion.entropy import EntropyPool, analyze_entropy_with_ent
-    
+
     console.print(f"[cyan]Analyzing entropy pool {pool_uuid[:8]}...[/cyan]\n")
-    
+
     pool = EntropyPool()
     result = pool.get_pool(pool_uuid)
-    
+
     if not result:
         console.print(f"[red]Error: Pool {pool_uuid} not found[/red]")
         raise typer.Exit(1)
-    
+
     entropy_bytes, metadata = result
-    
+
     console.print(f"Source: {metadata.get('source', 'unknown')}")
     console.print(f"Size: {metadata.get('byte_count', len(entropy_bytes))} bytes ({len(entropy_bytes) * 8} bits)")
     console.print(f"Created: {metadata.get('created_at', 'unknown')}")
     console.print(f"Consumed: {metadata.get('consumed', False)}")
-    
+
     # Run ENT analysis
     console.print("\n[cyan]Running ENT analysis...[/cyan]")
     analysis = analyze_entropy_with_ent(entropy_bytes)
-    
+
     if analysis is None:
         console.print("[yellow]ENT not installed[/yellow]")
         console.print("Install: brew install ent (macOS) or apt install ent (Linux)")

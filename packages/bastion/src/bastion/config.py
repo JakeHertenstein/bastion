@@ -1,40 +1,19 @@
 """Bastion configuration and paths.
 
 Centralized configuration for cache directories, file paths, and settings.
-All cache/data files are stored in ~/.bsec/ to keep the workspace clean.
-Legacy ~/.bastion/ is auto-migrated on first run.
+Primary location is ~/.bsec/ (migrated from legacy ~/.bastion/).
 
 Configuration is stored in ~/.bsec/config.toml and can be customized
-via 'bsec config' commands or by editing the file directly.
+via 'bastion config' commands or by editing the file directly.
 """
 
 import tomllib
 from pathlib import Path
 from typing import Any
-import shutil
 
-
-# Base directories (new: .bsec, legacy: .bastion)
-BSEC_DIR = Path.home() / ".bsec"
+# Base directories
+BASTION_DIR = Path.home() / ".bsec"
 LEGACY_BASTION_DIR = Path.home() / ".bastion"
-
-# Use .bsec if it exists, otherwise check for .bastion to migrate
-def _get_bastion_dir() -> Path:
-    """Get the bastion directory, migrating from .bastion to .bsec if needed."""
-    if BSEC_DIR.exists():
-        return BSEC_DIR
-    if LEGACY_BASTION_DIR.exists():
-        # Auto-migrate .bastion to .bsec
-        try:
-            shutil.move(str(LEGACY_BASTION_DIR), str(BSEC_DIR))
-            return BSEC_DIR
-        except (OSError, shutil.Error):
-            # Migration failed, use legacy path
-            return LEGACY_BASTION_DIR
-    # Fresh install, use new path
-    return BSEC_DIR
-
-BASTION_DIR = _get_bastion_dir()
 BASTION_CACHE_DIR = BASTION_DIR / "cache"
 BASTION_BACKUP_DIR = BASTION_DIR / "backups"
 BASTION_CONFIG_PATH = BASTION_DIR / "config.toml"
@@ -52,7 +31,7 @@ OTS_PENDING_DIR = SIGCHAIN_DIR / "ots" / "pending"
 OTS_COMPLETED_DIR = SIGCHAIN_DIR / "ots" / "completed"
 
 # Legacy paths (for migration)
-LEGACY_ENCRYPTED_DB = BASTION_DIR / "cache.db.enc"
+LEGACY_ENCRYPTED_DB = LEGACY_BASTION_DIR / "cache.db.enc"
 LEGACY_YUBIKEY_CACHE = Path.cwd() / "yubikey-slots-cache.json"
 LEGACY_PASSWORD_ROTATION_DB = Path.cwd() / "password-rotation-database.json"
 
@@ -64,6 +43,9 @@ BASTION_KEY_VAULT = "Private"
 DEFAULT_CONFIG = {
     "general": {
         "default_vault": "Private",
+    },
+    "machine": {
+        "uuid": None,  # Auto-generated stable machine identifier
     },
     "entropy": {
         "default_bits": 8192,
@@ -105,21 +87,21 @@ class BastionConfig:
     Loads configuration from ~/.bastion/config.toml with fallback to defaults.
     Configuration can be modified via the 'bastion config' commands.
     """
-    
+
     _instance: "BastionConfig | None" = None
     _config: dict[str, Any] | None = None
-    
+
     def __new__(cls) -> "BastionConfig":
         """Singleton pattern to avoid re-reading config file."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
-    
+
     def __init__(self) -> None:
         """Initialize configuration manager."""
         if self._config is None:
             self._load_config()
-    
+
     def _load_config(self) -> None:
         """Load configuration from file or use defaults."""
         if BASTION_CONFIG_PATH.exists():
@@ -132,7 +114,7 @@ class BastionConfig:
                 self._config = DEFAULT_CONFIG.copy()
         else:
             self._config = DEFAULT_CONFIG.copy()
-    
+
     def _merge_config(self, defaults: dict, overrides: dict) -> dict:
         """Deep merge configuration dictionaries."""
         result = defaults.copy()
@@ -142,7 +124,7 @@ class BastionConfig:
             else:
                 result[key] = value
         return result
-    
+
     def get(self, section: str, key: str, default: Any = None) -> Any:
         """Get a configuration value.
         
@@ -157,7 +139,7 @@ class BastionConfig:
         if self._config is None:
             self._load_config()
         return self._config.get(section, {}).get(key, default)
-    
+
     def get_section(self, section: str) -> dict[str, Any]:
         """Get entire configuration section.
         
@@ -170,62 +152,62 @@ class BastionConfig:
         if self._config is None:
             self._load_config()
         return self._config.get(section, {})
-    
+
     @property
     def default_vault(self) -> str:
         """Get default 1Password vault name."""
         return self.get("general", "default_vault", "Private")
-    
+
     @property
     def entropy_bits(self) -> int:
         """Get default entropy collection size in bits."""
         return self.get("entropy", "default_bits", 8192)
-    
+
     @property
     def entropy_expiry_days(self) -> int:
         """Get default entropy pool expiry in days."""
         return self.get("entropy", "expiry_days", 90)
-    
+
     @property
     def username_length(self) -> int:
         """Get default username length."""
         return self.get("username", "default_length", 16)
-    
+
     @property
     def username_algorithm(self) -> str:
         """Get default username generation algorithm."""
         return self.get("username", "default_algorithm", "sha512")
-    
+
     @property
     def rotation_interval_days(self) -> int:
         """Get default password rotation interval in days."""
         return self.get("rotation", "default_interval_days", 90)
-    
+
     @property
     def yubikey_slot(self) -> int:
         """Get default YubiKey HMAC slot."""
         return self.get("yubikey", "default_slot", 2)
-    
+
     @property
     def session_timeout_minutes(self) -> int:
         """Get session timeout in minutes."""
         return self.get("session", "timeout_minutes", 15)
-    
+
     @property
     def session_auto_anchor(self) -> bool:
         """Get whether to auto-anchor on session end."""
         return self.get("session", "auto_anchor", True)
-    
+
     @property
     def gpg_sign_commits(self) -> bool:
         """Get whether to GPG sign sigchain commits."""
         return self.get("session", "gpg_sign_commits", True)
-    
+
     @property
     def ots_enabled(self) -> bool:
         """Get whether OpenTimestamps is enabled."""
         return self.get("sigchain", "ots_enabled", True)
-    
+
     @property
     def ots_calendars(self) -> list[str]:
         """Get list of OTS calendar server URLs."""
@@ -234,17 +216,17 @@ class BastionConfig:
             "https://bob.btc.calendar.opentimestamps.org",
             "https://finney.calendar.forever.covfefe.org",
         ])
-    
+
     @property
     def sigchain_sync_to_1password(self) -> bool:
         """Get whether to sync sigchain head to 1Password."""
         return self.get("sigchain", "sync_to_1password", True)
-    
+
     def reload(self) -> None:
         """Reload configuration from disk."""
         self._config = None
         self._load_config()
-    
+
     @staticmethod
     def save_config(config: dict[str, Any]) -> None:
         """Save configuration to ~/.bastion/config.toml.
@@ -253,9 +235,9 @@ class BastionConfig:
             config: Configuration dictionary to save
         """
         ensure_cache_infrastructure()
-        
+
         lines = ["# Bastion Configuration", "# Generated by 'bastion config init'", ""]
-        
+
         for section, values in config.items():
             lines.append(f"[{section}]")
             for key, value in values.items():
@@ -266,9 +248,9 @@ class BastionConfig:
                 else:
                     lines.append(f"{key} = {value}")
             lines.append("")
-        
+
         BASTION_CONFIG_PATH.write_text("\n".join(lines))
-    
+
     @staticmethod
     def config_exists() -> bool:
         """Check if configuration file exists."""
@@ -309,11 +291,11 @@ def get_yubikey_cache_path() -> Path:
         Path to ~/.bastion/cache/yubikey-slots.json
     """
     ensure_cache_infrastructure()
-    
+
     # Auto-migrate from legacy path if needed
     if not YUBIKEY_CACHE_PATH.exists() and LEGACY_YUBIKEY_CACHE.exists():
         LEGACY_YUBIKEY_CACHE.rename(YUBIKEY_CACHE_PATH)
-    
+
     return YUBIKEY_CACHE_PATH
 
 
@@ -336,11 +318,11 @@ def get_password_rotation_db_path() -> Path:
         Path to ~/.bastion/cache/password-rotation.json
     """
     ensure_cache_infrastructure()
-    
+
     # Auto-migrate from legacy path if needed
     if not PASSWORD_ROTATION_DB_PATH.exists() and LEGACY_PASSWORD_ROTATION_DB.exists():
         LEGACY_PASSWORD_ROTATION_DB.rename(PASSWORD_ROTATION_DB_PATH)
-    
+
     return PASSWORD_ROTATION_DB_PATH
 
 
@@ -357,28 +339,28 @@ def migrate_legacy_cache_files() -> dict[str, bool]:
     """
     ensure_cache_infrastructure()
     results = {}
-    
+
     # Migrate encrypted database
     if LEGACY_ENCRYPTED_DB.exists() and not ENCRYPTED_DB_PATH.exists():
         LEGACY_ENCRYPTED_DB.rename(ENCRYPTED_DB_PATH)
         results["db.enc"] = True
     else:
         results["db.enc"] = False
-    
+
     # Migrate YubiKey cache
     if LEGACY_YUBIKEY_CACHE.exists() and not YUBIKEY_CACHE_PATH.exists():
         LEGACY_YUBIKEY_CACHE.rename(YUBIKEY_CACHE_PATH)
         results["yubikey-slots.json"] = True
     else:
         results["yubikey-slots.json"] = False
-    
+
     # Migrate password rotation database
     if LEGACY_PASSWORD_ROTATION_DB.exists() and not PASSWORD_ROTATION_DB_PATH.exists():
         LEGACY_PASSWORD_ROTATION_DB.rename(PASSWORD_ROTATION_DB_PATH)
         results["password-rotation.json"] = True
     else:
         results["password-rotation.json"] = False
-    
+
     return results
 
 

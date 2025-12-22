@@ -4,7 +4,6 @@ Configuration constants for Seeder system.
 Centralized configuration to support easy modification and testing.
 """
 
-from typing import List
 
 # === CRYPTOGRAPHIC CONSTANTS ===
 DEFAULT_MNEMONIC = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"  # BIP-39 test vector
@@ -13,14 +12,14 @@ DEFAULT_PBKDF2_ITERATIONS = 2048
 
 # === GRID CONFIGURATION ===
 TOKENS_WIDE = 10        # A-J columns
-TOKENS_TALL = 10        # 0-9 rows  
+TOKENS_TALL = 10        # 0-9 rows
 CHARS_PER_TOKEN = 4     # 4 characters per token
 
 # === BASE90 ALPHABET ===
 # Excludes problematic characters: space, quotes, backslash, backtick
-ALPHABET: List[str] = list(
+ALPHABET: list[str] = list(
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    "abcdefghijklmnopqrstuvwxyz" 
+    "abcdefghijklmnopqrstuvwxyz"
     "0123456789"
     "!#$%&()*+,-./:;<=>?@[]^_{|}~"
 )
@@ -28,7 +27,7 @@ ALPHABET_SIZE = len(ALPHABET)  # 90
 
 # === HMAC LABELS ===
 HMAC_LABEL_TOKENS = b"SEEDER-TOKENS"
-HMAC_LABEL_DIGEST = b"SEEDER-DIGEST" 
+HMAC_LABEL_DIGEST = b"SEEDER-DIGEST"
 HMAC_LABEL_SLIP39 = b"SEEDER-SLIP39"
 
 # === ARGON2 KDF CONFIGURATION ===
@@ -74,7 +73,7 @@ LABEL_VERSION = "v1"
 # Bastion-style Argon2 parameter encoding using URL query-string format
 # Format: TIME=3&MEMORY=2048&PARALLELISM=4
 # Canonical order: TIME, MEMORY, PARALLELISM (alphabetical within Argon2 params)
-def encode_argon2_params(time_cost: int = ARGON2_TIME_COST, 
+def encode_argon2_params(time_cost: int = ARGON2_TIME_COST,
                          memory_mb: int = ARGON2_MEMORY_COST_MB,
                          parallelism: int = ARGON2_PARALLELISM) -> str:
     """Encode Argon2 parameters in Bastion URL-style format: TIME=3&MEMORY=2048&PARALLELISM=4"""
@@ -92,13 +91,13 @@ def decode_argon2_params(encoded: str) -> tuple[int, int, int]:
     """
     if '=' not in encoded:
         raise ValueError(f"Invalid Argon2 params format (expected URL-style): {encoded}")
-    
+
     params = {}
     for part in encoded.split('&'):
         if '=' in part:
             key, value = part.split('=', 1)
             params[key.upper()] = value
-    
+
     if 'TIME' in params and 'MEMORY' in params and 'PARALLELISM' in params:
         return int(params['TIME']), int(params['MEMORY']), int(params['PARALLELISM'])
     raise ValueError(f"Missing required Argon2 params (TIME, MEMORY, PARALLELISM) in: {encoded}")
@@ -156,18 +155,18 @@ def coordinate_to_indices(coord: str) -> tuple[int, int]:
     """
     if len(coord) != 2:
         raise ValueError(f"Invalid coordinate format: {coord}")
-    
+
     col_char = coord[0].upper()  # Letter = column
     row_char = coord[1]          # Number = row
-    
+
     if col_char < 'A' or col_char > 'J':
         raise ValueError(f"Invalid column: {col_char}")
     if not row_char.isdigit() or int(row_char) > 9:
         raise ValueError(f"Invalid row: {row_char}")
-        
+
     col = ord(col_char) - ord('A')
     row = int(row_char)
-    
+
     return (row, col)
 
 def indices_to_coordinate(row: int, col: int) -> str:
@@ -179,7 +178,7 @@ def indices_to_coordinate(row: int, col: int) -> str:
         raise ValueError(f"Invalid row index: {row}")
     if col < 0 or col >= TOKENS_WIDE:
         raise ValueError(f"Invalid column index: {col}")
-        
+
     col_char = chr(ord('A') + col)
     return f"{col_char}{row}"
 
@@ -191,7 +190,7 @@ def validate_config() -> None:
     assert TOKENS_TALL == 10, f"Expected TOKENS_TALL=10, got {TOKENS_TALL}"
     assert CHARS_PER_TOKEN == 4, f"Expected CHARS_PER_TOKEN=4, got {CHARS_PER_TOKEN}"
     assert len(set(ALPHABET)) == ALPHABET_SIZE, "Alphabet contains duplicates"
-    
+
     # Verify problematic characters are excluded
     excluded_chars = [' ', '"', "'", '\\', '`']
     for char in excluded_chars:

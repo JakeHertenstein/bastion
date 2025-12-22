@@ -1,10 +1,8 @@
 """Tests for bastion_core.platform module."""
 
 import sys
-from unittest.mock import patch
 
 import pytest
-
 from bastion_core import platform
 
 

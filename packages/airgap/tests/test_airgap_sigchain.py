@@ -1,16 +1,13 @@
 """Tests for the airgap sigchain module."""
 
-import json
 import tempfile
-from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
-
 from airgap.sigchain import (
+    EnclaveBatch,
     EnclaveEvent,
     EnclaveEventType,
-    EnclaveBatch,
     EnclaveSession,
 )
 
@@ -89,7 +86,7 @@ class TestEnclaveBatch:
     def test_add_event(self):
         """Test adding events to batch."""
         batch = EnclaveBatch(session_id="test-session")
-        
+
         event = EnclaveEvent(
             event_type=EnclaveEventType.ENTROPY_COLLECTED,
             payload={"bits": 8192},
@@ -97,7 +94,7 @@ class TestEnclaveBatch:
             session_id="test-session",
         )
         batch.add_event(event)
-        
+
         assert batch.event_count == 1
         assert batch.first_local_seqno == 1
         assert batch.last_local_seqno == 1
@@ -105,7 +102,7 @@ class TestEnclaveBatch:
     def test_add_multiple_events(self):
         """Test adding multiple events."""
         batch = EnclaveBatch(session_id="test-session")
-        
+
         for i in range(5):
             event = EnclaveEvent(
                 event_type=EnclaveEventType.ENTROPY_COLLECTED,
@@ -114,7 +111,7 @@ class TestEnclaveBatch:
                 session_id="test-session",
             )
             batch.add_event(event)
-        
+
         assert batch.event_count == 5
         assert batch.first_local_seqno == 1
         assert batch.last_local_seqno == 5
@@ -122,7 +119,7 @@ class TestEnclaveBatch:
     def test_compute_merkle_root(self):
         """Test merkle root computation."""
         batch = EnclaveBatch(session_id="test-session")
-        
+
         for i in range(4):
             event = EnclaveEvent(
                 event_type=EnclaveEventType.ENTROPY_COLLECTED,
@@ -131,10 +128,10 @@ class TestEnclaveBatch:
                 session_id="test-session",
             )
             batch.add_event(event)
-        
+
         root = batch.compute_merkle_root()
         assert len(root) == 64
-        
+
         # Same batch should produce same root
         root2 = batch.compute_merkle_root()
         assert root == root2
@@ -142,7 +139,7 @@ class TestEnclaveBatch:
     def test_to_qr_data_and_back(self):
         """Test serializing batch for QR and deserializing."""
         batch = EnclaveBatch(session_id="test-session")
-        
+
         for i in range(3):
             event = EnclaveEvent(
                 event_type=EnclaveEventType.ENTROPY_COLLECTED,
@@ -151,10 +148,10 @@ class TestEnclaveBatch:
                 session_id="test-session",
             )
             batch.add_event(event)
-        
+
         qr_data = batch.to_qr_data()
         assert isinstance(qr_data, str)
-        
+
         # Deserialize
         restored = EnclaveBatch.from_qr_data(qr_data)
         assert restored.session_id == batch.session_id
@@ -164,7 +161,7 @@ class TestEnclaveBatch:
     def test_estimate_qr_size(self):
         """Test QR size estimation."""
         batch = EnclaveBatch(session_id="test-session")
-        
+
         for i in range(3):
             event = EnclaveEvent(
                 event_type=EnclaveEventType.ENTROPY_COLLECTED,
@@ -173,7 +170,7 @@ class TestEnclaveBatch:
                 session_id="test-session",
             )
             batch.add_event(event)
-        
+
         size = batch.estimate_qr_size()
         assert size > 0
         assert size < 10000  # Should be reasonably small
@@ -181,7 +178,7 @@ class TestEnclaveBatch:
     def test_can_fit_in_qr(self):
         """Test checking if batch fits in QR."""
         batch = EnclaveBatch(session_id="test-session")
-        
+
         # Small batch should fit
         event = EnclaveEvent(
             event_type=EnclaveEventType.ENTROPY_COLLECTED,
@@ -190,7 +187,7 @@ class TestEnclaveBatch:
             session_id="test-session",
         )
         batch.add_event(event)
-        
+
         assert batch.can_fit_in_qr(max_bytes=2048)
 
 
@@ -202,7 +199,7 @@ class TestEnclaveSession:
         with tempfile.TemporaryDirectory() as tmpdir:
             session = EnclaveSession(storage_path=Path(tmpdir))
             session_id = session.start()
-            
+
             assert session_id != ""
             assert session.active is True
 
@@ -211,12 +208,12 @@ class TestEnclaveSession:
         with tempfile.TemporaryDirectory() as tmpdir:
             session = EnclaveSession(storage_path=Path(tmpdir))
             session.start()
-            
+
             event = session.log_event(
                 EnclaveEventType.ENTROPY_COLLECTED,
                 {"bits": 8192, "source": "infnoise"},
             )
-            
+
             assert event.local_seqno == 2  # 1 is session start
             assert event.session_id == session.session_id
 
@@ -224,7 +221,7 @@ class TestEnclaveSession:
         """Test that logging without starting raises error."""
         with tempfile.TemporaryDirectory() as tmpdir:
             session = EnclaveSession(storage_path=Path(tmpdir))
-            
+
             with pytest.raises(RuntimeError):
                 session.log_event(
                     EnclaveEventType.ENTROPY_COLLECTED,
@@ -236,14 +233,14 @@ class TestEnclaveSession:
         with tempfile.TemporaryDirectory() as tmpdir:
             session = EnclaveSession(storage_path=Path(tmpdir))
             session.start()
-            
+
             session.log_event(
                 EnclaveEventType.ENTROPY_COLLECTED,
                 {"bits": 8192},
             )
-            
+
             batch = session.end()
-            
+
             assert session.active is False
             assert batch.event_count == 3  # start + entropy + end
 
@@ -252,15 +249,15 @@ class TestEnclaveSession:
         with tempfile.TemporaryDirectory() as tmpdir:
             session = EnclaveSession(storage_path=Path(tmpdir))
             session.start()
-            
+
             for i in range(3):
                 session.log_event(
                     EnclaveEventType.ENTROPY_COLLECTED,
                     {"bits": 1024 * (i + 1)},
                 )
-            
+
             batch = session.export_batch()
-            
+
             assert batch.event_count == 4  # start + 3 entropy
             assert batch.session_id == session.session_id
 
@@ -269,19 +266,19 @@ class TestEnclaveSession:
         with tempfile.TemporaryDirectory() as tmpdir:
             session = EnclaveSession(storage_path=Path(tmpdir))
             session.start()
-            
+
             # Add many events to exceed QR capacity
             for i in range(50):
                 session.log_event(
                     EnclaveEventType.ENTROPY_COLLECTED,
                     {"bits": 1024, "source": f"source_{i}", "extra_data": "x" * 50},
                 )
-            
+
             batches = session.split_into_qr_batches(max_bytes=1024)
-            
+
             # Should be split into multiple batches
             assert len(batches) >= 1
-            
+
             # All batches should fit in QR
             for batch in batches:
                 assert batch.can_fit_in_qr(max_bytes=1024)
@@ -290,7 +287,7 @@ class TestEnclaveSession:
         """Test listing available sessions."""
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir)
-            
+
             # Create multiple sessions
             for i in range(3):
                 session = EnclaveSession(storage_path=path)
@@ -299,7 +296,7 @@ class TestEnclaveSession:
                     EnclaveEventType.ENTROPY_COLLECTED,
                     {"bits": 1024},
                 )
-            
+
             sessions = EnclaveSession.list_sessions(storage_path=path)
             assert len(sessions) == 3
 
@@ -307,19 +304,19 @@ class TestEnclaveSession:
         """Test that session log is persisted to disk."""
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir)
-            
+
             session = EnclaveSession(storage_path=path)
             session_id = session.start()
-            
+
             session.log_event(
                 EnclaveEventType.ENTROPY_COLLECTED,
                 {"bits": 8192},
             )
-            
+
             # Check log file exists
             log_file = path / f"{session_id}.jsonl"
             assert log_file.exists()
-            
+
             # Check contents
             lines = log_file.read_text().strip().split("\n")
             assert len(lines) == 2  # start + entropy

@@ -1,18 +1,18 @@
 """Tests for the airgap QR code module."""
 
-import pytest
-from pathlib import Path
 import tempfile
+from pathlib import Path
 
+import pytest
 from airgap.qr import (
     MultiQRPart,
-    QRPartCollector,
     QRInfo,
-    split_for_qr,
-    reassemble_qr_parts,
-    generate_qr_terminal,
-    generate_qr_png,
+    QRPartCollector,
     estimate_qr_size,
+    generate_qr_png,
+    generate_qr_terminal,
+    reassemble_qr_parts,
+    split_for_qr,
 )
 
 
@@ -285,19 +285,19 @@ class TestIntegration:
     def test_full_split_reassemble_cycle(self):
         """Test full cycle: split → qr_string → parse → reassemble."""
         original_data = "This is a test of the BASTION QR protocol. " * 100
-        
+
         # Split into parts
         parts = split_for_qr(original_data, max_bytes=500)
-        
+
         # Convert to QR strings (what would be in actual QR codes)
         qr_strings = [part.to_qr_string() for part in parts]
-        
+
         # Parse back
         parsed_parts = [MultiQRPart.from_qr_string(s) for s in qr_strings]
-        
+
         # Reassemble
         result = reassemble_qr_parts(parsed_parts)
-        
+
         assert result == original_data
 
     def test_gpg_message_split_reassemble(self):
@@ -309,7 +309,7 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 =XXXX
 -----END PGP MESSAGE-----"""
-        
+
         parts = split_for_qr(gpg_message, max_bytes=200)
         reassembled = reassemble_qr_parts(parts)
         assert reassembled == gpg_message

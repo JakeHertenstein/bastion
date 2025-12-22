@@ -1,0 +1,86 @@
+{
+    "python.defaultInterpreterPath": "./venv/bin/python",
+    "python.terminal.activateEnvironment": true,
+    "python.analysis.extraPaths": ["./src"],
+    "python.analysis.autoImportCompletions": true,
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": false,
+    "python.linting.flake8Enabled": true,
+    "python.linting.mypyEnabled": true,
+    "python.formatting.provider": "black",
+    "python.formatting.blackArgs": ["--line-length", "88"],
+    "python.sortImports.args": ["--profile", "black"],
+    "python.testing.pytestEnabled": true,
+    "python.testing.pytestArgs": [
+        "tests/",
+        "-v"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.autoTestDiscoverOnSaveEnabled": true,
+    
+    "files.associations": {
+        "*.lsc": "json",
+        "*.csv": "csv"
+    },
+    
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/*.pyc": true,
+        "**/venv": true,
+        "**/env": true,
+        "**/.pytest_cache": true,
+        "**/build": true,
+        "**/dist": true,
+        "**/*.egg-info": true
+    },
+    
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit"
+    },
+    
+    "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/node_modules/**": true,
+        "**/venv/**": true,
+        "**/__pycache__/**": true
+    },
+    
+    "terminal.integrated.env.osx": {
+        "PYTHONPATH": "${workspaceFolder}/src"
+    },
+    
+    "terminal.integrated.env.linux": {
+        "PYTHONPATH": "${workspaceFolder}/src"
+    },
+    
+    "search.exclude": {
+        "**/__pycache__": true,
+        "**/venv": true,
+        "**/env": true,
+        "**/.pytest_cache": true,
+        "**/build": true,
+        "**/dist": true
+    },
+    
+    "python.analysis.include": [
+        "src/**",
+        "tests/**"
+    ],
+    
+    "python.analysis.exclude": [
+        "**/__pycache__",
+        "**/venv",
+        "**/env"
+    ],
+    
+    "git.ignoreLimitWarning": true,
+    
+    "json.schemas": [
+        {
+            "fileMatch": ["**/examples/*.lsc"],
+            "url": "https://raw.githubusercontent.com/microsoft/vscode/main/extensions/json-language-features/schemas/package.schema.json"
+        }
+    ]
+}

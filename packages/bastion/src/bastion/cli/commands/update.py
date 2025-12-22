@@ -1,6 +1,5 @@
 """Update command helpers for Bastion CLI."""
 
-from typing import Optional
 
 import typer
 from rich.console import Console
@@ -15,7 +14,7 @@ def update_metadata_show(uuid: str) -> None:
         uuid: 1Password item UUID
     """
     from bastion.bastion_metadata import get_bastion_metadata
-    
+
     metadata = get_bastion_metadata(uuid)
     if not metadata:
         console.print("[yellow]No Bastion Metadata found for this item[/yellow]")
@@ -41,14 +40,14 @@ def update_metadata_show(uuid: str) -> None:
 
 def update_metadata(
     uuid: str,
-    password_changed: Optional[str] = None,
-    password_expires: Optional[str] = None,
-    totp_issued: Optional[str] = None,
-    last_review: Optional[str] = None,
-    next_review: Optional[str] = None,
-    breach_detected: Optional[str] = None,
-    risk_level: Optional[str] = None,
-    bastion_notes: Optional[str] = None,
+    password_changed: str | None = None,
+    password_expires: str | None = None,
+    totp_issued: str | None = None,
+    last_review: str | None = None,
+    next_review: str | None = None,
+    breach_detected: str | None = None,
+    risk_level: str | None = None,
+    bastion_notes: str | None = None,
 ) -> None:
     """Update Bastion Metadata for an item.
     
@@ -64,7 +63,7 @@ def update_metadata(
         bastion_notes: Security notes
     """
     from bastion.bastion_metadata import update_bastion_metadata
-    
+
     updates = {}
     if password_changed:
         updates['password_changed'] = password_changed
@@ -85,14 +84,14 @@ def update_metadata(
         updates['risk_level'] = risk_level.upper()
     if bastion_notes:
         updates['bastion_notes'] = bastion_notes
-    
+
     if not updates:
         console.print("[yellow]No fields specified to update. Use --show to view current metadata.[/yellow]")
         raise typer.Exit(1)
-    
+
     console.print(f"[cyan]Updating Bastion Metadata for {uuid[:8]}...[/cyan]")
     success = update_bastion_metadata(uuid, **updates)
-    
+
     if success:
         console.print("[green]✓ Bastion Metadata updated successfully[/green]")
         for key, value in updates.items():

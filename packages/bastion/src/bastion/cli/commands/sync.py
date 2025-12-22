@@ -1,19 +1,18 @@
 """Sync command helpers for Bastion CLI."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from rich.console import Console
 
-from ..helpers import get_encrypted_db_manager
 from ...op_client import OpClient
 from ...planning import RotationPlanner
+from ..helpers import get_encrypted_db_manager
 
 console = Console()
 
 
 def sync_vault(
     db_path=None,
-    tier: int | None = None,
     only_uuid: str | None = None,
     all_items: bool = False,
     tags: list[str] | None = None,
@@ -26,29 +25,47 @@ def sync_vault(
     
     Args:
         db_path: Optional path to database
-        tier: Optional tier filter
         only_uuid: Optional single account UUID
         all_items: Whether to sync all items (not just tagged)
         tags: Optional list of specific tags to filter by
         vault: Optional vault name to sync from
         quiet: If True, suppress item names in output (for demos)
     """
-    from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, TimeElapsedColumn, TimeRemainingColumn
-    
+    from bastion_core.platform import get_machine_identifier
+    from rich.progress import (
+        BarColumn,
+        Progress,
+        SpinnerColumn,
+        TaskProgressColumn,
+        TextColumn,
+        TimeElapsedColumn,
+        TimeRemainingColumn,
+    )
+
     vault_msg = f" from vault '{vault}'" if vault else ""
     console.print(f"[cyan]Syncing from 1Password{vault_msg}...[/cyan]")
-    
+
     # Use encrypted cache manager (ignores db_path - always uses ~/.bsec/cache/db.enc)
     cache_mgr = get_encrypted_db_manager()
-    op_client = OpClient()
-    planner = RotationPlanner()
+    
+    # Update machine identity metadata
+    from bastion_core.platform import get_machine_identifier, get_machine_uuid
     
     db = cache_mgr.load()
     
+    machine_id = get_machine_identifier()
+    machine_uuid = get_machine_uuid()
+    db.metadata.machine_hostname = machine_id["hostname"]
+    db.metadata.machine_node = machine_id["node_name"]
+    db.metadata.machine_uuid = machine_uuid
+    
+    op_client = OpClient()
+    planner = RotationPlanner()
+
     # Sync logic
     synced_count = 0
     processed_uuids = set()
-    
+
     # First, get item list (quick operation)
     if all_items:
         console.print("[dim]Listing all items...[/dim]")
@@ -69,7 +86,7 @@ def sync_vault(
         console.print("[dim]Searching for tagged items...[/dim]")
         bastion_items = op_client.list_items_with_prefix("Bastion/", vault=vault)
         flat_bastion_items = op_client.list_items_with_prefix("bastion-", vault=vault)
-        
+
         # Merge and deduplicate by UUID
         seen_uuids = set()
         items = []
@@ -77,22 +94,17 @@ def sync_vault(
             if item["id"] not in seen_uuids:
                 seen_uuids.add(item["id"])
                 items.append(item)
-    
+
     console.print(f"[cyan]Found {len(items)} items[/cyan]")
-    
+
     # Apply filters before progress display
     if only_uuid:
         items = [item for item in items if item["id"] == only_uuid]
-    
-    if tier:
-        # Filter by tier if specified
-        tier_tag = f"tier{tier}"
-        items = [item for item in items if tier_tag in item.get("tags", [])]
-    
+
     if not items:
         console.print("[yellow]No items to sync[/yellow]")
         return
-    
+
     with Progress(
         SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
@@ -103,76 +115,76 @@ def sync_vault(
         console=console,
         transient=False,
     ) as progress:
-        
+
         # Fetch items in batches for better progress reporting
         # Use moderate batches (25) - balances progress visibility with speed
         BATCH_SIZE = 25
         full_items_by_uuid = {}
-        
+
         fetch_task = progress.add_task(
-            f"Fetching details (0/{len(items)})...", 
+            f"Fetching details (0/{len(items)})...",
             total=len(items)
         )
-        
+
         for i in range(0, len(items), BATCH_SIZE):
             batch = items[i:i + BATCH_SIZE]
             batch_results = op_client.get_items_batch(batch)
-            
+
             for item in batch_results:
                 full_items_by_uuid[item["id"]] = item
-            
+
             fetched = min(i + BATCH_SIZE, len(items))
             progress.update(
-                fetch_task, 
+                fetch_task,
                 completed=fetched,
                 description=f"Fetching details ({fetched}/{len(items)})..."
             )
-        
+
         progress.update(fetch_task, description=f"Fetched {len(full_items_by_uuid)} items")
-        
+
         # Process items
         process_task = progress.add_task(
-            f"Processing (0/{len(items)})...", 
+            f"Processing (0/{len(items)})...",
             total=len(items)
         )
-        
+
         for i, item in enumerate(items, 1):
             uuid = item["id"]
             if uuid in processed_uuids:
                 progress.update(process_task, completed=i)
                 continue
-            
+
             # Use batch-fetched data
             full_item = full_items_by_uuid.get(uuid)
             if not full_item:
                 progress.update(process_task, completed=i)
                 continue
-            
+
             account = planner.process_item(full_item, db.metadata.compromise_baseline)
             db.accounts[uuid] = account
             synced_count += 1
             processed_uuids.add(uuid)
             progress.update(
-                process_task, 
+                process_task,
                 completed=i,
                 description=f"Processing ({i}/{len(items)}): {account.title[:30]}..."
             )
-        
+
         progress.update(process_task, description=f"Processed {synced_count} items")
-    
+
     # Smart stale detection - only remove items not synced in 30+ days
     # This prevents mass removal when switching sync modes (e.g., --all to tagged-only)
     STALE_THRESHOLD_DAYS = 30
-    
-    if all_items or not tier:
-        # Only clean stale items when syncing all items or all tagged items (not tier-specific syncs)
+
+    if all_items:
+        # Only clean stale items when syncing all items
         not_synced_uuids = set(db.accounts.keys()) - processed_uuids
-        
+
         if not_synced_uuids:
             truly_stale = []
             recently_active = []
-            now = datetime.now(timezone.utc)
-            
+            now = datetime.now(UTC)
+
             for uuid in not_synced_uuids:
                 account = db.accounts[uuid]
                 # Check last_synced timestamp
@@ -182,7 +194,7 @@ def sync_vault(
                         last_sync_dt = datetime.fromisoformat(last_sync_str)
                         # Ensure timezone-aware for comparison
                         if last_sync_dt.tzinfo is None:
-                            last_sync_dt = last_sync_dt.replace(tzinfo=timezone.utc)
+                            last_sync_dt = last_sync_dt.replace(tzinfo=UTC)
                         days_since_sync = (now - last_sync_dt).days
                         if days_since_sync >= STALE_THRESHOLD_DAYS:
                             truly_stale.append((uuid, account.title, days_since_sync))
@@ -194,7 +206,7 @@ def sync_vault(
                 else:
                     # No last_synced, consider stale
                     truly_stale.append((uuid, account.title, None))
-            
+
             # Report recently active items that weren't in this sync
             if recently_active and not quiet:
                 console.print(f"\n[dim]ℹ️  {len(recently_active)} items not in this sync but recently active (kept):[/dim]")
@@ -204,7 +216,7 @@ def sync_vault(
                     console.print(f"  [dim]... and {len(recently_active) - 5} more[/dim]")
             elif recently_active and quiet:
                 console.print(f"\n[dim]ℹ️  {len(recently_active)} items not in this sync but recently active (kept)[/dim]")
-            
+
             # Remove truly stale items
             if truly_stale:
                 console.print(f"\n[yellow]Found {len(truly_stale)} stale items (not synced in {STALE_THRESHOLD_DAYS}+ days):[/yellow]")
@@ -215,24 +227,25 @@ def sync_vault(
                 for uuid, title, days in truly_stale:
                     del db.accounts[uuid]
                 console.print(f"[yellow]Removed {len(truly_stale)} stale accounts[/yellow]")
-    
-    db.metadata.last_sync = datetime.now(timezone.utc)
+
+    db.metadata.last_sync = datetime.now(UTC)
     db.metadata.op_cli_version = op_client.version
-    
+
     cache_mgr.save(db)
-    
+
     # Roll encryption key after successful save for forward secrecy
     console.print("[dim]Rolling encryption key...[/dim]")
     cache_mgr.roll_key()
-    
+
     console.print(f"\n[green]✅ Sync complete. Synced {synced_count} accounts.[/green]")
-    
+    console.print(f"[dim]Machine: {machine_id['hostname']} ({machine_id['node_name']})\nUUID: {machine_uuid}[/dim]")
+
     # Show summary counts only (avoid scrolling past with 1000+ entries)
     total = len(db.accounts)
     pre_baseline = sum(1 for a in db.accounts.values() if a.is_pre_baseline)
     overdue = sum(1 for a in db.accounts.values() if a.days_until_rotation is not None and a.days_until_rotation < 0)
     due_soon = sum(1 for a in db.accounts.values() if a.days_until_rotation is not None and 0 <= a.days_until_rotation <= 30)
-    
+
     console.print("\n[bold]📊 Summary:[/bold]")
     console.print(f"  Total Accounts: {total}")
     console.print(f"  🔴 Pre-Baseline (URGENT): {pre_baseline}")

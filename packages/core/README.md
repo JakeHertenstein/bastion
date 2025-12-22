@@ -6,6 +6,7 @@ Shared core utilities for the Bastion security toolchain.
 
 - **Platform Detection**: Detect macOS, Linux, Windows and their versions
 - **Hardware Detection**: Check for YubiKey, Infinite Noise TRNG, TPM availability
+- **Machine UUID**: Stable machine identifier derived from hardware (SHA-512)
 - **Network Checks**: Verify air-gap status and network connectivity
 
 ## Usage
@@ -16,6 +17,10 @@ from bastion_core import platform, hardware
 # Platform checks
 if platform.is_macos():
     print(f"Running on macOS {platform.macos_version()}")
+
+# Machine identity
+uuid = platform.get_machine_uuid()
+print(f"Machine UUID: {uuid}")
 
 # Hardware checks
 if hardware.has_yubikey():

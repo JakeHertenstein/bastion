@@ -18,6 +18,25 @@ Each authenticator token gets its own section numbered sequentially:
 - `Token 3`
 - etc.
 
+### TOTP Configuration Section (YubiKey Items)
+
+YubiKey device items include a "TOTP Configuration" section for provisioning automation:
+
+```
+TOTP Configuration:
+  Profile: Primary
+  Capacity: 32
+```
+
+**Fields:**
+- `Profile` (text): Profile name for TOTP provisioning (e.g., "Primary", "Backup", "Travel")
+- `Capacity` (text): Maximum OATH-TOTP slots (32 or 64, depending on device model)
+
+**Usage:**
+- `bsec 1p yubikey provision --serial <SN>` uses `Profile` field to filter accounts
+- Accounts tagged with `Bastion/2FA/TOTP/YubiKey/Include/<Profile>` are provisioned
+- `Capacity` field enforces slot limits and detects overflow
+
 ### Field Types by Authenticator Type
 
 #### YubiKey Type

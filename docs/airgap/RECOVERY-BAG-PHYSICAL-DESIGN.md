@@ -377,7 +377,7 @@ If only SD card or YubiKey needs update:
 
 ## Appendix A: Recovery Guide Template
 
-See [docs/airgap/RECOVERY-GUIDE-TEMPLATE.md](airgap/RECOVERY-GUIDE-TEMPLATE.md)
+See [RECOVERY-GUIDE-TEMPLATE.md](./RECOVERY-GUIDE-TEMPLATE.md)
 
 ## Appendix B: 1Password Record Template
 

@@ -50,7 +50,6 @@ See `docs/airgap/` in the main Bastion repository for detailed documentation:
 - `AIRGAP-DESIGN-DECISIONS.md` - Architecture and security decisions
 - `AIRGAP-CARD-PROVISIONING.md` - MicroSD card setup guide
 - `AIRGAP-1PASSWORD-TEMPLATES.md` - 1Password integration templates
-- `copilot-instructions.md` - Development guide
 
 ## Security Model
 

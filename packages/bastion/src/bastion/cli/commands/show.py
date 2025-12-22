@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 def show_person(
-    manager: "PeopleManager",
+    manager: PeopleManager,
     person_id: str,
     include_recovery: bool,
 ) -> None:
@@ -31,33 +31,33 @@ def show_person(
     if not details:
         console.print(f"[red]Person not found: {person_id}[/red]")
         raise typer.Exit(1)
-    
+
     # Format and display person info
     info = manager.format_person_info(details)
     console.print(info)
-    
+
     # Show recovery network if requested
     if include_recovery:
         console.print("\n[cyan]Recovery Network:[/cyan]")
         network = manager.get_recovery_network(details["id"])
-        
+
         if network["can_recover"]:
             console.print("\n[yellow]Can recover:[/yellow]")
             for target in network["can_recover"]:
                 title = target.get("title", target.get("reference", "Unknown"))
                 console.print(f"  • {title}")
-        
+
         if network["recovered_by"]:
             console.print("\n[yellow]Can be recovered by:[/yellow]")
             for source in network["recovered_by"]:
                 title = source.get("title", source.get("reference", "Unknown"))
                 console.print(f"  • {title}")
-        
+
         if not network["can_recover"] and not network["recovered_by"]:
             console.print("[dim]  No recovery relationships[/dim]")
 
 
-def show_recovery_matrix(manager: "PeopleManager") -> None:
+def show_recovery_matrix(manager: PeopleManager) -> None:
     """Display the recovery matrix for all people.
     
     Args:

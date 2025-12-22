@@ -36,7 +36,10 @@ class Metadata(BaseModel):
     compromise_baseline: str  # YYYY-MM-DD
     op_cli_version: str | None = None
     last_migration: datetime | str | None = None
-    
+    machine_hostname: str | None = None  # Hostname that created/last synced this cache
+    machine_node: str | None = None  # Node name for multi-machine tracking
+    machine_uuid: str | None = None  # Stable UUID for multi-machine key matching
+
     def model_post_init(self, __context: object) -> None:
         """Handle legacy field names."""
         if self.created and not self.created_at:
@@ -63,10 +66,9 @@ class Account(BaseModel):
     vault_name: str = "Private"  # 1Password vault name
     username: str = ""  # Username/email field from 1Password
     alternate_recovery_email: str = ""  # Secondary recovery email (for Square, etc.)
-    tier: Literal["Tier 1", "Tier 2", "Tier 3"]
     tags: str = ""  # Comma-separated
     urls: str = ""
-    
+
     # Rotation
     rotation_tag: str = ""
     rotation_interval_override: str = ""
@@ -74,7 +76,7 @@ class Account(BaseModel):
     next_rotation_date: str = ""
     days_until_rotation: int | None = None
     is_pre_baseline: bool = False
-    
+
     # Legacy 2FA fields (kept for backward compatibility)
     twofa_method: str = ""
     twofa_risk: str = ""
@@ -84,7 +86,7 @@ class Account(BaseModel):
     has_sms: bool = False
     has_no2fa: bool = False
     is_2fa_downgraded: bool = False
-    
+
     # Other
     dependency: str = ""
     risk_notes: str = ""
@@ -93,14 +95,14 @@ class Account(BaseModel):
     last_synced: str = ""
     migration_history: list[MigrationEntry] = Field(default_factory=list)
     fields_cache: list[dict] = Field(default_factory=list)  # Cache of 1Password fields
-    
+
     # Computed fields for tag-based analysis
     @computed_field
     @property
     def vault(self) -> str:
         """Alias for vault_name (backward compatibility)."""
         return self.vault_name
-    
+
     @computed_field
     @property
     def tag_list(self) -> list[str]:
@@ -108,13 +110,13 @@ class Account(BaseModel):
         if not self.tags:
             return []
         return [t.strip() for t in self.tags.split(",") if t.strip()]
-    
+
     @computed_field
     @property
     def capabilities(self) -> list[str]:
         """Extract capability tags."""
         return [t for t in self.tag_list if t.startswith("Bastion/Capability/") or t.startswith("Bastion/Cap/")]
-    
+
     @computed_field
     @property
     def twofa_methods(self) -> list[TwoFAMethod]:
@@ -135,7 +137,7 @@ class Account(BaseModel):
             if tag in tag_map:
                 methods.append(tag_map[tag])
         return methods or [TwoFAMethod.NONE]
-    
+
     @computed_field
     @property
     def strongest_2fa(self) -> TwoFAMethod:
@@ -144,7 +146,7 @@ class Account(BaseModel):
             return TwoFAMethod.NONE
         # Enum values are in order strongest to weakest
         return min(self.twofa_methods, key=lambda m: list(TwoFAMethod).index(m))
-    
+
     @computed_field
     @property
     def weakest_2fa(self) -> TwoFAMethod:
@@ -153,55 +155,55 @@ class Account(BaseModel):
             return TwoFAMethod.NONE
         # Return the weakest enabled method
         return max(self.twofa_methods, key=lambda m: list(TwoFAMethod).index(m))
-    
+
     @computed_field
     @property
     def security_controls(self) -> list[str]:
         """Extract security control tags."""
         return [t for t in self.tag_list if t.startswith("Bastion/Security/")]
-    
+
     @computed_field
     @property
     def dependencies(self) -> list[str]:
         """Extract dependency tags."""
         return [t for t in self.tag_list if t.startswith("Bastion/Dependency/")]
-    
+
     @computed_field
     @property
     def compliance_tags(self) -> list[str]:
         """Extract compliance tags."""
         return [t for t in self.tag_list if t.startswith("Bastion/Compliance/")]
-    
+
     @computed_field
     @property
     def pii_tags(self) -> list[str]:
         """Extract PII sensitivity tags."""
         return [t for t in self.tag_list if t.startswith("Bastion/PII/")]
-    
+
     @computed_field
     @property
     def is_shared_access(self) -> bool:
         """Check if account has shared access."""
         return "Bastion/Capability/Shared-Access" in self.tag_list
-    
+
     @computed_field
     @property
     def has_breach_exposure(self) -> bool:
         """Check if password is breach-exposed."""
         return "Bastion/Security/Breach-Exposed" in self.tag_list
-    
+
     @computed_field
     @property
     def has_rate_limiting(self) -> bool:
         """Check if account has rate limiting."""
         return "Bastion/Security/Rate-Limited" in self.tag_list
-    
+
     @computed_field
     @property
     def has_human_verification(self) -> bool:
         """Check if account requires human verification for sensitive ops."""
         return "Bastion/Security/Human-Verification" in self.tag_list
-    
+
     @computed_field
     @property
     def recovery_email(self) -> str:
@@ -213,7 +215,14 @@ class Account(BaseModel):
         email_pattern = r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
         match = re.search(email_pattern, self.username)
         return match.group(0) if match else ""
-    
+
+    @computed_field
+    @property
+    def risk_level(self) -> RiskLevel:
+        """Compute risk level based on account attributes (no dependencies)."""
+        _, level = self.compute_risk_score(dependency_count=0)
+        return level
+
     def compute_risk_score(self, dependency_count: int = 0) -> tuple[int, RiskLevel]:
         """
         Compute risk score based on attributes.
@@ -236,7 +245,7 @@ class Account(BaseModel):
             "Bastion/Capability/Data-Export": 20,
         }
         cap_score = sum(capability_scores.get(cap, 0) for cap in self.capabilities)
-        
+
         # 2. Weakest 2FA score (attack surface)
         twofa_scores = {
             TwoFAMethod.NONE: 200,
@@ -247,7 +256,7 @@ class Account(BaseModel):
             TwoFAMethod.FIDO2: 0,
         }
         twofa_score = twofa_scores.get(self.weakest_2fa, 0)
-        
+
         # 3. Security control modifiers
         security_modifiers = 0
         if self.has_breach_exposure:
@@ -266,16 +275,16 @@ class Account(BaseModel):
             security_modifiers += 20
         if "Bastion/Security/Password-No-Special" in self.security_controls:
             security_modifiers += 10
-        
+
         # Base score
         base_score = cap_score + twofa_score + security_modifiers
-        
+
         # 4. Multipliers
         shared_multiplier = 1.5 if self.is_shared_access else 1.0
-        
+
         # Dependency multiplier (1.2 per downstream account)
         dependency_multiplier = 1.0 + (dependency_count * 0.2)
-        
+
         # PII multiplier
         pii_multiplier = 1.0
         if "Bastion/PII/Financial" in self.pii_tags:
@@ -284,20 +293,20 @@ class Account(BaseModel):
             pii_multiplier = 1.8
         elif "Bastion/PII/Health" in self.pii_tags:
             pii_multiplier = 1.3
-        
+
         # Compliance modifier (slight reduction for regulatory oversight)
         compliance_modifier = 0
         if "Bastion/Compliance/FDIC" in self.compliance_tags or "Bastion/Compliance/SIPC" in self.compliance_tags:
             compliance_modifier = -10
-        
+
         # Final calculation
         final_score = int(
-            (base_score + compliance_modifier) 
-            * shared_multiplier 
-            * dependency_multiplier 
+            (base_score + compliance_modifier)
+            * shared_multiplier
+            * dependency_multiplier
             * pii_multiplier
         )
-        
+
         # Determine risk level
         if final_score >= 500:
             risk_level = RiskLevel.CRITICAL
@@ -307,7 +316,7 @@ class Account(BaseModel):
             risk_level = RiskLevel.MEDIUM
         else:
             risk_level = RiskLevel.LOW
-        
+
         return final_score, risk_level
 
 

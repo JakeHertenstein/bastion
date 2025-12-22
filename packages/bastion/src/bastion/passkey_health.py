@@ -37,11 +37,11 @@ def get_clipboard_json() -> dict | None:
         )
         if result.returncode != 0:
             return None
-        
+
         content = result.stdout.strip()
         if not content:
             return None
-            
+
         return json.loads(content)
     except (subprocess.SubprocessError, json.JSONDecodeError):
         return None
@@ -62,11 +62,11 @@ def is_passkey_healthy(export_json: dict) -> bool:
     """
     overview = export_json.get("overview", {})
     details = export_json.get("details", {})
-    
+
     has_overview_passkey = "passkey" in overview
     has_details_passkey = "passkey" in details
     has_private_key = details.get("passkey", {}).get("privateKey") is not None
-    
+
     # Healthy = has all three
     return has_overview_passkey and has_details_passkey and has_private_key
 
@@ -89,11 +89,11 @@ def is_passkey_orphaned(export_json: dict) -> bool:
     """
     overview = export_json.get("overview", {})
     details = export_json.get("details", {})
-    
+
     has_overview_passkey = "passkey" in overview
     has_details_passkey = "passkey" in details
     has_private_key = details.get("passkey", {}).get("privateKey") is not None
-    
+
     # Orphaned = has overview passkey but missing private key
     return has_overview_passkey and (not has_details_passkey or not has_private_key)
 
@@ -145,7 +145,7 @@ def transform_to_cli_format(export_json: dict) -> dict[str, Any]:
     """
     overview = export_json.get("overview", {})
     details = export_json.get("details", {})
-    
+
     # Build CLI format
     cli_json: dict[str, Any] = {
         "title": overview.get("title", ""),
@@ -153,11 +153,11 @@ def transform_to_cli_format(export_json: dict) -> dict[str, Any]:
         "created_at": export_json.get("createdAt", ""),
         "updated_at": export_json.get("updatedAt", ""),
     }
-    
+
     # Preserve tags
     if "tags" in overview:
         cli_json["tags"] = overview["tags"]
-    
+
     # Build URLs
     url = overview.get("url")
     if url:
@@ -166,14 +166,14 @@ def transform_to_cli_format(export_json: dict) -> dict[str, Any]:
             "primary": True,
             "href": url,
         }]
-    
+
     # Build fields from details.fields
     fields = []
     for field in details.get("fields", []):
         designation = field.get("designation", "")
         field_type = field.get("type", "T")
         value = field.get("value", "")
-        
+
         if designation == "username":
             fields.append({
                 "id": "username",
@@ -190,7 +190,7 @@ def transform_to_cli_format(export_json: dict) -> dict[str, Any]:
                 "label": "password",
                 "value": value,
             })
-    
+
     # Add notes if present
     notes = details.get("notesPlain", "")
     if notes:
@@ -201,10 +201,10 @@ def transform_to_cli_format(export_json: dict) -> dict[str, Any]:
             "label": "notesPlain",
             "value": notes,
         })
-    
+
     if fields:
         cli_json["fields"] = fields
-    
+
     return cli_json
 
 

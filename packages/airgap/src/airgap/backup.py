@@ -18,10 +18,9 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-import shutil
 import subprocess
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -29,14 +28,14 @@ from typing import Any
 @dataclass
 class BackupManifest:
     """Manifest describing backup contents and checksums."""
-    
+
     version: str = "1"
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     device_label: str = ""
     files: list[dict[str, str]] = field(default_factory=list)
     gnupg_version: str = ""
     key_ids: list[str] = field(default_factory=list)
-    
+
     def add_file(self, name: str, sha256: str, size: int) -> None:
         """Add a file to the manifest."""
         self.files.append({
@@ -44,7 +43,7 @@ class BackupManifest:
             "sha256": sha256,
             "size": size,
         })
-    
+
     def to_json(self) -> str:
         """Serialize manifest to JSON."""
         return json.dumps({
@@ -55,9 +54,9 @@ class BackupManifest:
             "gnupg_version": self.gnupg_version,
             "key_ids": self.key_ids,
         }, indent=2)
-    
+
     @classmethod
-    def from_json(cls, json_str: str) -> "BackupManifest":
+    def from_json(cls, json_str: str) -> BackupManifest:
         """Deserialize manifest from JSON."""
         data = json.loads(json_str)
         manifest = cls(
@@ -84,7 +83,7 @@ def _run_sudo(cmd: list[str], check: bool = True, **kwargs) -> subprocess.Comple
     """
     if os.geteuid() != 0:
         cmd = ["sudo"] + cmd
-    
+
     return subprocess.run(cmd, check=check, **kwargs)
 
 
@@ -118,13 +117,13 @@ def list_block_devices() -> list[dict[str, Any]]:
             text=True,
             timeout=10,
         )
-        
+
         if result.returncode != 0:
             return []
-        
+
         data = json.loads(result.stdout)
         devices = []
-        
+
         for device in data.get("blockdevices", []):
             # Only show removable USB devices
             if device.get("rm") == "1" or device.get("tran") == "usb":
@@ -136,9 +135,9 @@ def list_block_devices() -> list[dict[str, Any]]:
                     "removable": device.get("rm") == "1",
                     "transport": device.get("tran", "unknown"),
                 })
-        
+
         return devices
-        
+
     except (FileNotFoundError, subprocess.TimeoutExpired, json.JSONDecodeError):
         return []
 
@@ -172,11 +171,11 @@ def create_luks_container(
     """
     if not check_luks_available():
         raise RuntimeError("cryptsetup not installed. Install with: apt install cryptsetup")
-    
+
     # Verify device exists
     if not Path(device).exists():
         raise RuntimeError(f"Device not found: {device}")
-    
+
     # Format with LUKS2
     cmd = [
         "cryptsetup", "luksFormat",
@@ -189,16 +188,16 @@ def create_luks_container(
         "--verify-passphrase",
         device,
     ]
-    
+
     try:
         # Note: This will prompt for passphrase interactively
         result = _run_sudo(cmd, check=False, timeout=120)
-        
+
         if result.returncode != 0:
             raise RuntimeError("LUKS format failed. Check passphrase and device.")
-        
+
         return True
-        
+
     except subprocess.TimeoutExpired:
         raise RuntimeError("LUKS format timed out")
 
@@ -220,22 +219,22 @@ def open_luks_container(
         RuntimeError: If open fails
     """
     mapper_path = f"/dev/mapper/{name}"
-    
+
     # Check if already open
     if Path(mapper_path).exists():
         return mapper_path
-    
+
     cmd = ["cryptsetup", "open", device, name]
-    
+
     try:
         # Will prompt for passphrase
         result = _run_sudo(cmd, check=False, timeout=60)
-        
+
         if result.returncode != 0:
             raise RuntimeError("Failed to open LUKS container. Wrong passphrase?")
-        
+
         return mapper_path
-        
+
     except subprocess.TimeoutExpired:
         raise RuntimeError("LUKS open timed out")
 
@@ -250,12 +249,12 @@ def close_luks_container(name: str = "bastion_backup") -> bool:
         True if closed successfully
     """
     mapper_path = f"/dev/mapper/{name}"
-    
+
     if not Path(mapper_path).exists():
         return True  # Already closed
-    
+
     cmd = ["cryptsetup", "close", name]
-    
+
     try:
         result = _run_sudo(cmd, check=False, timeout=30)
         return result.returncode == 0
@@ -284,7 +283,7 @@ def format_filesystem(
         cmd = ["mkfs.vfat", "-n", label, device]
     else:
         raise ValueError(f"Unsupported filesystem type: {fstype}")
-    
+
     try:
         result = _run_sudo(cmd, check=False, capture_output=True, timeout=60)
         return result.returncode == 0
@@ -303,9 +302,9 @@ def mount_device(device: str, mount_point: Path) -> bool:
         True if mount succeeded
     """
     mount_point.mkdir(parents=True, exist_ok=True)
-    
+
     cmd = ["mount", device, str(mount_point)]
-    
+
     try:
         result = _run_sudo(cmd, check=False, timeout=30)
         return result.returncode == 0
@@ -324,9 +323,9 @@ def unmount_device(mount_point: Path) -> bool:
     """
     if not mount_point.is_mount():
         return True
-    
+
     cmd = ["umount", str(mount_point)]
-    
+
     try:
         result = _run_sudo(cmd, check=False, timeout=30)
         return result.returncode == 0
@@ -377,9 +376,9 @@ def export_gpg_keys(
     gnupghome = Path(gnupghome)
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    
+
     manifest = BackupManifest()
-    
+
     # Get GPG version
     try:
         result = subprocess.run(
@@ -392,10 +391,10 @@ def export_gpg_keys(
             manifest.gnupg_version = result.stdout.split("\n")[0]
     except (FileNotFoundError, subprocess.TimeoutExpired):
         pass
-    
+
     env = os.environ.copy()
     env["GNUPGHOME"] = str(gnupghome)
-    
+
     # Determine key ID if not specified
     if not key_id:
         result = subprocess.run(
@@ -412,12 +411,12 @@ def export_gpg_keys(
                 if len(parts) >= 2:
                     key_id = parts[1].split()[0]
                     break
-    
+
     if not key_id:
         raise RuntimeError("No GPG keys found to export")
-    
+
     manifest.key_ids.append(key_id)
-    
+
     # Export master secret key (certify only)
     master_path = output_dir / f"{key_id}-master-certify.key"
     result = subprocess.run(
@@ -433,7 +432,7 @@ def export_gpg_keys(
             file_sha256(master_path),
             len(result.stdout),
         )
-    
+
     # Export subkeys only
     subkeys_path = output_dir / f"{key_id}-subkeys.key"
     result = subprocess.run(
@@ -449,7 +448,7 @@ def export_gpg_keys(
             file_sha256(subkeys_path),
             len(result.stdout),
         )
-    
+
     # Export public key
     public_path = output_dir / f"{key_id}-public.asc"
     result = subprocess.run(
@@ -465,7 +464,7 @@ def export_gpg_keys(
             file_sha256(public_path),
             len(result.stdout),
         )
-    
+
     # Generate revocation certificate
     revoke_path = output_dir / f"{key_id}-revoke.asc"
     result = subprocess.run(
@@ -482,11 +481,11 @@ def export_gpg_keys(
             file_sha256(revoke_path),
             len(result.stdout),
         )
-    
+
     # Write manifest
     manifest_path = output_dir / "MANIFEST.json"
     manifest_path.write_text(manifest.to_json())
-    
+
     return manifest
 
 
@@ -501,35 +500,35 @@ def verify_backup(backup_dir: Path) -> tuple[bool, list[str]]:
     """
     errors = []
     manifest_path = backup_dir / "MANIFEST.json"
-    
+
     if not manifest_path.exists():
         return False, ["MANIFEST.json not found"]
-    
+
     try:
         manifest = BackupManifest.from_json(manifest_path.read_text())
     except (json.JSONDecodeError, KeyError) as e:
         return False, [f"Invalid manifest: {e}"]
-    
+
     for file_info in manifest.files:
         file_path = backup_dir / file_info["name"]
-        
+
         if not file_path.exists():
             errors.append(f"Missing file: {file_info['name']}")
             continue
-        
+
         actual_hash = file_sha256(file_path)
         expected_hash = file_info["sha256"]
-        
+
         if actual_hash != expected_hash:
             errors.append(f"Checksum mismatch: {file_info['name']}")
-    
+
     return len(errors) == 0, errors
 
 
 @dataclass
 class BackupResult:
     """Result of a backup operation."""
-    
+
     success: bool
     device: str
     mount_point: Path | None
@@ -565,7 +564,7 @@ def create_backup(
     mapper_name = "bastion_backup"
     mount_point = Path("/mnt/bastion_backup")
     errors = []
-    
+
     try:
         # Step 1: Create LUKS container
         # Note: This prompts for passphrase
@@ -577,10 +576,10 @@ def create_backup(
                 manifest=None,
                 errors=["Failed to create LUKS container"],
             )
-        
+
         # Step 2: Open container
         mapper_path = open_luks_container(device, mapper_name)
-        
+
         # Step 3: Format with ext4
         if not format_filesystem(mapper_path, label="BACKUP"):
             errors.append("Failed to format filesystem")
@@ -592,7 +591,7 @@ def create_backup(
                 manifest=None,
                 errors=errors,
             )
-        
+
         # Step 4: Mount
         if not mount_device(mapper_path, mount_point):
             errors.append("Failed to mount device")
@@ -604,21 +603,21 @@ def create_backup(
                 manifest=None,
                 errors=errors,
             )
-        
+
         # Step 5: Export keys
         backup_dir = mount_point / "keys"
         manifest = export_gpg_keys(gnupghome, backup_dir, key_id)
-        
+
         # Step 6: Verify
         valid, verify_errors = verify_backup(backup_dir)
         if not valid:
             errors.extend(verify_errors)
-        
+
         # Step 7: Sync and unmount
         subprocess.run(["sync"], timeout=30)
         unmount_device(mount_point)
         close_luks_container(mapper_name)
-        
+
         return BackupResult(
             success=valid,
             device=device,
@@ -626,7 +625,7 @@ def create_backup(
             manifest=manifest,
             errors=errors,
         )
-        
+
     except Exception as e:
         # Cleanup on error
         try:
@@ -634,7 +633,7 @@ def create_backup(
             close_luks_container(mapper_name)
         except Exception:
             pass
-        
+
         return BackupResult(
             success=False,
             device=device,
@@ -658,11 +657,11 @@ def verify_backup_device(
         Tuple of (valid, errors, manifest)
     """
     mount_point = Path("/mnt/bastion_backup_verify")
-    
+
     try:
         # Open container (prompts for passphrase)
         mapper_path = open_luks_container(device, mapper_name)
-        
+
         # Mount read-only
         mount_point.mkdir(parents=True, exist_ok=True)
         result = _run_sudo(
@@ -670,15 +669,15 @@ def verify_backup_device(
             check=False,
             timeout=30,
         )
-        
+
         if result.returncode != 0:
             close_luks_container(mapper_name)
             return False, ["Failed to mount device"], None
-        
+
         # Verify
         backup_dir = mount_point / "keys"
         valid, errors = verify_backup(backup_dir)
-        
+
         # Load manifest
         manifest = None
         manifest_path = backup_dir / "MANIFEST.json"
@@ -687,18 +686,18 @@ def verify_backup_device(
                 manifest = BackupManifest.from_json(manifest_path.read_text())
             except Exception:
                 pass
-        
+
         # Cleanup
         unmount_device(mount_point)
         close_luks_container(mapper_name)
-        
+
         return valid, errors, manifest
-        
+
     except Exception as e:
         try:
             unmount_device(mount_point)
             close_luks_container(mapper_name)
         except Exception:
             pass
-        
+
         return False, [str(e)], None

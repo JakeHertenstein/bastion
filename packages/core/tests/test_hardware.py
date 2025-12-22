@@ -1,6 +1,5 @@
 """Tests for bastion_core.hardware module."""
 
-import pytest
 
 from bastion_core import hardware
 

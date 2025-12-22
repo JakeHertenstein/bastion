@@ -1,0 +1,124 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "YubiKey Scan (Debug)",
+      "type": "python",
+      "request": "launch",
+      "module": "bastion.cli.main",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "args": [
+        "1p",
+        "yubikey",
+        "scan",
+        "-vv"
+      ],
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/packages/bastion/src:${workspaceFolder}/packages/core/src",
+        "DEBUG": "true"
+      },
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "YubiKey Status (Debug)",
+      "type": "python",
+      "request": "launch",
+      "module": "bastion.cli.main",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "args": [
+        "1p",
+        "yubikey",
+        "status",
+        "-vv"
+      ],
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/packages/bastion/src:${workspaceFolder}/packages/core/src",
+        "DEBUG": "true"
+      },
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "YubiKey Scan (Specific Serial)",
+      "type": "python",
+      "request": "launch",
+      "module": "bastion.cli.main",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "args": [
+        "1p",
+        "yubikey",
+        "scan",
+        "--serial",
+        "${input:yubiKeySerial}",
+        "-vv"
+      ],
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/packages/bastion/src:${workspaceFolder}/packages/core/src",
+        "DEBUG": "true"
+      },
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "YubiKey Scan + Update (Debug)",
+      "type": "python",
+      "request": "launch",
+      "module": "bastion.cli.main",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "args": [
+        "1p",
+        "yubikey",
+        "scan",
+        "--update",
+        "-vv"
+      ],
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/packages/bastion/src:${workspaceFolder}/packages/core/src",
+        "DEBUG": "true"
+      },
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Test Suite (YubiKey)",
+      "type": "python",
+      "request": "launch",
+      "module": "pytest",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "args": [
+        "tests/",
+        "-k",
+        "yubikey",
+        "-vv",
+        "--tb=short"
+      ],
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/packages/bastion/src:${workspaceFolder}/packages/core/src"
+      },
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Attach to Running Process",
+      "type": "python",
+      "request": "attach",
+      "port": 5678,
+      "host": "localhost",
+      "pathMapping": [
+        {
+          "localRoot": "${workspaceFolder}",
+          "remoteRoot": "."
+        }
+      ]
+    }
+  ],
+  "inputs": [
+    {
+      "id": "yubiKeySerial",
+      "type": "promptString",
+      "description": "Enter YubiKey serial number",
+      "default": "24014076"
+    }
+  ]
+}

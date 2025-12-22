@@ -44,7 +44,7 @@ def run_applescript(script: str, timeout: int = 30) -> str:
     """
     if not is_macos():
         raise MacOSAutomationError("AppleScript only available on macOS")
-    
+
     try:
         result = subprocess.run(
             ["osascript", "-e", script],
@@ -52,7 +52,7 @@ def run_applescript(script: str, timeout: int = 30) -> str:
             text=True,
             timeout=timeout,
         )
-        
+
         if result.returncode != 0:
             error_msg = result.stderr.strip() or "Unknown AppleScript error"
             if "not allowed assistive access" in error_msg.lower():
@@ -62,9 +62,9 @@ def run_applescript(script: str, timeout: int = 30) -> str:
                     "and enable access for Terminal (or your IDE)."
                 )
             raise MacOSAutomationError(f"AppleScript failed: {error_msg}")
-        
+
         return result.stdout.strip()
-    
+
     except subprocess.TimeoutExpired:
         raise MacOSAutomationError(f"AppleScript timed out after {timeout}s")
     except subprocess.SubprocessError as e:
@@ -75,7 +75,7 @@ def is_1password_running() -> bool:
     """Check if 1Password app is running."""
     if not is_macos():
         return False
-    
+
     script = '''
     tell application "System Events"
         return (name of processes) contains "1Password"
@@ -114,7 +114,7 @@ def activate_terminal() -> bool:
     """
     if not is_macos():
         return False
-    
+
     # Try to activate common terminal apps in order of preference
     terminal_apps = [
         "Code",           # VS Code
@@ -123,7 +123,7 @@ def activate_terminal() -> bool:
         "iTerm",          # iTerm (alt name)
         "Terminal",       # macOS Terminal
     ]
-    
+
     for app_name in terminal_apps:
         script = f'''
         tell application "System Events"
@@ -140,7 +140,7 @@ def activate_terminal() -> bool:
                 return True
         except MacOSAutomationError:
             continue
-    
+
     return False
 
 
@@ -185,11 +185,11 @@ def open_1password_item(item_id: str, vault_id: str | None = None) -> bool:
     """
     if not is_macos():
         return False
-    
+
     # Get the official share link from op CLI
     # Format: https://start.1password.com/open/i?a=ACCOUNT&h=HOST&i=ITEM&v=VAULT
     share_link = get_1password_item_link(item_id)
-    
+
     if share_link and share_link.startswith("https://start.1password.com/open/"):
         # Convert to onepassword:// scheme
         # https://start.1password.com/open/i?... -> onepassword://open/i?...
@@ -200,7 +200,7 @@ def open_1password_item(item_id: str, vault_id: str | None = None) -> bool:
             url = f"onepassword://open-item?v={vault_id}&i={item_id}"
         else:
             url = f"onepassword://open-item?i={item_id}"
-    
+
     try:
         subprocess.run(["open", url], check=True, timeout=5)
         return True
@@ -223,13 +223,13 @@ def open_item_and_prompt(item_id: str, vault_id: str | None = None) -> bool:
     """
     if not is_macos():
         return False
-    
+
     # First try direct item URL scheme (most reliable)
     if open_1password_item(item_id, vault_id):
         # Give 1Password time to open the item
         time.sleep(0.8)
         return True
-    
+
     # Fallback: just activate 1Password
     try:
         activate_1password()
@@ -248,16 +248,16 @@ def show_notification(title: str, message: str, sound: bool = False) -> None:
     """
     if not is_macos():
         return
-    
+
     # Escape quotes for AppleScript
     title_escaped = title.replace('"', '\\"')
     message_escaped = message.replace('"', '\\"')
-    
+
     sound_part = 'sound name "default"' if sound else ""
     script = f'''
     display notification "{message_escaped}" with title "{title_escaped}" {sound_part}
     '''
-    
+
     try:
         run_applescript(script, timeout=5)
     except MacOSAutomationError:
@@ -288,15 +288,15 @@ def wait_for_clipboard_change(
     """
     if not is_macos():
         return None
-    
+
     start_time = time.time()
-    
+
     while time.time() - start_time < timeout:
         current = get_clipboard_content()
         if current != original_content:
             return current
         time.sleep(check_interval)
-    
+
     return None
 
 
@@ -308,7 +308,7 @@ def get_clipboard_content() -> str:
     """
     if not is_macos():
         return ""
-    
+
     try:
         result = subprocess.run(
             ["pbpaste"],
@@ -329,7 +329,7 @@ def clear_clipboard() -> bool:
     """
     if not is_macos():
         return False
-    
+
     try:
         # Set clipboard to empty string
         result = subprocess.run(

@@ -4,6 +4,16 @@
 
 A secure, deterministic password token generator that creates 10×10 matrices of cryptographic tokens from various seed sources. Designed for air-gapped systems with strong emphasis on reproducibility and security.
 
+Outcome: high‑entropy offline passwords without a password manager; strength validated by entropy analysis and modeled attack‑costs.
+
+## Why Seeder
+
+Seeder provides a simple, reproducible way to create high‑entropy passwords entirely offline when a password manager isn’t available. It turns SLIP‑39/BIP‑39 (or simple seeds) into deterministic 10×10 token grids, enabling users to select consistent coordinate patterns for complex passwords across many accounts. The approach is validated via entropy analysis and attack‑cost modeling, aligning with defense‑in‑depth and air‑gapped workflows.
+
+- Read more: docs — Entropy System: ../../docs/ENTROPY-SYSTEM.md
+- Design overview: packages/seeder/docs/design.md
+- Security review approach: packages/seeder/docs/SECURITY_REVIEW_STRATEGY.md
+
 ## ⚠️ Security Warning
 
 **This tool is designed for online passwords with low lockout thresholds.**
@@ -423,17 +433,30 @@ Analyzes security when your physical matrix is compromised:
 ```
 
 ### Composite Password Formats
-Real-world usage often combines tokens with memorized elements:
+Real-world usage often combines fixed tokens with rolling tokens and a memorized word:
 
-**Format**: `FixedToken1-FixedToken2-RollingToken-MemorizedWord!`
+**Format**: `FixedToken1-FixedToken2-RollingToken-MemorizedWord`
 
 **Components:**
-- **Fixed Tokens**: Static coordinates from your grid (e.g., B3, F7)
-- **Rolling Tokens**: Coordinates that change quarterly/monthly (e.g., A0)
-- **Memorized Word**: 4-8 character pronounceable word you generate (e.g., "Poquyo")
-- **Separators**: Punctuation between components (e.g., "-", "!")
+- **Fixed Tokens**: Static coordinates from your grid (never change, e.g., A0, B1)
+- **Rolling Token**: Coordinate that changes quarterly/monthly (e.g., C2 in December, D3 in January)
+- **Memorized Word**: 4-8 character word you generate (e.g., "BankVault")
+- **Separators**: Hyphens between tokens for readability
+- **Entropy**: ~52 bits from 2 fixed tokens + ~26 bits from rotating token + memorability ≈ 78+ bits total
 
-**Example**: `P7C4-iM6?-X9h!-Poquyo!` (23 characters, 84+ bits entropy)
+**Real Test Vector (from phrase "my secure phrase"):**
+```bash
+python3 seeder generate grid --simple "my secure phrase"
+```
+Using fixed coordinates `A0-B1` and rolling coordinate `C2` (December 2025):
+- Fixed tokens: `$[|p-xCBn`
+- Rolling token: `qb)f`
+
+**Final password**: `$[|p-xCBn-qb)f-BankVault`
+- **Length**: 25 characters
+- **Entropy**: ~78 bits from tokens + memorability from word
+- **Rotation**: Change rolling coordinate monthly (C2 → D3 → E4, etc.) to reset login attempts
+- **Deterministic**: Same phrase always regenerates same tokens; you manage which coordinates rotate
 
 ### 🎲 Pronounceable Word Generation
 The built-in word generator creates memorable words for the memorized component:

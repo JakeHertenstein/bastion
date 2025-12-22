@@ -1,0 +1,130 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Squash to Main for Publication",
+      "type": "shell",
+      "command": "source .venv/bin/activate && echo '🧪 Running tests...' && python -m pytest packages/bastion/tests/ packages/core/tests/ packages/airgap/tests/ packages/seeder/tests/ -m 'not integration' -q && echo '✅ Tests passed!' && git checkout main && git merge --squash develop && git commit -m \"${input:commitMessage}\" && echo '✅ Squashed to main' && git checkout develop",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Squash to Main (with push)",
+      "type": "shell",
+      "command": "source .venv/bin/activate && echo '🧪 Running tests...' && python -m pytest packages/bastion/tests/ packages/core/tests/ packages/airgap/tests/ packages/seeder/tests/ -m 'not integration' -q && echo '✅ Tests passed!' && git checkout main && git merge --squash develop && (git diff --cached --quiet && echo '📝 No changes to commit' || git commit -m \"${input:commitMessage}\") && git push public main && echo '✅ Pushed to public/main' && git checkout develop",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Run Tests (Unit)",
+      "type": "shell",
+      "command": "source .venv/bin/activate && echo '🧪 Testing bastion...' && python -m pytest packages/bastion/tests/ -m 'not integration' -q && echo '🧪 Testing core...' && python -m pytest packages/core/tests/ -m 'not integration' -q && echo '🧪 Testing airgap...' && python -m pytest packages/airgap/tests/ -m 'not integration' -q && echo '🧪 Testing seeder...' && python -m pytest packages/seeder/tests/ -m 'not integration' -q && echo '✅ All tests passed!'",
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Lint Check",
+      "type": "shell",
+      "command": "source .venv/bin/activate && python -m ruff check packages/bastion/ packages/core/ packages/airgap/ packages/seeder/",
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Lint Fix",
+      "type": "shell",
+      "command": "source .venv/bin/activate && echo '🔧 Fixing safe linting issues...' && python -m ruff check --fix packages/bastion/ packages/core/ packages/airgap/ packages/seeder/ && echo '🔧 Fixing unsafe linting issues...' && python -m ruff check --fix --unsafe-fixes packages/bastion/ packages/core/ packages/airgap/ packages/seeder/ && echo '✅ Linting fixed!'",
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "Preview Pages (Jekyll)",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "-c",
+        "cd docs && bundle install && (sleep 3 && open http://localhost:4000 &) && bundle exec jekyll serve --livereload"
+      ],
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^.*$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^.*Server running at.*",
+          "endsPattern": "^.*"
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "new"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      }
+    },
+    {
+      "label": "Generate Brand Assets",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "scripts/generate-brand-assets.sh"
+      ],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      }
+    },
+    {
+      "label": "Build & Check Packages (Pre-PyPI)",
+      "type": "shell",
+      "command": "source .venv/bin/activate && echo '🔧 Building bastion-core...' && (cd packages/core && python -m build) && echo '🔧 Building bastion-security...' && (cd packages/bastion && python -m build) && echo '🔧 Building bastion-airgap...' && (cd packages/airgap && python -m build) && echo '🔧 Building bastion-seeder...' && (cd packages/seeder && python -m build) && echo '✅ All packages built!' && echo '🧪 Checking packages with twine...' && python -m pip install twine -q && twine check packages/*/dist/* && echo '✅ All packages valid for PyPI!'",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Publish to TestPyPI (Pre-Release Check)",
+      "type": "shell",
+      "command": "source .venv/bin/activate && echo '📦 Building all packages...' && (cd packages/core && python -m build) && (cd packages/bastion && python -m build) && (cd packages/airgap && python -m build) && (cd packages/seeder && python -m build) && echo '🧪 Verifying packages...' && python -m pip install twine -q && twine check packages/*/dist/* && echo '📤 Publishing to TestPyPI (requires ~/.pypirc [testpypi])...' && twine upload --repository testpypi packages/*/dist/* && echo '✅ Published to TestPyPI! Verify at https://test.pypi.org/'",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "commitMessage",
+      "type": "promptString",
+      "description": "Commit message for squashed release",
+      "default": "Release: Bastion 1.0.0"
+    }
+  ]
+}

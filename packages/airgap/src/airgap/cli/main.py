@@ -9,11 +9,10 @@ import getpass
 import hashlib
 import os
 import re
-import secrets
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 
 import typer
 from rich.console import Console
@@ -22,22 +21,15 @@ from rich.prompt import Confirm, IntPrompt, Prompt
 from rich.table import Table
 
 from .. import __version__
-from ..sigchain import EnclaveEventType, EnclaveEvent
 from ..slip39 import (
     SLIP39Config,
     SLIP39Share,
-    SLIP39ShareSet,
     compute_share_fingerprint,
-    format_share_for_display,
-    format_share_summary,
     generate_shares,
-    normalize_mnemonic,
     recover_secret,
     validate_share,
     verify_share_reentry,
-    verify_shares,
 )
-
 
 # =============================================================================
 # HARDWARE DETECTION (Linux-specific for air-gapped Raspberry Pi / Libre Computer)
@@ -59,11 +51,11 @@ WIRELESS_USB_VENDORS = {
 @dataclass
 class HardwareCheckResult:
     """Result of a hardware check."""
-    
+
     passed: bool
     devices: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
-    
+
     @property
     def is_airgap_safe(self) -> bool:
         """True if no network-capable hardware detected."""
@@ -78,10 +70,10 @@ def detect_wireless_interfaces() -> list[str]:
     """
     devices = []
     net_path = Path("/sys/class/net")
-    
+
     if not net_path.exists():
         return devices
-    
+
     for iface in net_path.iterdir():
         name = iface.name
         # Check for common wireless interface naming patterns
@@ -98,7 +90,7 @@ def detect_wireless_interfaces() -> list[str]:
                         devices.append(f"Wireless interface: {name}")
             except PermissionError:
                 devices.append(f"Wireless interface: {name} (access denied)")
-    
+
     return devices
 
 
@@ -110,21 +102,21 @@ def detect_wired_interfaces() -> list[str]:
     """
     devices = []
     net_path = Path("/sys/class/net")
-    
+
     if not net_path.exists():
         return devices
-    
+
     for iface in net_path.iterdir():
         name = iface.name
-        
+
         # Skip loopback and virtual interfaces
         if name in ("lo", "docker0", "br0", "virbr0") or name.startswith(("veth", "br-", "docker")):
             continue
-        
+
         # Skip wireless interfaces (handled separately)
         if name.startswith(("wlan", "wlp", "wifi", "wl")):
             continue
-        
+
         # Check for Ethernet interfaces
         # Type 1 = ARPHRD_ETHER (Ethernet)
         type_path = iface / "type"
@@ -138,7 +130,7 @@ def detect_wired_interfaces() -> list[str]:
                         # Check carrier state (cable plugged in)
                         carrier_path = iface / "carrier"
                         operstate_path = iface / "operstate"
-                        
+
                         state = "unknown"
                         try:
                             if carrier_path.exists():
@@ -148,13 +140,13 @@ def detect_wired_interfaces() -> list[str]:
                                 state = operstate_path.read_text().strip()
                         except (PermissionError, OSError):
                             pass
-                        
+
                         devices.append(f"Ethernet interface: {name} ({state})")
             except (PermissionError, OSError):
                 # If we can't read type but name matches ethernet pattern
                 if name.startswith(("eth", "enp", "eno", "ens")):
                     devices.append(f"Ethernet interface: {name}")
-    
+
     return devices
 
 
@@ -165,7 +157,7 @@ def detect_rfkill_devices() -> list[str]:
         List of RF device descriptions
     """
     devices = []
-    
+
     try:
         result = subprocess.run(
             ["rfkill", "list"],
@@ -173,7 +165,7 @@ def detect_rfkill_devices() -> list[str]:
             text=True,
             timeout=5,
         )
-        
+
         if result.returncode == 0 and result.stdout:
             # Parse rfkill output
             current_device = None
@@ -187,7 +179,7 @@ def detect_rfkill_devices() -> list[str]:
                             devices.append(f"RF device: {device_type}")
     except (FileNotFoundError, subprocess.TimeoutExpired):
         pass
-    
+
     return devices
 
 
@@ -198,7 +190,7 @@ def detect_wireless_usb_devices() -> list[str]:
         List of USB device descriptions
     """
     devices = []
-    
+
     try:
         result = subprocess.run(
             ["lsusb"],
@@ -206,7 +198,7 @@ def detect_wireless_usb_devices() -> list[str]:
             text=True,
             timeout=5,
         )
-        
+
         if result.returncode == 0:
             for line in result.stdout.splitlines():
                 # Line format: "Bus 001 Device 002: ID 148f:5370 Ralink Technology, Corp. RT5370..."
@@ -216,7 +208,7 @@ def detect_wireless_usb_devices() -> list[str]:
                         break
     except (FileNotFoundError, subprocess.TimeoutExpired):
         pass
-    
+
     return devices
 
 
@@ -228,18 +220,18 @@ def check_all_wireless() -> HardwareCheckResult:
     """
     devices = []
     warnings = []
-    
+
     # Check network interfaces
     devices.extend(detect_wireless_interfaces())
-    
+
     # Check rfkill
     rf_devices = detect_rfkill_devices()
     devices.extend(rf_devices)
-    
+
     # Check USB devices
     usb_devices = detect_wireless_usb_devices()
     devices.extend(usb_devices)
-    
+
     # Add warning if rfkill/lsusb not available
     try:
         subprocess.run(["rfkill", "--version"], capture_output=True, timeout=2)
@@ -247,14 +239,14 @@ def check_all_wireless() -> HardwareCheckResult:
         warnings.append("rfkill not installed - RF device detection limited")
     except subprocess.TimeoutExpired:
         pass
-    
+
     try:
         subprocess.run(["lsusb", "-V"], capture_output=True, timeout=2)
     except FileNotFoundError:
         warnings.append("lsusb not installed - USB device detection limited")
     except subprocess.TimeoutExpired:
         pass
-    
+
     return HardwareCheckResult(
         passed=len(devices) == 0,
         devices=devices,
@@ -269,7 +261,7 @@ def check_all_wired() -> HardwareCheckResult:
         HardwareCheckResult with all detected wired devices
     """
     devices = detect_wired_interfaces()
-    
+
     return HardwareCheckResult(
         passed=len(devices) == 0,
         devices=devices,
@@ -284,7 +276,7 @@ def check_entropy_sources() -> dict[str, tuple[bool, str]]:
         Dict mapping source name to (available, message) tuple
     """
     sources = {}
-    
+
     # Check Infinite Noise TRNG
     try:
         result = subprocess.run(
@@ -301,7 +293,7 @@ def check_entropy_sources() -> dict[str, tuple[bool, str]]:
         sources["infnoise"] = (False, "infnoise command not installed")
     except subprocess.TimeoutExpired:
         sources["infnoise"] = (False, "infnoise command timed out")
-    
+
     # Check YubiKey
     try:
         result = subprocess.run(
@@ -318,19 +310,19 @@ def check_entropy_sources() -> dict[str, tuple[bool, str]]:
         sources["yubikey"] = (False, "ykman command not installed")
     except subprocess.TimeoutExpired:
         sources["yubikey"] = (False, "ykman command timed out")
-    
+
     # Check /dev/urandom
     if Path("/dev/urandom").exists():
         sources["system"] = (True, "/dev/urandom available")
     else:
         sources["system"] = (False, "/dev/urandom not found")
-    
+
     # Check /dev/random
     if Path("/dev/random").exists():
         sources["random"] = (True, "/dev/random available (blocking)")
     else:
         sources["random"] = (False, "/dev/random not found")
-    
+
     return sources
 
 # Create main app
@@ -377,7 +369,7 @@ def _version_callback(value: bool) -> None:
 @app.callback()
 def main(
     version: Annotated[
-        Optional[bool],
+        bool | None,
         typer.Option("--version", callback=_version_callback, is_eager=True, help="Show version"),
     ] = None,
 ) -> None:
@@ -409,7 +401,7 @@ def _get_cards_from_1password() -> list[dict]:
         List of card metadata dicts
     """
     import json
-    
+
     try:
         # Search for items with Airgap/CARD tags
         result = subprocess.run(
@@ -418,13 +410,13 @@ def _get_cards_from_1password() -> list[dict]:
             text=True,
             timeout=30,
         )
-        
+
         if result.returncode != 0:
             return []
-        
+
         items = json.loads(result.stdout) if result.stdout else []
         cards = []
-        
+
         for item in items:
             # Get full item details
             detail_result = subprocess.run(
@@ -433,22 +425,22 @@ def _get_cards_from_1password() -> list[dict]:
                 text=True,
                 timeout=30,
             )
-            
+
             if detail_result.returncode != 0:
                 continue
-            
+
             detail = json.loads(detail_result.stdout)
-            
+
             # Extract custom fields
             fields = {f.get("label", ""): f.get("value", "") for f in detail.get("fields", [])}
-            
+
             # Parse tags to find domain
             domain = "UNKNOWN"
             for tag in detail.get("tags", []):
                 if tag.startswith("Bastion/Airgap/CARD/"):
                     domain = tag.split("/")[-1]
                     break
-            
+
             cards.append({
                 "id": item["id"],
                 "title": detail.get("title", "Unknown"),
@@ -460,9 +452,9 @@ def _get_cards_from_1password() -> list[dict]:
                 "check_digit": fields.get("Check Digit", ""),
                 "label": fields.get("Bastion Label", ""),
             })
-        
+
         return cards
-        
+
     except (subprocess.TimeoutExpired, json.JSONDecodeError, FileNotFoundError):
         return []
 
@@ -474,10 +466,10 @@ def _load_cards_cache() -> list[dict]:
         List of card metadata dicts, or empty list if cache doesn't exist
     """
     import json
-    
+
     if not CARDS_CACHE_PATH.exists():
         return []
-    
+
     try:
         return json.loads(CARDS_CACHE_PATH.read_text())
     except (json.JSONDecodeError, OSError):
@@ -491,7 +483,7 @@ def _save_cards_cache(cards: list[dict]) -> None:
         cards: List of card metadata dicts
     """
     import json
-    
+
     CARDS_CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
     CARDS_CACHE_PATH.write_text(json.dumps(cards, indent=2))
 
@@ -517,17 +509,17 @@ def cards_list(
     else:
         console.print("[cyan]Fetching cards from 1Password...[/cyan]")
         cards = _get_cards_from_1password()
-        
+
         if sync or not _load_cards_cache():
             _save_cards_cache(cards)
             console.print(f"[dim]Cache updated: {CARDS_CACHE_PATH}[/dim]")
-    
+
     if not cards:
         console.print("[yellow]No airgap cards found in 1Password[/yellow]")
         console.print("\n[dim]To register a card:[/dim]")
         console.print("  airgap cards provision --domain SECRETS --site home --role master")
         return
-    
+
     # Build table
     table = Table(title="Airgap Card Inventory", show_header=True)
     table.add_column("Domain", style="cyan")
@@ -535,14 +527,14 @@ def cards_list(
     table.add_column("Created", style="dim")
     table.add_column("Last Verified", style="dim")
     table.add_column("Check", style="dim")
-    
+
     # Sort by domain priority
     domain_order = {d: i for i, d in enumerate(CARD_DOMAINS)}
     cards.sort(key=lambda c: (domain_order.get(c["domain"], 99), c["site"], c["role"]))
-    
+
     for card in cards:
         site_role = f"{card['site']}.{card['role']}" if card['site'] and card['role'] else card['title']
-        
+
         # Color domain based on security level
         domain = card['domain']
         if domain == "SECRETS":
@@ -553,7 +545,7 @@ def cards_list(
             domain_styled = f"[green]{domain}[/green]"
         else:
             domain_styled = domain
-        
+
         table.add_row(
             domain_styled,
             site_role,
@@ -561,7 +553,7 @@ def cards_list(
             card['last_verified'][:10] if card['last_verified'] else "[dim]never[/dim]",
             card['check_digit'] or "",
         )
-    
+
     console.print(table)
     console.print(f"\n[dim]Total: {len(cards)} card(s)[/dim]")
 
@@ -588,7 +580,7 @@ def cards_provision(
         PARITY - PAR2 recovery data
     """
     from datetime import date
-    
+
     # Interactive prompts if not provided
     if not domain:
         console.print("[cyan]Card domains:[/cyan]")
@@ -600,27 +592,27 @@ def cards_provision(
         else:
             console.print("[red]Invalid choice[/red]")
             raise typer.Exit(1)
-    
+
     domain = domain.upper()
     if domain not in CARD_DOMAINS:
         console.print(f"[red]Invalid domain: {domain}[/red]")
         console.print(f"Valid domains: {', '.join(CARD_DOMAINS)}")
         raise typer.Exit(1)
-    
+
     if not site:
         site = typer.prompt("Site identifier (e.g., home, bank-a)")
-    
+
     if not role:
         role = typer.prompt("Role (e.g., live, master, backup-1)")
-    
+
     # Sanitize inputs
     site = re.sub(r'[^a-z0-9-]', '', site.lower())
     role = re.sub(r'[^a-z0-9-]', '', role.lower())
-    
+
     # Generate label with check digit
     today = date.today().isoformat()
     label_base = f"Bastion/Airgap/CARD/{domain}:{site}.{role}:{today}#VERSION=1"
-    
+
     # Calculate Luhn mod-36 check digit
     try:
         from bastion.label_spec import calculate_luhn_check
@@ -628,20 +620,20 @@ def cards_provision(
     except ImportError:
         # Fallback - simple checksum
         check = chr(65 + (sum(ord(c) for c in label_base) % 26))
-    
+
     full_label = f"{label_base}|{check}"
     title = f"Airgap Card: {domain} - {site}.{role}"
-    
-    console.print(f"\n[cyan]Creating card registration...[/cyan]")
+
+    console.print("\n[cyan]Creating card registration...[/cyan]")
     console.print(f"  Title: {title}")
     console.print(f"  Domain: {domain}")
     console.print(f"  Site: {site}")
     console.print(f"  Role: {role}")
     console.print(f"  Label: {full_label}")
-    
+
     if not typer.confirm("\nCreate this card in 1Password?"):
         raise typer.Abort()
-    
+
     # Create 1Password Secure Note
     try:
         # Build field assignments
@@ -657,7 +649,7 @@ def cards_provision(
                 f"Site[text]={site}",
                 f"Role[text]={role}",
                 f"Created[text]={today}",
-                f"Last Verified[text]=",
+                "Last Verified[text]=",
                 f"Check Digit[text]={check}",
                 f"Bastion Label[text]={full_label}",
             ],
@@ -665,17 +657,17 @@ def cards_provision(
             text=True,
             timeout=30,
         )
-        
+
         if result.returncode != 0:
             console.print(f"[red]Error creating item: {result.stderr}[/red]")
             raise typer.Exit(1)
-        
-        console.print(f"\n[green]✓ Card registered in 1Password[/green]")
-        console.print(f"\n[bold]Physical labeling instructions:[/bold]")
+
+        console.print("\n[green]✓ Card registered in 1Password[/green]")
+        console.print("\n[bold]Physical labeling instructions:[/bold]")
         console.print(f"  1. Write on card: [cyan]{domain}:{site}.{role}[/cyan]")
         console.print(f"  2. Add check digit: [cyan]{check}[/cyan]")
-        console.print(f"  3. Use color-coded case per domain")
-        
+        console.print("  3. Use color-coded case per domain")
+
     except subprocess.TimeoutExpired:
         console.print("[red]Error: 1Password CLI timed out[/red]")
         raise typer.Exit(1)
@@ -686,9 +678,9 @@ def cards_provision(
 
 @cards_app.command("verify")
 def cards_verify(
-    domain: Annotated[Optional[str], typer.Option("--domain", "-d", help="Card domain to verify")] = None,
-    site: Annotated[Optional[str], typer.Option("--site", "-s", help="Site identifier")] = None,
-    role: Annotated[Optional[str], typer.Option("--role", "-r", help="Role identifier")] = None,
+    domain: Annotated[str | None, typer.Option("--domain", "-d", help="Card domain to verify")] = None,
+    site: Annotated[str | None, typer.Option("--site", "-s", help="Site identifier")] = None,
+    role: Annotated[str | None, typer.Option("--role", "-r", help="Role identifier")] = None,
 ) -> None:
     """Verify card integrity and update Last Verified timestamp.
     
@@ -697,15 +689,15 @@ def cards_verify(
     (filesystem check, checksum validation, etc.).
     """
     from datetime import date
-    
+
     # Get cards from 1Password
     console.print("[cyan]Fetching cards from 1Password...[/cyan]")
     cards = _get_cards_from_1password()
-    
+
     if not cards:
         console.print("[yellow]No airgap cards found in 1Password[/yellow]")
         raise typer.Exit(1)
-    
+
     # Filter by criteria
     matches = cards
     if domain:
@@ -714,26 +706,26 @@ def cards_verify(
         matches = [c for c in matches if c['site'].lower() == site.lower()]
     if role:
         matches = [c for c in matches if c['role'].lower() == role.lower()]
-    
+
     if not matches:
         console.print("[yellow]No matching cards found[/yellow]")
         raise typer.Exit(1)
-    
+
     if len(matches) > 1:
         console.print("[yellow]Multiple cards match. Please be more specific:[/yellow]")
         for card in matches:
             console.print(f"  • {card['domain']}:{card['site']}.{card['role']}")
         raise typer.Exit(1)
-    
+
     card = matches[0]
     today = date.today().isoformat()
-    
-    console.print(f"\n[cyan]Updating verification timestamp for:[/cyan]")
+
+    console.print("\n[cyan]Updating verification timestamp for:[/cyan]")
     console.print(f"  {card['domain']}:{card['site']}.{card['role']}")
-    
+
     if not typer.confirm(f"\nMark as verified on {today}?"):
         raise typer.Abort()
-    
+
     # Update 1Password item
     try:
         result = subprocess.run(
@@ -745,13 +737,13 @@ def cards_verify(
             text=True,
             timeout=30,
         )
-        
+
         if result.returncode != 0:
             console.print(f"[red]Error updating item: {result.stderr}[/red]")
             raise typer.Exit(1)
-        
+
         console.print(f"\n[green]✓ Card marked as verified: {today}[/green]")
-        
+
     except subprocess.TimeoutExpired:
         console.print("[red]Error: 1Password CLI timed out[/red]")
         raise typer.Exit(1)
@@ -765,7 +757,7 @@ def cards_verify(
 def entropy_collect(
     source: Annotated[str, typer.Argument(help="Entropy source: yubikey, dice, infnoise, system")] = "system",
     bits: Annotated[int, typer.Option("--bits", "-b", help="Number of bits to collect")] = 256,
-    output: Annotated[Optional[Path], typer.Option("--output", "-o", help="Output file (default: stdout)")] = None,
+    output: Annotated[Path | None, typer.Option("--output", "-o", help="Output file (default: stdout)")] = None,
     analyze: Annotated[bool, typer.Option("--analyze", "-a", help="Run ENT analysis on collected entropy")] = False,
     raw: Annotated[bool, typer.Option("--raw", help="Output raw bytes instead of base64")] = False,
 ) -> None:
@@ -781,18 +773,18 @@ def entropy_collect(
     """
     import base64
     import sys
-    
+
     # Import bastion entropy modules
     try:
         # Try bastion package first
         if source == "yubikey":
-            from bastion.entropy_yubikey import collect_yubikey_entropy, check_yubikey_available, YubiKeyEntropyError
+            from bastion.entropy_yubikey import YubiKeyEntropyError, check_yubikey_available, collect_yubikey_entropy
         elif source == "dice":
             from bastion.entropy_dice import collect_dice_entropy
         elif source == "infnoise":
-            from bastion.entropy_infnoise import collect_infnoise_entropy, check_infnoise_available, InfNoiseError
+            from bastion.entropy_infnoise import InfNoiseError, check_infnoise_available, collect_infnoise_entropy
         elif source == "system":
-            from bastion.entropy_system_rng import collect_urandom_entropy, SystemRNGError
+            from bastion.entropy_system_rng import SystemRNGError, collect_urandom_entropy
         else:
             console.print(f"[red]Error: Unknown source '{source}'[/red]")
             console.print("Available sources: yubikey, dice, infnoise, system")
@@ -801,31 +793,39 @@ def entropy_collect(
         # Try password_rotation package (legacy path)
         try:
             if source == "yubikey":
-                from password_rotation.entropy_yubikey import collect_yubikey_entropy, check_yubikey_available, YubiKeyEntropyError
+                from password_rotation.entropy_yubikey import (
+                    YubiKeyEntropyError,
+                    check_yubikey_available,
+                    collect_yubikey_entropy,
+                )
             elif source == "dice":
                 from password_rotation.entropy_dice import collect_dice_entropy
             elif source == "infnoise":
-                from password_rotation.entropy_infnoise import collect_infnoise_entropy, check_infnoise_available, InfNoiseError
+                from password_rotation.entropy_infnoise import (
+                    InfNoiseError,
+                    check_infnoise_available,
+                    collect_infnoise_entropy,
+                )
             elif source == "system":
-                from password_rotation.entropy_system_rng import collect_urandom_entropy, SystemRNGError
+                from password_rotation.entropy_system_rng import SystemRNGError, collect_urandom_entropy
         except ImportError:
-            console.print(f"[red]Error: Could not import bastion entropy modules[/red]")
+            console.print("[red]Error: Could not import bastion entropy modules[/red]")
             console.print("Ensure bastion is installed: pip install -e /path/to/bastion")
             raise typer.Exit(1)
-    
+
     console.print(f"[cyan]Collecting {bits} bits from {source}...[/cyan]")
-    
+
     try:
         if source == "yubikey":
             if not check_yubikey_available():
                 console.print("[red]Error: No YubiKey detected[/red]")
                 raise typer.Exit(1)
             entropy_bytes = collect_yubikey_entropy(bits=bits)
-            
+
         elif source == "dice":
             # Dice collection is interactive
             entropy_bytes = collect_dice_entropy(bits=bits)
-            
+
         elif source == "infnoise":
             available, error = check_infnoise_available()
             if not available:
@@ -833,15 +833,15 @@ def entropy_collect(
                 raise typer.Exit(1)
             entropy_bytes, metadata = collect_infnoise_entropy(bits=bits)
             console.print(f"[dim]Device serial: {metadata.serial}[/dim]")
-            
+
         elif source == "system":
             entropy_bytes, metadata = collect_urandom_entropy(bits=bits)
             console.print(f"[dim]Source: {metadata.source_device}[/dim]")
-    
+
     except Exception as e:
         console.print(f"[red]Error collecting entropy: {e}[/red]")
         raise typer.Exit(1)
-    
+
     # Run ENT analysis if requested
     if analyze:
         try:
@@ -852,7 +852,7 @@ def entropy_collect(
             except ImportError:
                 console.print("[yellow]Warning: Could not import ENT analysis[/yellow]")
                 analyze = False
-        
+
         if analyze:
             console.print("\n[cyan]Running ENT analysis...[/cyan]")
             analysis = analyze_entropy_with_ent(entropy_bytes)
@@ -863,13 +863,13 @@ def entropy_collect(
                 console.print(f"  Quality: {analysis.quality_rating()}")
             else:
                 console.print("[yellow]  ENT not installed - install with: apt install ent[/yellow]")
-    
+
     # Output entropy
     if raw:
         output_data = entropy_bytes
     else:
         output_data = base64.b64encode(entropy_bytes)
-    
+
     if output:
         mode = "wb" if raw else "w"
         with open(output, mode) as f:
@@ -897,11 +897,11 @@ def entropy_verify(
     including entropy bits per byte, chi-square distribution, and serial correlation.
     """
     import base64
-    
+
     if not file.exists():
         console.print(f"[red]Error: File not found: {file}[/red]")
         raise typer.Exit(1)
-    
+
     # Read file
     if raw:
         entropy_bytes = file.read_bytes()
@@ -912,9 +912,9 @@ def entropy_verify(
         except Exception as e:
             console.print(f"[red]Error decoding base64: {e}[/red]")
             raise typer.Exit(1)
-    
+
     console.print(f"[cyan]Analyzing {len(entropy_bytes)} bytes of entropy...[/cyan]\n")
-    
+
     # Import and run analysis
     try:
         from bastion.entropy import analyze_entropy_with_ent
@@ -924,20 +924,20 @@ def entropy_verify(
         except ImportError:
             console.print("[red]Error: Could not import ENT analysis module[/red]")
             raise typer.Exit(1)
-    
+
     analysis = analyze_entropy_with_ent(entropy_bytes)
-    
+
     if analysis is None:
         console.print("[red]Error: ENT tool not installed[/red]")
         console.print("Install with: apt install ent (Linux) or brew install ent (macOS)")
         raise typer.Exit(1)
-    
+
     # Build results table
     table = Table(title="ENT Analysis Results", show_header=True)
     table.add_column("Metric", style="cyan")
     table.add_column("Value")
     table.add_column("Ideal", style="dim")
-    
+
     table.add_row("Entropy", f"{analysis.entropy_bits_per_byte:.6f} bits/byte", "8.0")
     table.add_row("Chi-square", f"{analysis.chi_square:.2f}", "~256")
     table.add_row("Chi-square p-value", f"{analysis.chi_square_pvalue:.6f}", "0.10-0.90")
@@ -945,9 +945,9 @@ def entropy_verify(
     table.add_row("Monte Carlo π", f"{analysis.monte_carlo_pi:.6f}", "3.14159")
     table.add_row("Monte Carlo error", f"{analysis.monte_carlo_error:.2f}%", "<1%")
     table.add_row("Serial correlation", f"{analysis.serial_correlation:.6f}", "0.0")
-    
+
     console.print(table)
-    
+
     # Quality rating
     quality = analysis.quality_rating()
     if quality == "EXCELLENT":
@@ -958,7 +958,7 @@ def entropy_verify(
         console.print(f"\n[bold yellow]Quality: {quality}[/bold yellow]")
     else:
         console.print(f"\n[bold red]Quality: {quality}[/bold red]")
-    
+
     if analysis.is_acceptable():
         console.print("[green]✓ Entropy meets minimum quality requirements[/green]")
     else:
@@ -989,11 +989,11 @@ def keygen_master(
     Supported algorithms: rsa4096 (default), rsa3072, ed25519
     """
     from ..crypto import (
+        EntropyQuality,
         collect_verified_entropy,
         inject_kernel_entropy,
-        EntropyQuality,
     )
-    
+
     console.print(Panel.fit(
         f"[bold cyan]GPG Master Key Generation[/bold cyan]\n\n"
         f"Algorithm: {algorithm}\n"
@@ -1003,10 +1003,10 @@ def keygen_master(
         "[bold red]⚠️  TIER 1 OPERATION[/bold red]",
         title="🔐 keygen master",
     ))
-    
+
     if not typer.confirm("\nProceed with master key generation?"):
         raise typer.Abort()
-    
+
     # Step 1: Collect and verify entropy
     console.print(f"\n[cyan]Step 1: Collecting entropy from {entropy_source}...[/cyan]")
     try:
@@ -1016,21 +1016,21 @@ def keygen_master(
             source=entropy_source,
             min_quality=quality_enum,
         )
-        
+
         if collection.analysis:
             console.print(f"  Entropy: {collection.analysis.entropy_bits_per_byte:.4f} bits/byte")
             console.print(f"  Quality: [bold]{collection.quality}[/bold]")
         else:
             console.print(f"  Collected {collection.bits} bits")
             console.print("  [yellow]ENT analysis unavailable[/yellow]")
-            
+
     except Exception as e:
         console.print(f"[red]Error collecting entropy: {e}[/red]")
         raise typer.Exit(1)
-    
+
     # Step 2: Inject into kernel pool
     if inject:
-        console.print(f"\n[cyan]Step 2: Injecting entropy into kernel pool...[/cyan]")
+        console.print("\n[cyan]Step 2: Injecting entropy into kernel pool...[/cyan]")
         try:
             inject_kernel_entropy(collection.data, entropy_bits=collection.bits)
             console.print("  [green]✓ Entropy injected successfully[/green]")
@@ -1046,11 +1046,11 @@ def keygen_master(
         except Exception as e:
             console.print(f"  [yellow]⚠ Kernel injection not available: {e}[/yellow]")
             console.print("  [dim]GPG will use system entropy pool[/dim]")
-    
+
     # Step 3: Generate GPG key
     console.print(f"\n[cyan]Step 3: Generating GPG master key ({algorithm})...[/cyan]")
     console.print("[yellow]This will prompt for passphrase interactively[/yellow]")
-    
+
     # Build GPG key generation parameters
     if algorithm == "rsa4096":
         key_type = "RSA"
@@ -1064,18 +1064,18 @@ def keygen_master(
     else:
         console.print(f"[red]Unsupported algorithm: {algorithm}[/red]")
         raise typer.Exit(1)
-    
+
     # Generate key using GPG batch mode for certify-only master key
     # Note: This creates a minimal master key with only certify capability
     console.print("\n[dim]GPG will prompt for user ID and passphrase...[/dim]")
-    
+
     try:
         # Interactive key generation - GPG will handle prompts
         result = subprocess.run(
             ["gpg", "--full-generate-key", "--expert"],
             timeout=300,  # 5 minute timeout for interactive input
         )
-        
+
         if result.returncode == 0:
             console.print("\n[green]✓ Master key generated successfully[/green]")
             console.print("\n[cyan]Next steps:[/cyan]")
@@ -1085,7 +1085,7 @@ def keygen_master(
         else:
             console.print("\n[red]Key generation failed or was cancelled[/red]")
             raise typer.Exit(1)
-            
+
     except subprocess.TimeoutExpired:
         console.print("\n[red]Key generation timed out[/red]")
         raise typer.Exit(1)
@@ -1149,9 +1149,9 @@ def keygen_slip39_generate(
         console.print("  20 words = 128-bit secret (Cryptosteel compatible)")
         console.print("  33 words = 256-bit secret")
         raise typer.Exit(1)
-    
+
     secret_bits = 128 if words == 20 else 256
-    
+
     console.print(Panel.fit(
         "[bold red]⚠️  TIER 1 OPERATION[/bold red]\n\n"
         f"SLIP-39 Share Generation ({threshold}-of-{shares})\n\n"
@@ -1162,14 +1162,14 @@ def keygen_slip39_generate(
         "[yellow]Shares will be displayed once. Record carefully![/yellow]",
         title="🔐 SLIP-39 Generation",
     ))
-    
+
     # ==========================================================================
     # STEP 1: Hardware check (Tier 1 enforcement)
     # ==========================================================================
     if not skip_hardware_check:
         console.print("\n[cyan]Checking for wireless hardware...[/cyan]")
         wireless = check_all_wireless()
-        
+
         if not wireless.is_airgap_safe:
             console.print("\n[bold red]⚠️  TIER 1 VIOLATION: Wireless hardware detected![/bold red]")
             for device in wireless.devices:
@@ -1177,11 +1177,11 @@ def keygen_slip39_generate(
             console.print("\n[yellow]Remove all wireless hardware before generating shares.[/yellow]")
             console.print("Use --skip-hardware-check to override (NOT RECOMMENDED).")
             raise typer.Exit(1)
-        
+
         console.print("[green]✓ No wireless hardware detected[/green]")
     else:
         console.print("\n[yellow]⚠️  Hardware check skipped (--skip-hardware-check)[/yellow]")
-    
+
     # ==========================================================================
     # STEP 2: Passphrase handling
     # ==========================================================================
@@ -1190,17 +1190,17 @@ def keygen_slip39_generate(
         console.print("\n[cyan]SLIP-39 Passphrase Setup[/cyan]")
         console.print("[yellow]WARNING: This passphrase is NOT recoverable from shares![/yellow]")
         console.print("You must remember it or store it separately.\n")
-        
+
         while True:
             passphrase = getpass.getpass("Enter passphrase: ")
             passphrase_confirm = getpass.getpass("Confirm passphrase: ")
-            
+
             if passphrase == passphrase_confirm:
                 console.print("[green]✓ Passphrase confirmed[/green]")
                 break
             else:
                 console.print("[red]Passphrases don't match. Try again.[/red]")
-    
+
     # ==========================================================================
     # STEP 3: Configuration validation
     # ==========================================================================
@@ -1214,22 +1214,22 @@ def keygen_slip39_generate(
     except ValueError as e:
         console.print(f"\n[red]Configuration error: {e}[/red]")
         raise typer.Exit(1)
-    
-    console.print(f"\n[cyan]Configuration:[/cyan]")
+
+    console.print("\n[cyan]Configuration:[/cyan]")
     console.print(f"  Shares: {config.total_shares}")
     console.print(f"  Threshold: {config.threshold}")
     console.print(f"  Secret size: {config.secret_bits} bits")
     console.print(f"  Words per share: {config.words_per_share}")
     console.print(f"  Passphrase: {'Yes' if passphrase else 'No'}")
-    
+
     if not Confirm.ask("\nProceed with share generation?"):
         raise typer.Abort()
-    
+
     # ==========================================================================
     # STEP 4: Generate shares
     # ==========================================================================
     console.print("\n[cyan]Generating master secret and shares...[/cyan]")
-    
+
     try:
         # Generate using system entropy (could integrate with infnoise later)
         share_set = generate_shares(config=config)
@@ -1238,16 +1238,16 @@ def keygen_slip39_generate(
     except Exception as e:
         console.print(f"\n[red]Share generation failed: {e}[/red]")
         raise typer.Exit(1)
-    
+
     # ==========================================================================
     # STEP 5: Display and verify each share
     # ==========================================================================
     verified_shares: list[SLIP39Share] = []
-    
+
     for share in share_set.shares:
         # Clear screen for security
         console.clear()
-        
+
         # Display share
         console.print(Panel(
             f"[bold cyan]SLIP-39 Share {share.index} of {share.total}[/bold cyan]\n"
@@ -1259,15 +1259,15 @@ def keygen_slip39_generate(
             title=f"🔐 Share {share.index}/{share.total}",
             border_style="cyan",
         ))
-        
+
         if skip_verify:
             Prompt.ask("\nPress Enter when recorded", default="")
             verified_shares.append(share)
             continue
-        
+
         # Wait for user to record
         Prompt.ask("\nPress Enter when you have recorded this share", default="")
-        
+
         # Clear and verify via re-entry
         console.clear()
         console.print(Panel(
@@ -1276,12 +1276,12 @@ def keygen_slip39_generate(
             "[dim]Enter words separated by spaces (case-insensitive).[/dim]",
             title=f"✅ Verify Share {share.index}/{share.total}",
         ))
-        
+
         # Re-entry loop
         max_attempts = 3
         for attempt in range(max_attempts):
             user_input = Prompt.ask(f"\nEnter share {share.index} ({share.word_count} words)")
-            
+
             if verify_share_reentry(share.mnemonic, user_input):
                 console.print(f"\n[green]✓ Share {share.index} verified successfully![/green]")
                 console.print(f"  Fingerprint: {share.fingerprint}")
@@ -1297,9 +1297,9 @@ def keygen_slip39_generate(
                     console.print("\nOptions:")
                     console.print("  1. Re-display share (security risk)")
                     console.print("  2. Abort generation")
-                    
+
                     choice = Prompt.ask("Choice", choices=["1", "2"], default="2")
-                    
+
                     if choice == "1":
                         # Re-display and retry
                         console.clear()
@@ -1315,16 +1315,16 @@ def keygen_slip39_generate(
                     else:
                         console.print("\n[yellow]Aborting generation. No shares saved.[/yellow]")
                         raise typer.Abort()
-        
+
         # Pause before next share
         if share.index < share.total:
             Prompt.ask(f"\nPress Enter to continue to Share {share.index + 1}", default="")
-    
+
     # ==========================================================================
     # STEP 6: Final summary
     # ==========================================================================
     console.clear()
-    
+
     if len(verified_shares) == share_set.share_count:
         console.print(Panel(
             f"[bold green]✓ All {share_set.share_count} shares generated and verified![/bold green]\n\n"
@@ -1348,7 +1348,7 @@ def keygen_slip39_generate(
             title="⚠️  Incomplete Verification",
             border_style="yellow",
         ))
-    
+
     # Skip verify option warning
     if skip_verify:
         console.print("\n[yellow]⚠️  Verification was skipped (--skip-verify)[/yellow]")
@@ -1359,13 +1359,13 @@ def _format_mnemonic_grid(mnemonic: str) -> str:
     """Format mnemonic as numbered grid for display."""
     words = mnemonic.split()
     lines = []
-    
+
     # 4 words per row
     for i in range(0, len(words), 4):
         row_words = words[i:i + 4]
         numbered = [f"{i + j + 1:2}. {w:<12}" for j, w in enumerate(row_words)]
         lines.append("".join(numbered))
-    
+
     return "\n".join(lines)
 
 
@@ -1387,32 +1387,32 @@ def keygen_slip39_recover(
         "[yellow]⚠️  Only perform recovery on an air-gapped machine![/yellow]",
         title="🔓 Recovery Mode",
     ))
-    
+
     # Collect passphrase if used
     passphrase = ""
     if use_passphrase:
         passphrase = getpass.getpass("\nEnter passphrase: ")
-    
+
     # Ask how many shares will be entered
     num_shares = IntPrompt.ask("\nHow many shares will you enter?", default=3)
     if num_shares < 2:
         console.print("[red]Need at least 2 shares for recovery.[/red]")
         raise typer.Exit(1)
-    
+
     # Collect shares
     shares_entered: list[str] = []
     console.print(f"\nEnter {num_shares} shares (or 'cancel' to abort):")
     console.print("[dim]Enter all words separated by spaces.[/dim]\n")
-    
+
     for share_num in range(1, num_shares + 1):
         while True:
             console.print(f"[cyan]Share {share_num} of {num_shares}:[/cyan]")
             user_input = Prompt.ask("Enter mnemonic (or 'cancel')")
-            
+
             if user_input.lower() == "cancel":
                 console.print("[yellow]Recovery cancelled.[/yellow]")
                 raise typer.Abort()
-            
+
             # Validate share
             is_valid, error = validate_share(user_input)
             if is_valid:
@@ -1423,14 +1423,14 @@ def keygen_slip39_recover(
             else:
                 console.print(f"[red]✗ Invalid share: {error}[/red]")
                 console.print("[yellow]Check your entry and try again.[/yellow]\n")
-    
+
     # Attempt recovery
     console.print(f"\n[cyan]Attempting recovery with {len(shares_entered)} shares...[/cyan]")
-    
+
     try:
         master_secret = recover_secret(shares_entered, passphrase)
         master_fingerprint = hashlib.sha256(master_secret).hexdigest()[:8]
-        
+
         console.print(Panel(
             "[bold green]✓ Recovery Successful![/bold green]\n\n"
             f"Master Secret Fingerprint: {master_fingerprint}\n"
@@ -1440,13 +1440,13 @@ def keygen_slip39_recover(
             title="🔓 Recovery Complete",
             border_style="green",
         ))
-        
+
         # Option to display secret (hex)
         if Confirm.ask("\nDisplay master secret? (security risk)"):
-            console.print(f"\n[bold]Master Secret (hex):[/bold]")
+            console.print("\n[bold]Master Secret (hex):[/bold]")
             console.print(f"  {master_secret.hex()}")
             console.print("\n[yellow]Clear your terminal after use![/yellow]")
-        
+
     except ValueError as e:
         console.print(f"\n[bold red]✗ Recovery failed: {e}[/bold red]")
         console.print("\nPossible causes:")
@@ -1471,28 +1471,28 @@ def keygen_slip39_verify() -> None:
         "[dim]The recovered secret will NOT be displayed.[/dim]",
         title="✅ Verification Mode",
     ))
-    
+
     # Check for passphrase
     use_passphrase = Confirm.ask("\nDid you use a passphrase during generation?")
     passphrase = ""
     if use_passphrase:
         passphrase = getpass.getpass("Enter passphrase: ")
-    
+
     # Ask how many shares will be entered
     num_shares = IntPrompt.ask("\nHow many shares will you enter?", default=3)
     if num_shares < 2:
         console.print("[red]Need at least 2 shares for verification.[/red]")
         raise typer.Exit(1)
-    
+
     # Collect shares
     shares_entered: list[str] = []
     console.print(f"\nEnter {num_shares} shares:")
     console.print("[dim]Enter all words separated by spaces.[/dim]\n")
-    
+
     for share_num in range(1, num_shares + 1):
         while True:
             user_input = Prompt.ask(f"Share {share_num} of {num_shares}")
-            
+
             is_valid, error = validate_share(user_input)
             if is_valid:
                 shares_entered.append(user_input)
@@ -1502,14 +1502,14 @@ def keygen_slip39_verify() -> None:
             else:
                 console.print(f"[red]✗ Invalid: {error}[/red]")
                 console.print("[yellow]Check your entry and try again.[/yellow]\n")
-    
+
     # Verify
     console.print(f"\n[cyan]Verifying {len(shares_entered)} shares...[/cyan]")
-    
+
     try:
         master_secret = recover_secret(shares_entered, passphrase)
         master_fingerprint = hashlib.sha256(master_secret).hexdigest()[:8]
-        
+
         console.print(Panel(
             "[bold green]✓ Verification Successful![/bold green]\n\n"
             f"Master Fingerprint: {master_fingerprint}\n\n"
@@ -1518,10 +1518,10 @@ def keygen_slip39_verify() -> None:
             title="✅ Shares Valid",
             border_style="green",
         ))
-        
+
         # Clear secret from memory
         del master_secret
-        
+
     except ValueError as e:
         console.print(f"\n[bold red]✗ Verification failed: {e}[/bold red]")
         raise typer.Exit(1)
@@ -1529,7 +1529,7 @@ def keygen_slip39_verify() -> None:
 
 @keygen_app.command("subkeys")
 def keygen_subkeys(
-    key_id: Annotated[Optional[str], typer.Option("--key", "-k", help="Master key ID")] = None,
+    key_id: Annotated[str | None, typer.Option("--key", "-k", help="Master key ID")] = None,
     sign: Annotated[bool, typer.Option("--sign/--no-sign", help="Create signing subkey")] = True,
     encrypt: Annotated[bool, typer.Option("--encrypt/--no-encrypt", help="Create encryption subkey")] = True,
     auth: Annotated[bool, typer.Option("--auth/--no-auth", help="Create authentication subkey")] = True,
@@ -1549,14 +1549,14 @@ def keygen_subkeys(
         f"Expiration: {expire}",
         title="🔐 keygen subkeys",
     ))
-    
+
     if not any([sign, encrypt, auth]):
         console.print("[red]At least one subkey type must be selected[/red]")
         raise typer.Exit(1)
-    
+
     if not typer.confirm("\nProceed with subkey generation?"):
         raise typer.Abort()
-    
+
     # Build GPG command
     cmd = ["gpg", "--expert", "--edit-key"]
     if key_id:
@@ -1571,7 +1571,7 @@ def keygen_subkeys(
         if result.returncode != 0 or not result.stdout:
             console.print("[red]No GPG secret keys found. Run 'airgap keygen master' first.[/red]")
             raise typer.Exit(1)
-        
+
         # Parse first key
         for line in result.stdout.split("\n"):
             if line.strip().startswith("sec"):
@@ -1579,14 +1579,14 @@ def keygen_subkeys(
                 if len(parts) >= 2:
                     key_id = parts[1].split()[0]
                     break
-        
+
         if not key_id:
             console.print("[red]Could not determine default key[/red]")
             raise typer.Exit(1)
-        
+
         console.print(f"[dim]Using key: {key_id}[/dim]")
         cmd.append(key_id)
-    
+
     console.print("\n[yellow]This will open GPG interactive mode.[/yellow]")
     console.print("[dim]Commands to add subkeys:[/dim]")
     if sign:
@@ -1596,7 +1596,7 @@ def keygen_subkeys(
     if auth:
         console.print("  addkey → (8) RSA capability → toggle to auth only → set expiry")
     console.print("  save\n")
-    
+
     try:
         subprocess.run(cmd, timeout=600)
     except subprocess.TimeoutExpired:
@@ -1607,7 +1607,7 @@ def keygen_subkeys(
 
 @keygen_app.command("transfer-to-yubikey")
 def keygen_transfer_yubikey(
-    key_id: Annotated[Optional[str], typer.Option("--key", "-k", help="Key ID to transfer")] = None,
+    key_id: Annotated[str | None, typer.Option("--key", "-k", help="Key ID to transfer")] = None,
 ) -> None:
     """Transfer subkeys to YubiKey.
     
@@ -1625,7 +1625,7 @@ def keygen_transfer_yubikey(
         "[bold yellow]⚠️  Ensure you have backups before proceeding![/bold yellow]",
         title="🔐 keytocard",
     ))
-    
+
     # Check YubiKey
     try:
         result = subprocess.run(
@@ -1641,10 +1641,10 @@ def keygen_transfer_yubikey(
     except FileNotFoundError:
         console.print("[red]ykman not found. Install with: pip install yubikey-manager[/red]")
         raise typer.Exit(1)
-    
+
     if not typer.confirm("\nProceed with key transfer?"):
         raise typer.Abort()
-    
+
     # Get key ID
     if not key_id:
         result = subprocess.run(
@@ -1658,16 +1658,16 @@ def keygen_transfer_yubikey(
                 if len(parts) >= 2:
                     key_id = parts[1].split()[0]
                     break
-    
+
     if not key_id:
         console.print("[red]No secret keys found[/red]")
         raise typer.Exit(1)
-    
+
     console.print(f"\n[dim]Transferring subkeys for: {key_id}[/dim]")
     console.print("\n[yellow]GPG will open in edit mode.[/yellow]")
     console.print("[dim]For each subkey, select it (key N) then run 'keytocard'[/dim]")
     console.print("[dim]Save when done.[/dim]\n")
-    
+
     try:
         subprocess.run(["gpg", "--edit-key", key_id], timeout=600)
         console.print("\n[green]Transfer complete. Verify with 'gpg -K'[/green]")
@@ -1682,8 +1682,8 @@ def keygen_transfer_yubikey(
 
 @backup_app.command("create")
 def backup_create(
-    device: Annotated[Optional[str], typer.Option("--device", "-d", help="Block device (e.g., /dev/sdb)")] = None,
-    key_id: Annotated[Optional[str], typer.Option("--key", "-k", help="GPG key ID to backup")] = None,
+    device: Annotated[str | None, typer.Option("--device", "-d", help="Block device (e.g., /dev/sdb)")] = None,
+    key_id: Annotated[str | None, typer.Option("--key", "-k", help="GPG key ID to backup")] = None,
     label: Annotated[str, typer.Option("--label", "-l", help="LUKS volume label")] = "BASTION_BACKUP",
 ) -> None:
     """Create LUKS-encrypted backup of GPG keys.
@@ -1699,10 +1699,10 @@ def backup_create(
     """
     from ..backup import (
         check_luks_available,
-        list_block_devices,
         create_backup,
+        list_block_devices,
     )
-    
+
     console.print(Panel.fit(
         "[bold cyan]LUKS-Encrypted Key Backup[/bold cyan]\n\n"
         "[bold red]⚠️  WARNING: This will ERASE the target device![/bold red]\n\n"
@@ -1713,57 +1713,57 @@ def backup_create(
         "• Revocation certificate",
         title="🔐 backup create",
     ))
-    
+
     # Check LUKS availability
     if not check_luks_available():
         console.print("[red]cryptsetup not installed. Install with: apt install cryptsetup[/red]")
         raise typer.Exit(1)
-    
+
     # List available devices if not specified
     if not device:
         console.print("\n[cyan]Available removable devices:[/cyan]")
         devices = list_block_devices()
-        
+
         if not devices:
             console.print("[yellow]No removable devices found[/yellow]")
             console.print("[dim]Insert a USB drive and try again[/dim]")
             raise typer.Exit(1)
-        
+
         for i, dev in enumerate(devices, 1):
             mounted = f" [mounted: {dev['mountpoint']}]" if dev.get('mountpoint') else ""
             console.print(f"  {i}. {dev['name']} ({dev['size']}){mounted}")
-        
+
         choice = typer.prompt("\nSelect device number", type=int)
         if 1 <= choice <= len(devices):
             device = devices[choice - 1]['name']
         else:
             console.print("[red]Invalid selection[/red]")
             raise typer.Exit(1)
-    
+
     console.print(f"\n[bold red]⚠️  ALL DATA ON {device} WILL BE ERASED![/bold red]")
     if not typer.confirm(f"Proceed with backup to {device}?"):
         raise typer.Abort()
-    
+
     # Get GNUPGHOME
     gnupghome = Path(os.environ.get("GNUPGHOME", Path.home() / ".gnupg"))
-    
+
     console.print(f"\n[cyan]Creating backup on {device}...[/cyan]")
     console.print("[yellow]You will be prompted for a LUKS passphrase[/yellow]")
     console.print("[dim]Use a strong passphrase different from your GPG passphrase[/dim]\n")
-    
+
     try:
         result = create_backup(device, gnupghome, label=label, key_id=key_id)
-        
+
         if result.success:
             console.print("\n[bold green]✓ Backup created successfully![/bold green]")
             if result.manifest:
-                console.print(f"\n[dim]Backed up keys:[/dim]")
+                console.print("\n[dim]Backed up keys:[/dim]")
                 for key in result.manifest.key_ids:
                     console.print(f"  • {key}")
-                console.print(f"\n[dim]Files:[/dim]")
+                console.print("\n[dim]Files:[/dim]")
                 for f in result.manifest.files:
                     console.print(f"  • {f['name']} ({f['size']} bytes)")
-            
+
             console.print("\n[cyan]Important:[/cyan]")
             console.print("  1. Create a second backup on another USB drive")
             console.print("  2. Store backups in geographically separate locations")
@@ -1773,7 +1773,7 @@ def backup_create(
             for error in result.errors:
                 console.print(f"  • {error}")
             raise typer.Exit(1)
-            
+
     except Exception as e:
         console.print(f"\n[red]Backup error: {e}[/red]")
         raise typer.Exit(1)
@@ -1781,7 +1781,7 @@ def backup_create(
 
 @backup_app.command("verify")
 def backup_verify(
-    device: Annotated[Optional[str], typer.Option("--device", "-d", help="Block device to verify")] = None,
+    device: Annotated[str | None, typer.Option("--device", "-d", help="Block device to verify")] = None,
 ) -> None:
     """Verify backup integrity and checksums.
     
@@ -1791,32 +1791,32 @@ def backup_verify(
         list_block_devices,
         verify_backup_device,
     )
-    
+
     # List available devices if not specified
     if not device:
         console.print("[cyan]Available removable devices:[/cyan]")
         devices = list_block_devices()
-        
+
         if not devices:
             console.print("[yellow]No removable devices found[/yellow]")
             raise typer.Exit(1)
-        
+
         for i, dev in enumerate(devices, 1):
             console.print(f"  {i}. {dev['name']} ({dev['size']})")
-        
+
         choice = typer.prompt("\nSelect device number", type=int)
         if 1 <= choice <= len(devices):
             device = devices[choice - 1]['name']
         else:
             console.print("[red]Invalid selection[/red]")
             raise typer.Exit(1)
-    
+
     console.print(f"\n[cyan]Verifying backup on {device}...[/cyan]")
     console.print("[yellow]You will be prompted for the LUKS passphrase[/yellow]\n")
-    
+
     try:
         valid, errors, manifest = verify_backup_device(device)
-        
+
         if valid:
             console.print("[bold green]✓ Backup verification PASSED[/bold green]")
             if manifest:
@@ -1828,7 +1828,7 @@ def backup_verify(
             for error in errors:
                 console.print(f"  • {error}")
             raise typer.Exit(1)
-            
+
     except Exception as e:
         console.print(f"\n[red]Verification error: {e}[/red]")
         raise typer.Exit(1)
@@ -1847,7 +1847,7 @@ def check_wireless_cmd() -> None:
     hardware should be present.
     """
     result = check_all_wireless()
-    
+
     if result.is_airgap_safe:
         console.print(Panel.fit(
             "[bold green]✓ No wireless hardware detected[/bold green]\n\n"
@@ -1867,7 +1867,7 @@ def check_wireless_cmd() -> None:
             border_style="red",
         ))
         raise typer.Exit(1)
-    
+
     # Show warnings if any
     if result.warnings:
         for warning in result.warnings:
@@ -1883,7 +1883,7 @@ def check_wired_cmd() -> None:
     should be present or active.
     """
     result = check_all_wired()
-    
+
     if result.is_airgap_safe:
         console.print(Panel.fit(
             "[bold green]✓ No wired network interfaces detected[/bold green]\n\n"
@@ -1894,10 +1894,10 @@ def check_wired_cmd() -> None:
     else:
         # Build device list
         device_lines = "\n".join(f"  • {d}" for d in result.devices)
-        
+
         # Check if any are connected
         has_connected = any("connected" in d.lower() for d in result.devices)
-        
+
         if has_connected:
             console.print(Panel.fit(
                 f"[bold red]⚠️  ACTIVE WIRED NETWORK CONNECTION[/bold red]\n\n"
@@ -1933,18 +1933,18 @@ def check_tier_cmd(
     if tier not in (1, 2, 3):
         console.print("[red]Error: Tier must be 1, 2, or 3[/red]")
         raise typer.Exit(1)
-    
+
     console.print(f"\n[cyan]Checking Tier {tier} requirements...[/cyan]\n")
-    
+
     # Check wireless
     wireless_result = check_all_wireless()
     wired_result = check_all_wired()
     entropy_sources = check_entropy_sources()
-    
+
     # Track failures
     failures = []
     warnings = []
-    
+
     # Tier 1: Strictest - no network hardware at all
     if tier == 1:
         if not wireless_result.is_airgap_safe:
@@ -1953,7 +1953,7 @@ def check_tier_cmd(
             failures.append(f"Wired interfaces detected: {len(wired_result.devices)} interface(s)")
         if not entropy_sources.get("infnoise", (False,))[0] and not entropy_sources.get("yubikey", (False,))[0]:
             failures.append("No hardware entropy source (Infinite Noise or YubiKey required)")
-    
+
     # Tier 2: No wireless, wired OK if disconnected
     elif tier == 2:
         if not wireless_result.is_airgap_safe:
@@ -1964,23 +1964,23 @@ def check_tier_cmd(
             failures.append("Active wired network connection detected")
         elif not wired_result.is_airgap_safe:
             warnings.append(f"Wired interfaces present (disconnected): {len(wired_result.devices)}")
-    
+
     # Tier 3: Basic checks only
     # (All network hardware allowed, just informational)
-    
+
     # Build results table
     table = Table(title=f"Tier {tier} Check Results", show_header=True)
     table.add_column("Check", style="cyan")
     table.add_column("Status")
     table.add_column("Details", style="dim")
-    
+
     # Wireless row
     if wireless_result.is_airgap_safe:
         table.add_row("Wireless", "[green]✓ PASS[/green]", "No wireless hardware")
     else:
         status = "[red]✗ FAIL[/red]" if tier <= 2 else "[yellow]⚠ INFO[/yellow]"
         table.add_row("Wireless", status, f"{len(wireless_result.devices)} device(s)")
-    
+
     # Wired row
     if wired_result.is_airgap_safe:
         table.add_row("Wired", "[green]✓ PASS[/green]", "No wired interfaces")
@@ -1992,7 +1992,7 @@ def check_tier_cmd(
         else:
             status = "[yellow]⚠ WARN[/yellow]" if tier <= 2 else "[green]✓ OK[/green]"
             table.add_row("Wired", status, "Interfaces present, disconnected")
-    
+
     # Entropy row
     hw_entropy = entropy_sources.get("infnoise", (False,))[0] or entropy_sources.get("yubikey", (False,))[0]
     if hw_entropy:
@@ -2005,16 +2005,16 @@ def check_tier_cmd(
     else:
         status = "[red]✗ FAIL[/red]" if tier == 1 else "[yellow]⚠ WARN[/yellow]"
         table.add_row("Hardware Entropy", status, "No hardware RNG found")
-    
+
     # System entropy row
     if entropy_sources.get("system", (False,))[0]:
         table.add_row("System Entropy", "[green]✓ PASS[/green]", "/dev/urandom available")
     else:
         table.add_row("System Entropy", "[red]✗ FAIL[/red]", "/dev/urandom not found")
-    
+
     console.print(table)
     console.print()
-    
+
     # Final verdict
     if failures:
         console.print(Panel.fit(
@@ -2048,20 +2048,20 @@ def check_entropy_source_cmd() -> None:
     - /dev/random (system, blocking)
     """
     sources = check_entropy_sources()
-    
+
     table = Table(title="Entropy Source Availability", show_header=True)
     table.add_column("Source", style="cyan")
     table.add_column("Status")
     table.add_column("Details", style="dim")
-    
+
     for source, (available, message) in sources.items():
         if available:
             table.add_row(source, "[green]✓ Available[/green]", message)
         else:
             table.add_row(source, "[red]✗ Unavailable[/red]", message)
-    
+
     console.print(table)
-    
+
     # Summary
     hw_available = sources.get("infnoise", (False,))[0] or sources.get("yubikey", (False,))[0]
     if hw_available:
@@ -2081,7 +2081,7 @@ def export_salt(
     bits: Annotated[int, typer.Option("--bits", "-b", help="Salt size in bits")] = 256,
     source: Annotated[str, typer.Option("--source", "-s", help="Entropy source")] = "infnoise",
     min_quality: Annotated[str, typer.Option("--min-quality", help="Minimum entropy quality")] = "GOOD",
-    pdf: Annotated[Optional[Path], typer.Option("--pdf", help="Output PDF file for printing")] = None,
+    pdf: Annotated[Path | None, typer.Option("--pdf", help="Output PDF file for printing")] = None,
 ) -> None:
     """Generate and export encrypted salt via QR code.
     
@@ -2091,14 +2091,14 @@ def export_salt(
     The manager machine decrypts the salt and stores it in 1Password
     for deterministic username generation.
     """
-    from ..crypto import generate_salt, gpg_encrypt, EntropyQuality
+    from ..crypto import EntropyQuality, generate_salt, gpg_encrypt
     from ..qr import (
-        split_for_qr,
-        generate_qr_terminal,
-        generate_pdf,
         estimate_qr_size,
+        generate_pdf,
+        generate_qr_terminal,
+        split_for_qr,
     )
-    
+
     console.print(Panel.fit(
         f"[bold cyan]Salt Export via Encrypted QR[/bold cyan]\n\n"
         f"Recipient: {recipient}\n"
@@ -2107,7 +2107,7 @@ def export_salt(
         f"Min Quality: {min_quality}",
         title="🔐 export salt",
     ))
-    
+
     # Step 1: Generate salt with verified entropy
     console.print(f"\n[cyan]Step 1: Generating {bits}-bit salt from {source}...[/cyan]")
     try:
@@ -2122,7 +2122,7 @@ def export_salt(
     except Exception as e:
         console.print(f"[red]Error generating salt: {e}[/red]")
         raise typer.Exit(1)
-    
+
     # Step 2: Encrypt to recipient
     console.print(f"\n[cyan]Step 2: Encrypting to {recipient}...[/cyan]")
     try:
@@ -2133,17 +2133,17 @@ def export_salt(
         console.print(f"[red]Encryption failed: {e}[/red]")
         console.print("[dim]Ensure recipient's public key is imported: airgap keys import <key.asc>[/dim]")
         raise typer.Exit(1)
-    
+
     # Step 3: Split for QR if needed
     encrypted_str = encrypted.decode()
     qr_parts = split_for_qr(encrypted_str, max_bytes=2000)
-    
-    console.print(f"\n[cyan]Step 3: QR code generation...[/cyan]")
+
+    console.print("\n[cyan]Step 3: QR code generation...[/cyan]")
     console.print(f"  Parts needed: {len(qr_parts)}")
-    
+
     qr_info = estimate_qr_size(qr_parts[0].to_qr_string() if len(qr_parts) > 1 else encrypted_str)
     console.print(f"  QR version: {qr_info.version} ({qr_info.modules}×{qr_info.modules})")
-    
+
     # Generate PDF if requested
     if pdf:
         console.print(f"\n[cyan]Generating PDF: {pdf}[/cyan]")
@@ -2152,12 +2152,12 @@ def export_salt(
             console.print(f"[green]✓ PDF saved: {pdf}[/green]")
         except Exception as e:
             console.print(f"[yellow]PDF generation failed: {e}[/yellow]")
-    
+
     # Display QR codes in terminal
     console.print("\n" + "=" * 60)
     console.print("[bold]Scan the following QR code(s) with the manager machine:[/bold]")
     console.print("=" * 60 + "\n")
-    
+
     for i, part in enumerate(qr_parts):
         if len(qr_parts) > 1:
             console.print(f"[bold cyan]QR Code {part.sequence}/{part.total}[/bold cyan]")
@@ -2165,22 +2165,22 @@ def export_salt(
         else:
             console.print("[bold cyan]QR Code (single)[/bold cyan]")
             qr_data = part.data
-        
+
         qr_output = generate_qr_terminal(qr_data)
         console.print(qr_output)
-        
+
         if i < len(qr_parts) - 1:
             typer.prompt("\nPress Enter for next QR code", default="")
-    
+
     console.print("\n[yellow]⚠️  Clear screen after scanning (Ctrl-L or 'clear')[/yellow]")
     console.print("[dim]Salt has been displayed - do not leave visible[/dim]")
 
 
 @export_app.command("pubkey")
 def export_pubkey(
-    key_id: Annotated[Optional[str], typer.Option("--key", "-k", help="Key ID to export")] = None,
+    key_id: Annotated[str | None, typer.Option("--key", "-k", help="Key ID to export")] = None,
     qr: Annotated[bool, typer.Option("--qr", help="Display as QR code")] = False,
-    output: Annotated[Optional[Path], typer.Option("--output", "-o", help="Output file")] = None,
+    output: Annotated[Path | None, typer.Option("--output", "-o", help="Output file")] = None,
 ) -> None:
     """Export GPG public key for transfer to manager.
     
@@ -2188,8 +2188,8 @@ def export_pubkey(
     QR code for camera scanning or save to file for USB transfer.
     """
     from ..crypto import gpg_list_keys
-    from ..qr import split_for_qr, generate_qr_terminal, generate_pdf
-    
+    from ..qr import generate_qr_terminal, split_for_qr
+
     # Get key ID if not specified
     if not key_id:
         keys = gpg_list_keys(secret=True)
@@ -2198,7 +2198,7 @@ def export_pubkey(
             raise typer.Exit(1)
         key_id = keys[0]['keyid']
         console.print(f"[dim]Using key: {key_id}[/dim]")
-    
+
     # Export public key
     try:
         result = subprocess.run(
@@ -2209,26 +2209,26 @@ def export_pubkey(
         if result.returncode != 0 or not result.stdout:
             console.print(f"[red]Failed to export key: {key_id}[/red]")
             raise typer.Exit(1)
-        
+
         pubkey = result.stdout.decode()
         console.print(f"[green]✓ Exported public key ({len(pubkey)} bytes)[/green]")
     except Exception as e:
         console.print(f"[red]Export error: {e}[/red]")
         raise typer.Exit(1)
-    
+
     # Output to file
     if output:
         output.write_text(pubkey)
         console.print(f"[green]✓ Saved to: {output}[/green]")
-    
+
     # Display as QR
     if qr:
         qr_parts = split_for_qr(pubkey, max_bytes=2000)
-        
+
         if len(qr_parts) > 1:
             console.print(f"\n[yellow]Public key requires {len(qr_parts)} QR codes[/yellow]")
             console.print("[dim]Consider using USB transfer for large keys[/dim]")
-        
+
         for i, part in enumerate(qr_parts):
             if len(qr_parts) > 1:
                 console.print(f"\n[bold cyan]QR Code {part.sequence}/{part.total}[/bold cyan]")
@@ -2236,13 +2236,13 @@ def export_pubkey(
             else:
                 console.print("\n[bold cyan]Public Key QR Code[/bold cyan]")
                 qr_data = part.data
-            
+
             qr_output = generate_qr_terminal(qr_data)
             console.print(qr_output)
-            
+
             if i < len(qr_parts) - 1:
                 typer.prompt("\nPress Enter for next QR code", default="")
-    
+
     # Print to stdout if no output specified
     if not output and not qr:
         console.print("\n[dim]Public key:[/dim]")
@@ -2263,18 +2263,18 @@ def keys_import(
     (salts, secrets) for secure transfer via QR code.
     """
     from ..crypto import gpg_import_key
-    
+
     if not keyfile.exists():
         console.print(f"[red]File not found: {keyfile}[/red]")
         raise typer.Exit(1)
-    
+
     console.print(f"[cyan]Importing key from {keyfile}...[/cyan]")
-    
+
     try:
         key_data = keyfile.read_bytes()
         key_id = gpg_import_key(key_data)
         console.print(f"[green]✓ Imported key: {key_id}[/green]")
-        
+
         # Show key details
         result = subprocess.run(
             ["gpg", "--list-keys", key_id],
@@ -2284,7 +2284,7 @@ def keys_import(
         )
         if result.returncode == 0:
             console.print(f"\n[dim]{result.stdout}[/dim]")
-            
+
     except Exception as e:
         console.print(f"[red]Import failed: {e}[/red]")
         raise typer.Exit(1)
@@ -2300,9 +2300,9 @@ def keys_list(
     encryption and signing operations.
     """
     from ..crypto import gpg_list_keys
-    
+
     keys = gpg_list_keys(secret=secret)
-    
+
     if not keys:
         key_type = "secret" if secret else "public"
         console.print(f"[yellow]No {key_type} keys found[/yellow]")
@@ -2311,27 +2311,27 @@ def keys_list(
         else:
             console.print("[dim]Run 'airgap keys import <file.asc>' to import a public key[/dim]")
         return
-    
+
     table = Table(title="Secret Keys" if secret else "Public Keys", show_header=True)
     table.add_column("Key ID", style="cyan")
     table.add_column("User ID")
     table.add_column("Fingerprint", style="dim")
-    
+
     for key in keys:
         table.add_row(
             key['keyid'][-8:],  # Short key ID
             key['uid'][:50] + "..." if len(key['uid']) > 50 else key['uid'],
             key['fingerprint'][-16:] if key['fingerprint'] else "",
         )
-    
+
     console.print(table)
     console.print(f"\n[dim]Total: {len(keys)} key(s)[/dim]")
 
 
 @keys_app.command("export")
 def keys_export(
-    key_id: Annotated[Optional[str], typer.Option("--key", "-k", help="Key ID to export")] = None,
-    output: Annotated[Optional[Path], typer.Option("--output", "-o", help="Output file")] = None,
+    key_id: Annotated[str | None, typer.Option("--key", "-k", help="Key ID to export")] = None,
+    output: Annotated[Path | None, typer.Option("--output", "-o", help="Output file")] = None,
     secret: Annotated[bool, typer.Option("--secret", help="Export secret key (DANGER)")] = False,
 ) -> None:
     """Export GPG key to file.
@@ -2352,11 +2352,11 @@ def keys_export(
                 if len(parts) >= 2:
                     key_id = parts[1].split()[0]
                     break
-    
+
     if not key_id:
         console.print("[red]No key found to export[/red]")
         raise typer.Exit(1)
-    
+
     if secret:
         console.print("[bold red]⚠️  WARNING: Exporting SECRET key![/bold red]")
         console.print("[yellow]This key should NEVER be transmitted over network[/yellow]")
@@ -2365,22 +2365,22 @@ def keys_export(
         cmd = ["gpg", "--armor", "--export-secret-keys", key_id]
     else:
         cmd = ["gpg", "--armor", "--export", key_id]
-    
+
     try:
         result = subprocess.run(cmd, capture_output=True, timeout=30)
-        
+
         if result.returncode != 0 or not result.stdout:
-            console.print(f"[red]Failed to export key[/red]")
+            console.print("[red]Failed to export key[/red]")
             raise typer.Exit(1)
-        
+
         key_data = result.stdout.decode()
-        
+
         if output:
             output.write_text(key_data)
             console.print(f"[green]✓ Exported to: {output}[/green]")
         else:
             console.print(key_data)
-            
+
     except Exception as e:
         console.print(f"[red]Export error: {e}[/red]")
         raise typer.Exit(1)

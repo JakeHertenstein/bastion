@@ -24,12 +24,7 @@ Usage:
         chain.append(payload)
 """
 
-from .models import (
-    ChainHead,
-    DeviceType,
-    EnclaveImportBatch,
-    SigchainLink,
-)
+from .chain import Sigchain
 from .events import (
     AuditEventType,
     ConfigChangePayload,
@@ -41,30 +36,33 @@ from .events import (
     TagOperationPayload,
     UsernameGeneratedPayload,
 )
-from .chain import Sigchain
 from .git_log import SigchainGitLog
 from .gpg import (
-    GPGSigner,
     GPGSignature,
+    GPGSigner,
     VerificationResult,
     get_signer,
-    GPGEncryptor,
-    EncryptionResult,
-    DecryptionResult,
-    get_encryptor,
+    gpg_decrypt,
+    gpg_import_public_key,
 )
-from .op_storage import SigchainStorage, SessionSummary
 from .integration import (
     emit_event,
     get_active_session,
+    record_config_change,
+    record_entropy_pool_created,
+    record_password_rotation,
+    record_tag_operation,
+    record_username_generated,
     set_active_session,
     sigchain_session,
-    record_username_generated,
-    record_entropy_pool_created,
-    record_tag_operation,
-    record_password_rotation,
-    record_config_change,
 )
+from .models import (
+    ChainHead,
+    DeviceType,
+    EnclaveImportBatch,
+    SigchainLink,
+)
+from .op_storage import SessionSummary, SigchainStorage
 
 __all__ = [
     # Models
@@ -91,10 +89,8 @@ __all__ = [
     "GPGSignature",
     "VerificationResult",
     "get_signer",
-    "GPGEncryptor",
-    "EncryptionResult",
-    "DecryptionResult",
-    "get_encryptor",
+    "gpg_decrypt",
+    "gpg_import_public_key",
     # 1Password Storage
     "SigchainStorage",
     "SessionSummary",

@@ -70,32 +70,32 @@ def collect_yubikey_entropy(
     """
     if bits < 256:
         raise ValueError("Minimum 256 bits required for cryptographic entropy")
-    
+
     if slot not in (1, 2):
         raise ValueError("Slot must be 1 or 2")
-    
+
     # Check YubiKey availability
     if not check_yubikey_available():
         raise YubiKeyEntropyError(
             "YubiKey not found. Please insert YubiKey and ensure ykman is installed.\n"
             "Install: brew install ykman (macOS) or apt install yubikey-manager (Linux)"
         )
-    
+
     # Calculate number of challenges needed
     # Each HMAC-SHA1 response is 20 bytes (160 bits)
     bytes_needed = (bits + 7) // 8  # Round up
     responses_needed = (bytes_needed + 19) // 20  # Round up
-    
+
     responses: list[bytes] = []
-    
+
     for i in range(responses_needed):
         # Generate random challenge (64 bytes for good mixing)
         challenge = secrets.token_bytes(64)
         challenge_hex = challenge.hex()
-        
+
         # Build ykman command for challenge-response calculation
         cmd = ["ykman", "otp", "calculate", str(slot), challenge_hex]
-        
+
         try:
             result = subprocess.run(
                 cmd,
@@ -104,18 +104,18 @@ def collect_yubikey_entropy(
                 check=True,
                 timeout=30,
             )
-            
+
             # Parse hex response
             response_hex = result.stdout.strip()
             response_bytes = bytes.fromhex(response_hex)
-            
+
             if len(response_bytes) != 20:
                 raise YubiKeyEntropyError(
                     f"Unexpected response length: {len(response_bytes)} bytes (expected 20)"
                 )
-            
+
             responses.append(response_bytes)
-            
+
         except subprocess.TimeoutExpired as e:
             # Check if slot needs to be programmed
             stderr_bytes = e.stderr if e.stderr else b""
@@ -139,10 +139,10 @@ def collect_yubikey_entropy(
             raise YubiKeyEntropyError(
                 f"Failed to parse YubiKey response: {e}"
             ) from e
-    
+
     # Concatenate all responses
     all_entropy = b''.join(responses)
-    
+
     # Truncate to exact byte count needed
     return all_entropy[:bytes_needed]
 
@@ -158,8 +158,8 @@ def estimate_collection_time(bits: int) -> tuple[int, float]:
     """
     bytes_needed = (bits + 7) // 8
     responses_needed = (bytes_needed + 19) // 20
-    
+
     # Each challenge-response takes ~0.5 seconds
     estimated_seconds = responses_needed * 0.5
-    
+
     return (responses_needed, estimated_seconds)

@@ -1,6 +1,6 @@
 # Bastion Cryptographic Function Matrix
 
-**Version**: 0.3.0  
+**Version**: 0.3.0 (illustrative; refer to [VERSION](../../VERSION) for canonical tool version)
 **Updated**: 2025-01-14
 
 This document provides a comprehensive matrix of all cryptographic functions used in Bastion, their purposes, and their security properties.

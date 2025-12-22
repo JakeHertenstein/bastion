@@ -138,8 +138,6 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Optional
-
 
 # =============================================================================
 # Constants
@@ -254,22 +252,22 @@ def luhn_mod36_generate(s: str) -> str:
     """
     if not s:
         return '0'
-    
+
     # Filter to alphanumeric only (ignore delimiters for checksum)
     chars = [c for c in s if c.isalnum()]
-    
+
     total = 0
     for i, char in enumerate(reversed(chars)):
         value = luhn_mod36_char_to_int(char)
-        
+
         # Double every second digit (odd indices in reversed list)
         if i % 2 == 0:
             value *= 2
             if value >= LUHN_BASE:
                 value -= LUHN_BASE
-        
+
         total += value
-    
+
     check_value = (LUHN_BASE - (total % LUHN_BASE)) % LUHN_BASE
     return luhn_mod36_int_to_char(check_value)
 
@@ -291,25 +289,25 @@ def luhn_mod36_validate(s: str) -> bool:
     """
     if not s:
         return False
-    
+
     # Filter to alphanumeric only
     chars = [c for c in s if c.isalnum()]
-    
+
     if len(chars) < 2:
         return False
-    
+
     total = 0
     for i, char in enumerate(reversed(chars)):
         value = luhn_mod36_char_to_int(char)
-        
+
         # Double every second digit (odd indices, which is the payload)
         if i % 2 == 1:
             value *= 2
             if value >= LUHN_BASE:
                 value -= LUHN_BASE
-        
+
         total += value
-    
+
     return total % LUHN_BASE == 0
 
 
@@ -362,7 +360,7 @@ def encode_params(params: dict[str, int | str]) -> str:
         'BASTION=0.3.0&VERSION=1&LENGTH=16'
     """
     parts = []
-    
+
     # Fixed order: BASTION, VERSION, TIME, MEMORY, PARALLELISM, NONCE, LENGTH, ENCODING
     if 'bastion' in params:
         validate_param_value(str(params['bastion']), 'BASTION')
@@ -388,7 +386,7 @@ def encode_params(params: dict[str, int | str]) -> str:
     if 'encoding' in params:
         validate_param_value(str(params['encoding']), 'ENCODING')
         parts.append(f"ENCODING={params['encoding']}")
-    
+
     return '&'.join(parts)
 
 
@@ -413,31 +411,31 @@ def decode_params(params_str: str) -> dict[str, int | str]:
     """
     if not params_str:
         return {}
-    
+
     result: dict[str, int | str] = {}
     last_order_index = -1
-    
+
     for part in params_str.split('&'):
         if not part:
             raise ValueError("Empty parameter segment (consecutive '&' or trailing '&')")
-        
+
         if '=' not in part:
             raise ValueError(f"Parameter missing '=' separator: {part!r}")
-        
+
         attr, value = part.split('=', 1)
         attr_upper = attr.upper()
         attr_lower = attr.lower()
-        
+
         # Validate non-empty value
         if not value:
             raise ValueError(f"Parameter '{attr_upper}' has empty value")
-        
+
         # Validate value characters
         if not PARAM_VALUE_PATTERN.match(value):
             raise ValueError(
                 f"Parameter '{attr_upper}' value contains invalid characters: {value!r}"
             )
-        
+
         # Validate canonical ordering
         if attr_upper in PARAM_ORDER:
             current_index = PARAM_ORDER.index(attr_upper)
@@ -447,7 +445,7 @@ def decode_params(params_str: str) -> dict[str, int | str]:
                     f"previous parameter. Required order: {', '.join(PARAM_ORDER)}"
                 )
             last_order_index = current_index
-        
+
         # Convert numeric values
         if attr_lower in ('time', 'memory', 'parallelism', 'length', 'encoding'):
             try:
@@ -457,7 +455,7 @@ def decode_params(params_str: str) -> dict[str, int | str]:
         else:
             # Keep bastion, version and nonce as strings
             result[attr_lower] = value
-    
+
     return result
 
 
@@ -521,17 +519,17 @@ def validate_algo(algo: str, type_: str) -> list[str]:
         List of error messages (empty if valid)
     """
     errors = []
-    
+
     # Check charset (now allows /)
     if not re.match(r'^[A-Z0-9/]+$', algo):
         invalid = set(c for c in algo if not re.match(r'[A-Z0-9/]', c))
         errors.append(f"algo: invalid characters {invalid!r}")
-    
+
     # Check against valid algorithms for type (warning only, allow extension)
     if type_ in VALID_ALGOS and algo not in VALID_ALGOS[type_]:
         # Not an error, just unusual - algorithms can be extended
         pass
-    
+
     return errors
 
 
@@ -563,23 +561,23 @@ class BastionLabel:
         >>> label.build()
         'Bastion/USER/SHA2/512:github.com:2025-11-30#VERSION=1&LENGTH=16|K'
     """
-    
+
     tool: str
     type: str
     algo: str
     ident: str
     date: str
     params: str
-    check: Optional[str] = None
-    
+    check: str | None = None
+
     # Cached decoded params
     _decoded_params: dict = field(default_factory=dict, repr=False, compare=False)
-    
+
     def __post_init__(self):
         """Decode params on initialization."""
         if self.params and not self._decoded_params:
             object.__setattr__(self, '_decoded_params', decode_params(self.params))
-    
+
     @classmethod
     def parse(cls, label: str) -> BastionLabel:
         """Parse a label string into BastionLabel.
@@ -601,45 +599,45 @@ class BastionLabel:
         """
         if not label:
             raise ValueError("Label cannot be empty")
-        
+
         # Split off check digit if present
-        check: Optional[str] = None
+        check: str | None = None
         body = label
-        
+
         if '|' in label:
             body, check_part = label.rsplit('|', 1)
             if len(check_part) == 1:
                 check = check_part.upper()
             else:
                 raise ValueError(f"Check digit must be single character, got {check_part!r}")
-        
+
         # Split off params if present
         params = ''
         if '#' in body:
             body, params = body.rsplit('#', 1)
-        
+
         # Parse HIERARCHY:IDENT:DATE
         colon_parts = body.split(':')
-        
+
         if len(colon_parts) != 3:
             raise ValueError(
                 f"Label must have format HIERARCHY:IDENT:DATE, got {len(colon_parts)} colon-separated parts: {body!r}"
             )
-        
+
         hierarchy, ident, date = colon_parts
-        
+
         # Parse TOOL/TYPE/ALGO from hierarchy
         slash_parts = hierarchy.split('/')
-        
+
         if len(slash_parts) < 3:
             raise ValueError(
                 f"Hierarchy must have at least TOOL/TYPE/ALGO, got: {hierarchy!r}"
             )
-        
+
         tool = slash_parts[0]
         type_ = slash_parts[1].upper()
         algo = '/'.join(slash_parts[2:]).upper()  # Rejoin remaining parts as algo
-        
+
         return cls(
             tool=tool,
             type=type_,
@@ -649,15 +647,15 @@ class BastionLabel:
             params=params,
             check=check,
         )
-    
+
     @classmethod
     def build_new(
         cls,
         type: str,
         ident: str,
         date: str,
-        algo: Optional[str] = None,
-        params: Optional[str] = None,
+        algo: str | None = None,
+        params: str | None = None,
         tool: str = DEFAULT_TOOL,
         with_check: bool = True,
     ) -> BastionLabel:
@@ -683,13 +681,13 @@ class BastionLabel:
             'VERSION=1&LENGTH=16'
         """
         type_upper = type.upper()
-        
+
         if algo is None:
             algo = DEFAULT_ALGO.get(type_upper, 'SHA2/512')
-        
+
         if params is None:
             params = DEFAULT_PARAMS.get(type_upper, 'VERSION=1')
-        
+
         label = cls(
             tool=tool,
             type=type_upper,
@@ -699,12 +697,12 @@ class BastionLabel:
             params=params,
             check=None,
         )
-        
+
         if with_check:
             label = label.with_check()
-        
+
         return label
-    
+
     def hierarchy(self) -> str:
         """Get hierarchy portion (1Password tag).
         
@@ -712,7 +710,7 @@ class BastionLabel:
             Hierarchy string: TOOL/TYPE/ALGO
         """
         return f"{self.tool}/{self.type}/{self.algo}"
-    
+
     def tag(self) -> str:
         """Get 1Password tag (alias for hierarchy).
         
@@ -720,7 +718,7 @@ class BastionLabel:
             1Password-compatible tag string
         """
         return self.hierarchy()
-    
+
     def body(self) -> str:
         """Get label body (without check digit).
         
@@ -728,7 +726,7 @@ class BastionLabel:
             Label string without "|CHECK" suffix
         """
         return f"{self.hierarchy()}:{self.ident}:{self.date}#{self.params}"
-    
+
     def build(self, with_check: bool = True) -> str:
         """Build complete label string.
         
@@ -745,13 +743,13 @@ class BastionLabel:
             'Bastion/USER/SHA2/512:github.com:2025-11-30#VERSION=1&LENGTH=16'
         """
         body = self.body()
-        
+
         if with_check:
             check = self.check or luhn_mod36_generate(body)
             return f"{body}|{check}"
-        
+
         return body
-    
+
     def with_check(self) -> BastionLabel:
         """Return copy with computed check digit.
         
@@ -768,7 +766,7 @@ class BastionLabel:
             params=self.params,
             check=check,
         )
-    
+
     def without_check(self) -> BastionLabel:
         """Return copy without check digit.
         
@@ -784,7 +782,7 @@ class BastionLabel:
             params=self.params,
             check=None,
         )
-    
+
     def validate(self) -> list[str]:
         """Validate all fields.
         
@@ -797,36 +795,36 @@ class BastionLabel:
             []
         """
         errors = []
-        
+
         # Tool (must be PascalCase, start with letter)
         if not self.tool or not self.tool[0].isupper():
             errors.append(f"tool: must be PascalCase, got {self.tool!r}")
-        
+
         # Type
         errors.extend(validate_type(self.type))
-        
+
         # Algorithm (now allows /)
         if not re.match(r'^[A-Z0-9/]+$', self.algo):
             errors.append(f"algo: must be UPPERCASE with / separators, got {self.algo!r}")
-        
+
         # Params must start with VERSION=
         if not self.params.startswith('VERSION='):
             errors.append(f"params: must start with VERSION=n, got {self.params!r}")
-        
+
         # Ident charset (allows period for domain names)
         errors.extend(validate_ident_charset(self.ident))
-        
+
         # Date charset
         if not re.match(r'^[A-Za-z0-9-]+$', self.date):
             errors.append(f"date: invalid characters in {self.date!r}")
-        
+
         # Check digit (if present)
         if self.check is not None:
             if not luhn_mod36_validate(self.build(with_check=True)):
                 errors.append(f"check: invalid Luhn check digit '{self.check}'")
-        
+
         return errors
-    
+
     def is_valid(self) -> bool:
         """Check if label is valid.
         
@@ -834,7 +832,7 @@ class BastionLabel:
             True if no validation errors
         """
         return len(self.validate()) == 0
-    
+
     def verify_check(self) -> bool:
         """Verify the check digit is correct.
         
@@ -844,7 +842,7 @@ class BastionLabel:
         if self.check is None:
             return False
         return luhn_mod36_validate(self.build(with_check=True))
-    
+
     def get_param(self, key: str, default: int | str | None = None) -> int | str | None:
         """Get a decoded parameter value.
         
@@ -864,7 +862,7 @@ class BastionLabel:
         if not self._decoded_params:
             object.__setattr__(self, '_decoded_params', decode_params(self.params))
         return self._decoded_params.get(key, default)
-    
+
     def get_length(self, default: int = 16) -> int:
         """Get length parameter.
         
@@ -902,8 +900,8 @@ def build_label(
     type: str,
     ident: str,
     date: str,
-    algo: Optional[str] = None,
-    params: Optional[str] = None,
+    algo: str | None = None,
+    params: str | None = None,
     tool: str = DEFAULT_TOOL,
     with_check: bool = True,
 ) -> str:

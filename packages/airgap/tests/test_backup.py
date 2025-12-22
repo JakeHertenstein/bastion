@@ -1,12 +1,11 @@
 """Tests for the airgap backup module."""
 
 import json
-import pytest
-from pathlib import Path
-from datetime import datetime, timezone
-from unittest.mock import patch, MagicMock
-import tempfile
 import os
+import tempfile
+from datetime import UTC, datetime
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 from airgap.backup import (
     BackupManifest,
@@ -47,7 +46,7 @@ class TestBackupManifest:
         manifest = BackupManifest()
         manifest.add_file("master.asc", "a" * 64, 1000)
         manifest.add_file("public.asc", "b" * 64, 500)
-        
+
         assert len(manifest.files) == 2
         assert manifest.files[0]["name"] == "master.asc"
         assert manifest.files[0]["sha256"] == "a" * 64
@@ -62,10 +61,10 @@ class TestBackupManifest:
             key_ids=["KEY123"],
         )
         manifest.add_file("test.asc", "c" * 64, 100)
-        
+
         json_str = manifest.to_json()
         data = json.loads(json_str)
-        
+
         assert data["version"] == "1"
         assert data["device_label"] == "TEST"
         assert data["gnupg_version"] == "2.4.0"
@@ -76,7 +75,7 @@ class TestBackupManifest:
 
     def test_manifest_from_json(self):
         """Test parsing manifest from JSON."""
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         json_str = json.dumps({
             "version": "1",
             "created_at": now,
@@ -89,7 +88,7 @@ class TestBackupManifest:
             ],
         })
         manifest = BackupManifest.from_json(json_str)
-        
+
         assert manifest.device_label == "PARSE-TEST"
         assert manifest.gnupg_version == "2.4.1"
         assert manifest.key_ids == ["KEY456", "KEY789"]
@@ -106,10 +105,10 @@ class TestBackupManifest:
         )
         original.add_file("a.asc", "f" * 64, 111)
         original.add_file("b.asc", "0" * 64, 222)
-        
+
         json_str = original.to_json()
         parsed = BackupManifest.from_json(json_str)
-        
+
         assert parsed.device_label == original.device_label
         assert parsed.gnupg_version == original.gnupg_version
         assert parsed.key_ids == original.key_ids
@@ -199,24 +198,24 @@ class TestFileSha256:
         with tempfile.NamedTemporaryFile(delete=False) as f:
             f.write(b"hello world")
             f.flush()
-            
+
             # SHA256 of "hello world"
             expected = "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"
             actual = file_sha256(Path(f.name))
             assert actual == expected
-            
+
             os.unlink(f.name)
 
     def test_sha256_empty_file(self):
         """Test SHA256 of empty file."""
         with tempfile.NamedTemporaryFile(delete=False) as f:
             f.flush()
-            
+
             # SHA256 of empty content
             expected = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
             actual = file_sha256(Path(f.name))
             assert actual == expected
-            
+
             os.unlink(f.name)
 
     def test_sha256_binary_content(self):
@@ -224,12 +223,12 @@ class TestFileSha256:
         with tempfile.NamedTemporaryFile(delete=False) as f:
             f.write(bytes(range(256)))  # All byte values
             f.flush()
-            
+
             # This will have a consistent hash
             actual = file_sha256(Path(f.name))
             assert len(actual) == 64  # SHA256 is 64 hex chars
             assert all(c in "0123456789abcdef" for c in actual)
-            
+
             os.unlink(f.name)
 
 
@@ -240,11 +239,11 @@ class TestVerifyBackup:
         """Test verification of a valid backup."""
         with tempfile.TemporaryDirectory() as tmpdir:
             backup_dir = Path(tmpdir)
-            
+
             # Create a test file
             test_file = backup_dir / "test.asc"
             test_file.write_text("test content")
-            
+
             # Create manifest with correct checksum
             manifest = BackupManifest()
             manifest.add_file(
@@ -252,10 +251,10 @@ class TestVerifyBackup:
                 file_sha256(test_file),
                 test_file.stat().st_size,
             )
-            
+
             manifest_path = backup_dir / "manifest.json"
             manifest_path.write_text(manifest.to_json())
-            
+
             # Verify
             success, errors = verify_backup(backup_dir)
             assert success is True
@@ -265,11 +264,11 @@ class TestVerifyBackup:
         """Test verification fails on checksum mismatch."""
         with tempfile.TemporaryDirectory() as tmpdir:
             backup_dir = Path(tmpdir)
-            
+
             # Create a test file
             test_file = backup_dir / "test.asc"
             test_file.write_text("test content")
-            
+
             # Create manifest with WRONG checksum
             manifest = BackupManifest()
             manifest.add_file(
@@ -277,10 +276,10 @@ class TestVerifyBackup:
                 "0" * 64,  # Wrong hash
                 test_file.stat().st_size,
             )
-            
+
             manifest_path = backup_dir / "manifest.json"
             manifest_path.write_text(manifest.to_json())
-            
+
             # Verify should fail
             success, errors = verify_backup(backup_dir)
             assert success is False
@@ -290,7 +289,7 @@ class TestVerifyBackup:
         """Test verification fails when file is missing."""
         with tempfile.TemporaryDirectory() as tmpdir:
             backup_dir = Path(tmpdir)
-            
+
             # Create manifest referencing non-existent file
             manifest = BackupManifest()
             manifest.add_file(
@@ -298,10 +297,10 @@ class TestVerifyBackup:
                 "a" * 64,
                 1000,
             )
-            
+
             manifest_path = backup_dir / "manifest.json"
             manifest_path.write_text(manifest.to_json())
-            
+
             # Verify should fail
             success, errors = verify_backup(backup_dir)
             assert success is False
@@ -311,7 +310,7 @@ class TestVerifyBackup:
         """Test verification fails when manifest is missing."""
         with tempfile.TemporaryDirectory() as tmpdir:
             backup_dir = Path(tmpdir)
-            
+
             # No manifest file
             success, errors = verify_backup(backup_dir)
             assert success is False
@@ -325,7 +324,7 @@ class TestManifestFileOperations:
         """Test writing and reading manifest file."""
         with tempfile.TemporaryDirectory() as tmpdir:
             manifest_path = Path(tmpdir) / "manifest.json"
-            
+
             # Create and write
             manifest = BackupManifest(
                 device_label="FILEIO",
@@ -334,7 +333,7 @@ class TestManifestFileOperations:
             )
             manifest.add_file("test.asc", "1" * 64, 500)
             manifest_path.write_text(manifest.to_json())
-            
+
             # Read and verify
             loaded = BackupManifest.from_json(manifest_path.read_text())
             assert loaded.device_label == "FILEIO"
@@ -345,7 +344,7 @@ class TestManifestFileOperations:
         """Test that manifest JSON is pretty-printed."""
         manifest = BackupManifest(device_label="PRETTY")
         json_str = manifest.to_json()
-        
+
         # Pretty-printed JSON has newlines and indentation
         assert "\n" in json_str
         assert "  " in json_str  # 2-space indent

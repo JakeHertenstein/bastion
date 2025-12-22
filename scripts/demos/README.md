@@ -2,6 +2,16 @@
 
 Asciinema terminal demos for the Bastion README.
 
+## Demo Vault Setup
+
+All demos use the **"Bastion DEMO"** vault. This is a separate vault used only for demo recordings and screenshots. Create it with:
+
+```bash
+op vault create "Bastion DEMO"
+```
+
+This vault is separate from user vaults created during normal Bastion usage.
+
 ## Quick Start
 
 ```bash

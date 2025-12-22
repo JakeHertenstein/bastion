@@ -4,6 +4,12 @@ Thank you for your interest in contributing to Bastion!
 
 ## Development Setup
 
+### Platform Requirements
+
+**Primary Development Platform:** macOS 14+ (Tahoe/Sonoma)
+
+Bastion is currently developed and tested only on macOS. No testing has been performed on Linux, Windows, or other environments. Compatibility cannot be guaranteed outside of macOS at this time.
+
 ### Prerequisites
 
 - Python 3.11+

@@ -1,7 +1,6 @@
 """Tests for bastion_core.network module."""
 
 import pytest
-
 from bastion_core.network import (
     AirgapStatus,
     can_reach_dns,

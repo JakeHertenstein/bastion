@@ -1,12 +1,10 @@
 """Tests for GPG signing module."""
 
-from datetime import datetime, timezone
-
-import pytest
+from datetime import UTC, datetime
 
 from bastion.sigchain.gpg import (
-    GPGSigner,
     GPGSignature,
+    GPGSigner,
     SignatureStatus,
     VerificationResult,
     get_signer,
@@ -26,9 +24,9 @@ class TestMockGPGSigner:
         """Test mock signing produces deterministic signature."""
         signer = GPGSigner(mock=True)
         data = b"test data to sign"
-        
+
         sig = signer.sign(data)
-        
+
         assert isinstance(sig, GPGSignature)
         assert sig.is_mock is True
         assert sig.key_id == GPGSigner.MOCK_KEY_ID
@@ -38,10 +36,10 @@ class TestMockGPGSigner:
         """Test mock verification with valid signature."""
         signer = GPGSigner(mock=True)
         data = b"test data to sign"
-        
+
         sig = signer.sign(data)
         result = signer.verify(data, sig.signature)
-        
+
         assert result.valid is True
         assert result.status == SignatureStatus.GOOD
         assert result.key_id == GPGSigner.MOCK_KEY_ID
@@ -51,10 +49,10 @@ class TestMockGPGSigner:
         signer = GPGSigner(mock=True)
         data = b"original data"
         tampered = b"tampered data"
-        
+
         sig = signer.sign(data)
         result = signer.verify(tampered, sig.signature)
-        
+
         assert result.valid is False
         assert result.status == SignatureStatus.BAD
         assert "mismatch" in result.error.lower()
@@ -64,9 +62,9 @@ class TestMockGPGSigner:
         signer = GPGSigner(mock=True)
         data = b"test data"
         invalid_sig = b"not a valid signature"
-        
+
         result = signer.verify(data, invalid_sig)
-        
+
         assert result.valid is False
         assert result.status == SignatureStatus.BAD
 
@@ -74,9 +72,9 @@ class TestMockGPGSigner:
         """Test mock signature armor format."""
         signer = GPGSigner(mock=True)
         sig = signer.sign(b"data")
-        
+
         armor = sig.to_armor()
-        
+
         assert "BEGIN MOCK GPG SIGNATURE" in armor
         assert "END MOCK GPG SIGNATURE" in armor
 
@@ -84,7 +82,7 @@ class TestMockGPGSigner:
         """Test getting default key in mock mode."""
         signer = GPGSigner(mock=True)
         key = signer.get_default_key()
-        
+
         assert key == GPGSigner.MOCK_KEY_ID
 
 
@@ -109,9 +107,9 @@ class TestVerificationResult:
             status=SignatureStatus.GOOD,
             key_id="ABC123",
             signer_name="Test User",
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
         )
-        
+
         assert result.valid is True
         assert result.status == SignatureStatus.GOOD
         assert result.error is None
@@ -126,7 +124,7 @@ class TestVerificationResult:
             timestamp=None,
             error="Signature verification failed",
         )
-        
+
         assert result.valid is False
         assert result.error is not None
 

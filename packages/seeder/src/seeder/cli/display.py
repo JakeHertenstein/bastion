@@ -5,8 +5,6 @@ Rich-based display functions for formatting output consistently.
 """
 
 import sys
-from pathlib import Path
-from typing import List, Tuple
 
 from rich.console import Console
 from rich.panel import Panel
@@ -30,25 +28,25 @@ def print_grid_table(grid: SeederGrid) -> None:
     Spreadsheet convention: letter=column (A-J), number=row (0-9)
     """
     table = Table(title="🔢 Token Matrix", show_header=True, header_style="bold cyan")
-    
+
     # Add column headers: " ", "A", "B", "C", ... "J" (letters for columns)
     table.add_column(" ", style="bold yellow", width=2)
     for col in range(10):
         col_letter = chr(ord('A') + col)
         table.add_column(col_letter, justify="center", style="white", width=5)
-    
+
     # Add rows 0-9 (numbers for rows)
     for row in range(10):
         row_data = [str(row)]
-        
+
         for col in range(10):
             col_letter = chr(ord('A') + col)
             coord = f"{col_letter}{row}"
             token = grid.get_token(coord)
             row_data.append(token)
-        
+
         table.add_row(*row_data)
-    
+
     console.print(table)
 
 
@@ -86,7 +84,7 @@ def create_info_panel() -> Panel:
         "Uses deterministic cryptographic tokens for air-gapped password generation.\n\n"
         "[bold red]⚠️  SECURITY WARNING:[/bold red]\n"
         "• Designed for [yellow]online passwords with low lockout thresholds[/yellow]\n"
-        "• [red]NOT recommended for scenarios where offline attacks are likely[/red]\n" 
+        "• [red]NOT recommended for scenarios where offline attacks are likely[/red]\n"
         "• [cyan]Always use 2FA for sensitive accounts[/cyan]\n\n"
         "[bold]Available Commands:[/bold]\n"
         "• [cyan]generate grid[/cyan] - Create token matrices\n"
@@ -106,45 +104,45 @@ def create_info_panel() -> Panel:
     )
 
 
-def create_patterns_table(patterns: List[Tuple[str, str]], grid: SeederGrid, count: int) -> Table:
+def create_patterns_table(patterns: list[tuple[str, str]], grid: SeederGrid, count: int) -> Table:
     """Create a table showing password patterns."""
     table = Table(title="🎯 Password Patterns", show_header=True, header_style="bold green")
     table.add_column("#", style="bold yellow", width=3)
     table.add_column("Pattern", style="cyan", width=20)
     table.add_column("Password", style="white", width=20)
     table.add_column("Description", style="dim", width=30)
-    
+
     for i, (pattern_coords, description) in enumerate(patterns[:count], 1):
         coords = pattern_coords.split()
         password_parts = []
-        
+
         for coord in coords:
             try:
                 token = grid.get_token(coord)
                 password_parts.append(token)
             except Exception:  # noqa: BLE001
                 password_parts.append("???")
-        
+
         password = "".join(password_parts)
-        
+
         table.add_row(
             str(i),
             pattern_coords,
             password,
             description
         )
-    
+
     return table
 
 
-def create_shares_table(shares: List[str]) -> Table:
+def create_shares_table(shares: list[str]) -> Table:
     """Create a table showing SLIP-39 shares."""
     table = Table(title="🔑 SLIP-39 Test Shares", show_header=True, header_style="bold blue")
     table.add_column("Share #", style="bold yellow")
     table.add_column("Mnemonic", style="white")
-    
+
     for i, share in enumerate(shares, 1):
         table.add_row(f"Share {i}", share)
-    
+
     return table
     return table

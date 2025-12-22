@@ -1,0 +1,6 @@
+source "https://rubygems.org"
+
+# Match GitHub Pages environment and allow local preview
+gem "github-pages", group: :jekyll_plugins
+gem "jekyll-remote-theme"
+gem "webrick", "~> 1.8"

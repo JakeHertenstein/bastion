@@ -8,6 +8,7 @@ This guide walks you through setting up Bastion from scratch. By the end, you'll
 - ✅ Hardware entropy pool generated
 - ✅ Username generator initialized
 - ✅ First status report generated
+ - ✅ Option to generate offline seed cards (Seeder) for high‑entropy passwords without a manager
 
 ---
 
@@ -257,6 +258,7 @@ ls -la ~/.bsec/cache/
 | Scan for breaches | `bsec 1p check breaches` |
 | Re-sync after 1Password changes | `bsec 1p sync vault` |
 | Generate username for new account | `bsec generate username example.com` |
+| Show dependency tree for an account | `bsec 1p analyze dependencies --account-uuid <uuid>` |
 
 ### Security Hardening
 
@@ -266,6 +268,11 @@ bsec 1p check breaches
 
 # Analyze risk across all accounts
 bsec 1p analyze risk
+bsec 1p analyze dependencies --account-uuid <uuid>
+
+# Show risk for a single account
+bsec 1p analyze risk --account "Google"
+bsec 1p analyze risk --account-uuid 123e4567-e89b-12d3-a456-426614174000
 
 # Find items without proper tags
 bsec 1p audit no-tags
@@ -279,6 +286,17 @@ bsec 1p yubikey scan
 
 # Update 1Password from connected YubiKey
 bsec 1p yubikey scan --update
+```
+
+### Offline Passwords (Seeder)
+
+Generate deterministic seed cards for high‑entropy passwords without a manager. See packages/seeder/README.md for usage and security notes.
+
+Why Seeder: outcome-focused — high‑entropy offline passwords, validated by entropy and attack‑cost analysis.
+
+```bash
+# Example (offline password token grid)
+python3 seeder generate grid --simple "my secure phrase"
 ```
 
 ---
@@ -297,7 +315,7 @@ ln -s ~/.local/venvs/bastion .venv
 uv sync
 ```
 
-See [Development Setup](../.github/copilot-instructions.md#development-environment-setup) for details.
+See [Development Environment Setup](#development-environment-setup) for details.
 
 ### "op: command not found"
 
@@ -342,6 +360,7 @@ bsec generate username github.com      # Generate for domain
 bsec 1p report status                  # Rotation status
 bsec 1p check breaches                 # Breach detection
 bsec 1p analyze risk                   # Risk analysis
+bsec 1p analyze dependencies --account-uuid <uuid>  # Dependency tree
 
 # YubiKey
 bsec 1p yubikey list                   # Show YubiKey items
@@ -354,8 +373,8 @@ bsec 1p yubikey scan                   # Compare with hardware
 
 | Topic | Guide |
 |-------|-------|
-| Entropy collection in depth | [ENTROPY-SYSTEM.md](ENTROPY-SYSTEM.md) |
-| Username generation details | [USERNAME-GENERATOR-GUIDE.md](USERNAME-GENERATOR-GUIDE.md) |
-| YubiKey sync workflows | [YUBIKEY-SYNC-GUIDE.md](YUBIKEY-SYNC-GUIDE.md) |
-| Tagging your items | [BASTION-TAGGING-GUIDE.md](BASTION-TAGGING-GUIDE.md) |
-| Label format specification | [LABEL-FORMAT-SPECIFICATION.md](LABEL-FORMAT-SPECIFICATION.md) |
+| Entropy collection in depth | [ENTROPY-SYSTEM](../features/entropy/ENTROPY-SYSTEM.md) |
+| Username generation details | [USERNAME-GENERATOR-GUIDE](../features/username/USERNAME-GENERATOR-GUIDE.md) |
+| YubiKey sync workflows | [YUBIKEY-SYNC-GUIDE](../features/yubikey/YUBIKEY-SYNC-GUIDE.md) |
+| Tagging your items | [BASTION-TAGGING-GUIDE](../security/BASTION-TAGGING-GUIDE.md) |
+| Label format specification | [LABEL-FORMAT-SPECIFICATION](../reference/LABEL-FORMAT-SPECIFICATION.md) |

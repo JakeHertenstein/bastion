@@ -1,25 +1,24 @@
 """Tests for the sigchain module."""
 
-from datetime import datetime, timezone
-from pathlib import Path
 import json
 import tempfile
+from datetime import UTC, datetime
+from pathlib import Path
 
 import pytest
-
 from bastion.sigchain import (
+    AuditEventType,
+    ChainHead,
+    ConfigChangePayload,
+    DeviceType,
+    EntropyPoolCreatedPayload,
+    PasswordRotationPayload,
     Sigchain,
     SigchainLink,
-    ChainHead,
-    DeviceType,
-    AuditEventType,
-    PasswordRotationPayload,
-    UsernameGeneratedPayload,
-    EntropyPoolCreatedPayload,
     TagOperationPayload,
-    ConfigChangePayload,
+    UsernameGeneratedPayload,
 )
-from bastion.sigchain.chain import SigchainError, ChainIntegrityError
+from bastion.sigchain.chain import ChainIntegrityError
 
 
 class TestSigchainLink:
@@ -32,8 +31,8 @@ class TestSigchainLink:
             prev_hash=None,
             event_type="PASSWORD_ROTATION",
             payload_hash="abc123",
-            source_timestamp=datetime.now(timezone.utc),
-            append_timestamp=datetime.now(timezone.utc),
+            source_timestamp=datetime.now(UTC),
+            append_timestamp=datetime.now(UTC),
             device=DeviceType.MANAGER,
         )
         assert link.seqno == 1
@@ -42,7 +41,7 @@ class TestSigchainLink:
 
     def test_compute_hash(self):
         """Test that hash computation is deterministic."""
-        ts = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+        ts = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
         link = SigchainLink(
             seqno=1,
             prev_hash=None,
@@ -59,7 +58,7 @@ class TestSigchainLink:
 
     def test_hash_changes_with_data(self):
         """Test that different data produces different hashes."""
-        ts = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+        ts = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
         link1 = SigchainLink(
             seqno=1,
             prev_hash=None,
@@ -92,12 +91,12 @@ class TestEventPayloads:
             domain="example.com",
             new_change_date="2025-01-15",
             rotation_interval_days=90,
-            tier="Tier 1",
+            risk_level="critical",
         )
         assert payload.event_type == AuditEventType.PASSWORD_ROTATION
         hash1 = payload.compute_hash()
         assert len(hash1) == 64
-        
+
     def test_username_generated_payload(self):
         """Test UsernameGeneratedPayload."""
         payload = UsernameGeneratedPayload(
@@ -132,7 +131,7 @@ class TestEventPayloads:
             account_title="Test",
             action="add",
             tags_before=[],
-            tags_after=["Bastion/Tier/1"],
+            tags_after=["Bastion/Capability/Recovery"],
         )
         assert payload.event_type == AuditEventType.TAG_OPERATION
 
@@ -184,7 +183,7 @@ class TestSigchain:
             new_change_date="2025-01-15",
         )
         link = chain.append(payload)
-        
+
         assert chain.seqno == 1
         assert link.seqno == 1
         assert link.prev_hash is None  # Genesis
@@ -193,7 +192,7 @@ class TestSigchain:
     def test_append_multiple_events(self):
         """Test appending multiple events creates proper chain."""
         chain = Sigchain(device=DeviceType.MANAGER)
-        
+
         # First event
         payload1 = PasswordRotationPayload(
             account_uuid="uuid-1",
@@ -202,7 +201,7 @@ class TestSigchain:
             new_change_date="2025-01-15",
         )
         link1 = chain.append(payload1)
-        
+
         # Second event
         payload2 = UsernameGeneratedPayload(
             domain="example.com",
@@ -212,7 +211,7 @@ class TestSigchain:
             length=16,
         )
         link2 = chain.append(payload2)
-        
+
         assert chain.seqno == 2
         assert link2.prev_hash == link1.compute_hash()
         assert link1.prev_hash is None
@@ -220,7 +219,7 @@ class TestSigchain:
     def test_verify_chain(self):
         """Test chain verification succeeds for valid chain."""
         chain = Sigchain(device=DeviceType.MANAGER)
-        
+
         for i in range(5):
             payload = PasswordRotationPayload(
                 account_uuid=f"uuid-{i}",
@@ -229,13 +228,13 @@ class TestSigchain:
                 new_change_date="2025-01-15",
             )
             chain.append(payload)
-        
+
         assert chain.verify() is True
 
     def test_verify_detects_tampering(self):
         """Test that verification fails if chain is tampered."""
         chain = Sigchain(device=DeviceType.MANAGER)
-        
+
         for i in range(3):
             payload = PasswordRotationPayload(
                 account_uuid=f"uuid-{i}",
@@ -244,25 +243,25 @@ class TestSigchain:
                 new_change_date="2025-01-15",
             )
             chain.append(payload)
-        
+
         # Tamper with middle link
         chain.links[1] = SigchainLink(
             seqno=2,
             prev_hash="tampered_hash",
             event_type="PASSWORD_ROTATION",
             payload_hash="fake",
-            source_timestamp=datetime.now(timezone.utc),
-            append_timestamp=datetime.now(timezone.utc),
+            source_timestamp=datetime.now(UTC),
+            append_timestamp=datetime.now(UTC),
             device=DeviceType.MANAGER,
         )
-        
+
         with pytest.raises(ChainIntegrityError):
             chain.verify()
 
     def test_get_merkle_root(self):
         """Test merkle root computation."""
         chain = Sigchain(device=DeviceType.MANAGER)
-        
+
         for i in range(4):
             payload = PasswordRotationPayload(
                 account_uuid=f"uuid-{i}",
@@ -271,10 +270,10 @@ class TestSigchain:
                 new_change_date="2025-01-15",
             )
             chain.append(payload)
-        
+
         root = chain.get_merkle_root()
         assert len(root) == 64
-        
+
         # Same chain should produce same root
         root2 = chain.get_merkle_root()
         assert root == root2
@@ -282,7 +281,7 @@ class TestSigchain:
     def test_get_chain_head(self):
         """Test getting chain head state."""
         chain = Sigchain(device=DeviceType.MANAGER)
-        
+
         payload = PasswordRotationPayload(
             account_uuid="uuid-1",
             account_title="Test Account",
@@ -290,7 +289,7 @@ class TestSigchain:
             new_change_date="2025-01-15",
         )
         chain.append(payload)
-        
+
         head = chain.get_chain_head()
         assert isinstance(head, ChainHead)
         assert head.seqno == 1
@@ -299,7 +298,7 @@ class TestSigchain:
     def test_export_events_jsonl(self):
         """Test exporting events as JSONL."""
         chain = Sigchain(device=DeviceType.MANAGER)
-        
+
         for i in range(3):
             payload = PasswordRotationPayload(
                 account_uuid=f"uuid-{i}",
@@ -308,10 +307,10 @@ class TestSigchain:
                 new_change_date="2025-01-15",
             )
             chain.append(payload)
-        
+
         lines = list(chain.export_events_jsonl())
         assert len(lines) == 3
-        
+
         # Each line should be valid JSON
         for line in lines:
             data = json.loads(line)
@@ -321,7 +320,7 @@ class TestSigchain:
     def test_save_and_load(self):
         """Test saving and loading chain from file."""
         chain = Sigchain(device=DeviceType.MANAGER)
-        
+
         for i in range(3):
             payload = PasswordRotationPayload(
                 account_uuid=f"uuid-{i}",
@@ -330,14 +329,14 @@ class TestSigchain:
                 new_change_date="2025-01-15",
             )
             chain.append(payload)
-        
+
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
             path = Path(f.name)
-        
+
         try:
             chain.save_to_file(path)
             loaded = Sigchain.load_from_file(path)
-            
+
             assert loaded.seqno == chain.seqno
             assert loaded.head_hash == chain.head_hash
             assert len(loaded.links) == len(chain.links)
@@ -380,9 +379,9 @@ class TestChainHead:
             device=DeviceType.MANAGER,
             last_events_summary="Test summary",
         )
-        
+
         json_str = head.model_dump_json()
         loaded = ChainHead.model_validate_json(json_str)
-        
+
         assert loaded.seqno == head.seqno
         assert loaded.head_hash == head.head_hash

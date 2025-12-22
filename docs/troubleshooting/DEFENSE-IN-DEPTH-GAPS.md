@@ -269,6 +269,6 @@ bastion init --verify-dependencies
 ## References
 
 - [Defense in Depth section in README](../README.md#defense-in-depth)
-- [SLIP-39 Implementation](./SLIP39-IMPLEMENTATION.md) (if exists)
-- [Sigchain Design](./SIGCHAIN-DESIGN.md) (if exists)
-- [Recovery Bag Diagram](./recovery-bag.mmd)
+ - [AIRGAP-CARD-PROVISIONING.md](../airgap/AIRGAP-CARD-PROVISIONING.md)
+ - [SIGCHAIN-GUIDE.md](../reference/SIGCHAIN-GUIDE.md)
+ - [Recovery Bag Diagram](../airgap/recovery-bag.mmd)

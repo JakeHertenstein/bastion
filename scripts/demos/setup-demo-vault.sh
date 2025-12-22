@@ -2,11 +2,11 @@
 # =============================================================================
 # Bastion Demo Vault Setup
 # =============================================================================
-# Creates example items in the "Bastion" vault for demo recordings.
+# Creates example items in the "Bastion DEMO" vault for demo recordings.
 #
 # PREREQUISITES:
 #   1. 1Password CLI authenticated: op signin
-#   2. Vault named "Bastion" exists: op vault create Bastion
+#   2. Vault named "Bastion DEMO" exists: op vault create "Bastion DEMO"
 #
 # USAGE:
 #   ./setup-demo-vault.sh          # Create all demo items
@@ -20,7 +20,7 @@
 
 set -e
 
-VAULT="Bastion"
+VAULT="Bastion DEMO"
 
 # Colors
 RED='\033[0;31m'

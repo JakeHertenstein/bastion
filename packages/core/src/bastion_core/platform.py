@@ -5,10 +5,13 @@ Provides cross-platform detection for macOS, Linux, and Windows,
 including version information and architecture details.
 """
 
+import hashlib
 import platform as stdlib_platform
 import subprocess
 import sys
+import uuid
 from functools import lru_cache
+from pathlib import Path
 from typing import Literal
 
 __all__ = [
@@ -21,6 +24,8 @@ __all__ = [
     "is_arm64",
     "is_x86_64",
     "python_version",
+    "get_machine_identifier",
+    "get_machine_uuid",
 ]
 
 PlatformName = Literal["macos", "linux", "windows", "unknown"]
@@ -100,6 +105,20 @@ def architecture() -> Literal["arm64", "x86_64", "unknown"]:
     return "unknown"
 
 
+def get_machine_identifier() -> dict[str, str]:
+    """
+    Get machine identity information.
+
+    Returns:
+        Dictionary with 'hostname' and 'node_name' keys.
+        Useful for machine-aware cache key tracking.
+    """
+    return {
+        "hostname": stdlib_platform.node(),
+        "node_name": stdlib_platform.node(),
+    }
+
+
 def is_arm64() -> bool:
     """Check if running on ARM64 (Apple Silicon, etc.)."""
     return architecture() == "arm64"
@@ -153,3 +172,60 @@ def homebrew_prefix() -> str | None:
     except (FileNotFoundError, subprocess.TimeoutExpired):
         pass
     return None
+
+@lru_cache(maxsize=1)
+def get_machine_uuid() -> str:
+    """
+    Get a stable, persistent machine UUID.
+
+    On first call, attempts to retrieve system hardware identifier:
+    - macOS: System serial number (stable, survives renames)
+    - Linux/Windows: MAC address hash (stable, survives renames)
+    - Fallback: Generates and caches persistent UUID in ~/.bsec/machine-uuid
+
+    Returns:
+        UUID string that uniquely identifies this machine.
+        Same across reboots and hostname changes.
+    """
+    # Try to get persistent system identifier
+    if is_macos():
+        try:
+            result = subprocess.run(
+                ["system_profiler", "SPHardwareDataType"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            for line in result.stdout.split("\n"):
+                if "Serial Number" in line:
+                    serial = line.split(":")[-1].strip()
+                    if serial:
+                        return hashlib.sha512(serial.encode()).hexdigest()[:32]
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            pass
+
+    # Fallback: use MAC address hash (same across reboots)
+    try:
+        mac = uuid.getnode()
+        if mac != 0:  # 0 means couldn't get MAC, fallback to file
+            return hashlib.sha512(str(mac).encode()).hexdigest()[:32]
+    except Exception:
+        pass
+
+    # Last resort: persistent file in ~/.bsec/
+    try:
+        uuid_file = Path.home() / ".bsec" / "machine-uuid"
+        if uuid_file.exists():
+            return uuid_file.read_text(encoding="utf-8").strip()
+        else:
+            # Generate new persistent UUID
+            uuid_file.parent.mkdir(parents=True, exist_ok=True)
+            new_uuid = uuid.uuid4().hex[:32]
+            uuid_file.write_text(new_uuid, encoding="utf-8")
+            uuid_file.chmod(0o600)
+            return new_uuid
+    except Exception:
+        pass
+
+    # Absolute fallback (should never reach)
+    return uuid.uuid4().hex[:32]

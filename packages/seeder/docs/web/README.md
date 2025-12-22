@@ -153,8 +153,8 @@ Save the page locally for air-gapped operation - no additional setup required!
 ### Quick Start
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/seed-card.git
-cd seed-card/docs/web
+git clone https://github.com/JakeHertenstein/bastion.git
+cd bastion/packages/seeder/docs/web
 
 # Serve locally (any HTTP server)
 python -m http.server 8000

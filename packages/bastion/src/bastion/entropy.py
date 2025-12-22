@@ -16,7 +16,6 @@ import re
 import subprocess
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Optional
 from pathlib import Path
 
 
@@ -30,7 +29,7 @@ class QualityThreshold(Enum):
     GOOD = "GOOD"
     FAIR = "FAIR"
     POOR = "POOR"
-    
+
     @classmethod
     def meets_threshold(cls, rating: str, minimum: "QualityThreshold") -> bool:
         """Check if a rating meets the minimum threshold.
@@ -52,7 +51,7 @@ class QualityThreshold(Enum):
 
 class EntropyAnalysis:
     """Results from ENT statistical analysis."""
-    
+
     def __init__(
         self,
         entropy_bits_per_byte: float,
@@ -81,7 +80,7 @@ class EntropyAnalysis:
         self.monte_carlo_pi = monte_carlo_pi
         self.monte_carlo_error = monte_carlo_error
         self.serial_correlation = serial_correlation
-    
+
     def is_acceptable(self) -> bool:
         """Check if entropy meets minimum quality standards.
         
@@ -93,7 +92,7 @@ class EntropyAnalysis:
             and 0.01 <= self.chi_square_pvalue <= 0.99  # Not suspiciously uniform or non-uniform
             and abs(self.serial_correlation) < 0.1  # Low correlation between bytes
         )
-    
+
     def quality_rating(self) -> str:
         """Get human-readable quality rating.
         
@@ -112,7 +111,7 @@ class EntropyAnalysis:
             return "FAIR"
         else:
             return "POOR"
-    
+
     def to_dict(self) -> dict[str, float]:
         """Convert to dictionary for storage.
         
@@ -128,7 +127,7 @@ class EntropyAnalysis:
             "monte_carlo_error": self.monte_carlo_error,
             "serial_correlation": self.serial_correlation,
         }
-    
+
     @staticmethod
     def from_dict(data: dict[str, float]) -> "EntropyAnalysis":
         """Create from dictionary.
@@ -152,16 +151,16 @@ class EntropyAnalysis:
 
 class EntropyPool:
     """Entropy pool with metadata and 1Password integration."""
-    
+
     SOURCE_ITEM_PREFIX = "Bastion Entropy Source"
     DERIVED_ITEM_PREFIX = "Bastion Entropy Derived"
     POOL_TAG = "Bastion/ENTROPY"
-    
+
     def __init__(self):
         """Initialize entropy pool manager."""
         self._cached_pools: dict[str, tuple[bytes, dict]] = {}  # uuid -> (entropy_bytes, metadata)
         self._cached_max_serial: int | None = None  # Session-level serial cache for batch ops
-    
+
     def find_highest_serial_number(self, version: str = "v1", use_cache: bool = False) -> int:
         """Find the highest serial number for entropy pools.
         
@@ -175,7 +174,7 @@ class EntropyPool:
         # Return cached value if available and requested
         if use_cache and self._cached_max_serial is not None:
             return self._cached_max_serial
-        
+
         try:
             result = subprocess.run(
                 ["op", "item", "list", "--tags", self.POOL_TAG, "--format", "json"],
@@ -184,9 +183,9 @@ class EntropyPool:
                 check=True,
                 timeout=120,  # Longer timeout for large pool counts (200+)
             )
-            
+
             items = json.loads(result.stdout)
-            
+
             # Parse serial numbers from titles (match both Source and Derived prefixes)
             # Title format: "Bastion Entropy Source #N" or "Bastion Entropy Derived #N"
             patterns = [
@@ -194,7 +193,7 @@ class EntropyPool:
                 re.compile(rf'{re.escape(self.DERIVED_ITEM_PREFIX)} #(\d+)'),
             ]
             max_serial = 0
-            
+
             for item in items:
                 title = item.get("title", "")
                 for pattern in patterns:
@@ -203,14 +202,14 @@ class EntropyPool:
                         serial = int(match.group(1))
                         max_serial = max(max_serial, serial)
                         break
-            
+
             # Cache the result for subsequent calls
             self._cached_max_serial = max_serial
             return max_serial
-            
+
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired, json.JSONDecodeError, ValueError):
             return 0
-    
+
     def set_cached_serial(self, serial: int) -> None:
         """Set the cached max serial number.
         
@@ -221,28 +220,28 @@ class EntropyPool:
             serial: The highest serial number to cache
         """
         self._cached_max_serial = serial
-    
+
     def invalidate_serial_cache(self) -> None:
         """Invalidate the cached max serial number.
         
         Call this if external changes may have modified pool serials.
         """
         self._cached_max_serial = None
-    
+
     def create_pool(
         self,
         entropy_bytes: bytes,
         source: str,
-        analysis: Optional[EntropyAnalysis] = None,
+        analysis: EntropyAnalysis | None = None,
         vault: str = "Private",
         version: str = "v1",
         expiry_days: int = 90,
         pool_type: str = "source",
-        source_type: Optional[str] = None,
-        source_uuids: Optional[list[str]] = None,
-        derivation_method: Optional[str] = None,
-        device_metadata: Optional[dict] = None,
-        batch_id: Optional[int] = None,
+        source_type: str | None = None,
+        source_uuids: list[str] | None = None,
+        derivation_method: str | None = None,
+        device_metadata: dict | None = None,
+        batch_id: int | None = None,
     ) -> tuple[str, int]:
         """Create entropy pool in 1Password.
         
@@ -270,22 +269,22 @@ class EntropyPool:
         # Find next serial number using cache if available (batch ops)
         highest_serial = self.find_highest_serial_number(version, use_cache=True)
         next_serial = highest_serial + 1
-        
+
         # Build title based on pool type (version in metadata, not title)
         if pool_type == "source":
             title = f"{self.SOURCE_ITEM_PREFIX} #{next_serial}"
         else:
             title = f"{self.DERIVED_ITEM_PREFIX} #{next_serial}"
-        
+
         # Encode entropy as base64
         entropy_b64 = base64.b64encode(entropy_bytes).decode('utf-8')
         byte_count = len(entropy_bytes)
         bit_count = byte_count * 8
-        
+
         # Calculate Unix timestamps for date fields
         created_timestamp = int(datetime.now().timestamp())
         expires_timestamp = int((datetime.now() + timedelta(days=expiry_days)).timestamp())
-        
+
         # Build field list using native 1Password sections
         # Section format: "Section Name.Field Name[type]=value"
         # Field names use Title Case for 1Password canonical form
@@ -304,17 +303,17 @@ class EntropyPool:
             f"Pool Info.Pool Type[text]={pool_type}",
             f"Pool Info.Source[text]={source}",
         ]
-        
+
         # Store entropy in a concealed field within Pool Info section
         fields.append(f"Pool Info.Entropy[concealed]={entropy_b64}")
-        
+
         if source_type:
             fields.append(f"Pool Info.Source Type[text]={source_type}")
-        
+
         # Batch ID (for batch collection runs)
         if batch_id is not None:
             fields.append(f"Pool Info.Batch ID[text]={batch_id}")
-        
+
         # Combine method (for combined/derived pools)
         if derivation_method:
             # Store human-readable combine method name
@@ -323,24 +322,24 @@ class EntropyPool:
                 "sha3_512": "SHA3-512",
             }.get(derivation_method, derivation_method.upper())
             fields.append(f"Pool Info.Combine Method[text]={combine_method_display}")
-        
+
         # Entropy Sources section (for derived pools - individual UUID fields)
         if pool_type == "derived" and source_uuids:
             for i, uuid in enumerate(source_uuids, 1):
                 fields.append(f"Entropy Sources.Source {i}[text]={uuid}")
-        
+
         # Device Metadata section
         if device_metadata:
             for key, value in device_metadata.items():
                 fields.append(f"Device Metadata.{key}[text]={value}")
-        
+
         # Lifecycle section
         fields.extend([
             f"Lifecycle.Created At[date]={created_timestamp}",
             f"Lifecycle.Expires At[date]={expires_timestamp}",
             "Lifecycle.Consumed[text]=False",
         ])
-        
+
         # Statistical Analysis section (only for samples >= 1KB)
         if analysis and byte_count >= 1024:
             fields.extend([
@@ -351,12 +350,12 @@ class EntropyPool:
                 f"Statistical Analysis.Monte Carlo Pi[text]={analysis.monte_carlo_pi:.6f}",
                 f"Statistical Analysis.Monte Carlo Error Pct[text]={analysis.monte_carlo_error:.2f}",
                 f"Statistical Analysis.Serial Correlation[text]={analysis.serial_correlation:.6f}",
-                f"Statistical Analysis.Quality Rating[text]={analysis.quality_rating()}", 
+                f"Statistical Analysis.Quality Rating[text]={analysis.quality_rating()}",
             ])
-        
+
         fields.append("--format")
         fields.append("json")
-        
+
         try:
             # Create password item with all fields in sections
             result = subprocess.run(
@@ -366,10 +365,10 @@ class EntropyPool:
                 check=True,
                 timeout=30,
             )
-            
+
             item_data = json.loads(result.stdout)
             pool_uuid = item_data.get("id", "")
-            
+
             # Cache the pool
             metadata = {
                 "serial": next_serial,
@@ -381,29 +380,29 @@ class EntropyPool:
                 "analysis": analysis.to_dict() if analysis else None,
             }
             self._cached_pools[pool_uuid] = (entropy_bytes, metadata)
-            
+
             # Update serial cache for next create_pool call
             self._cached_max_serial = next_serial
-            
+
             return (pool_uuid, next_serial)
-            
+
         except subprocess.CalledProcessError as e:
             # Import here to avoid circular import
             from bastion.op_client import OPAuthError, is_auth_error
-            
+
             # Check if this is an auth error (1Password locked)
             if is_auth_error(e.stderr or ""):
                 # Raise auth error WITHOUT exposing entropy
                 raise OPAuthError(
                     "1Password authentication required. Please unlock 1Password."
                 ) from None  # Use 'from None' to suppress chained exception
-            
+
             # For non-auth errors, still don't expose the command (contains entropy)
             raise RuntimeError(
                 f"Failed to create entropy pool: {e.stderr or 'Unknown error'}"
             ) from None
-    
-    def get_pool(self, pool_uuid: str) -> Optional[tuple[bytes, dict]]:
+
+    def get_pool(self, pool_uuid: str) -> tuple[bytes, dict] | None:
         """Retrieve entropy pool from 1Password.
         
         Args:
@@ -414,7 +413,7 @@ class EntropyPool:
         """
         if pool_uuid in self._cached_pools:
             return self._cached_pools[pool_uuid]
-        
+
         try:
             result = subprocess.run(
                 ["op", "item", "get", pool_uuid, "--format", "json"],
@@ -423,9 +422,9 @@ class EntropyPool:
                 check=True,
                 timeout=30,
             )
-            
+
             item_data = json.loads(result.stdout)
-            
+
             # Extract entropy field (base64 entropy) - check both new "Entropy" field and legacy "password" field
             entropy_b64 = None
             for field in item_data.get("fields", []):
@@ -434,19 +433,19 @@ class EntropyPool:
                 if (label == "Entropy" or field_id == "password") and field.get("value"):
                     entropy_b64 = field["value"]
                     break
-            
+
             if not entropy_b64:
                 return None
-            
+
             # Decode entropy
             entropy_bytes = base64.b64decode(entropy_b64)
-            
+
             # Extract metadata from custom fields
             metadata: dict = {}
             for field in item_data.get("fields", []):
                 label = field.get("label", "")
                 value = field.get("value")
-                
+
                 if label == "serial_number":
                     metadata["serial"] = int(value) if value else 0
                 elif label == "source":
@@ -471,15 +470,15 @@ class EntropyPool:
                     if "analysis" not in metadata:
                         metadata["analysis"] = {}
                     metadata["analysis"]["quality_rating"] = value
-            
+
             # Cache the pool
             self._cached_pools[pool_uuid] = (entropy_bytes, metadata)
-            
+
             return (entropy_bytes, metadata)
-            
+
         except (subprocess.CalledProcessError, json.JSONDecodeError, ValueError):
             return None
-    
+
     def mark_consumed(self, pool_uuid: str) -> None:
         """Mark entropy pool as consumed.
         
@@ -500,16 +499,16 @@ class EntropyPool:
                 check=True,
                 timeout=30,
             )
-            
+
             # Update cache
             if pool_uuid in self._cached_pools:
                 entropy_bytes, metadata = self._cached_pools[pool_uuid]
                 metadata["consumed"] = True
                 self._cached_pools[pool_uuid] = (entropy_bytes, metadata)
-                
+
         except subprocess.CalledProcessError as e:
             raise RuntimeError(f"Failed to mark pool as consumed: {e.stderr}") from e
-    
+
     def list_pools(self, include_consumed: bool = False) -> list[dict]:
         """List all entropy pools.
         
@@ -527,14 +526,14 @@ class EntropyPool:
                 check=True,
                 timeout=30,
             )
-            
+
             items = json.loads(result.stdout)
             pools = []
-            
+
             for item in items:
                 pool_uuid = item.get("id", "")
                 title = item.get("title", "")
-                
+
                 # Get full details
                 detail_result = subprocess.run(
                     ["op", "item", "get", pool_uuid, "--format", "json"],
@@ -543,19 +542,19 @@ class EntropyPool:
                     check=True,
                     timeout=30,
                 )
-                
+
                 detail_data = json.loads(detail_result.stdout)
-                
+
                 # Extract metadata
                 pool_info = {
                     "uuid": pool_uuid,
                     "title": title,
                 }
-                
+
                 for field in detail_data.get("fields", []):
                     label = field.get("label", "")
                     value = field.get("value")
-                    
+
                     # Support both Title Case (new) and snake_case (legacy) field names
                     if label in ("Serial Number", "serial_number"):
                         pool_info["serial"] = value
@@ -577,18 +576,18 @@ class EntropyPool:
                         pool_info["byte_count"] = int(value) if value else 0
                     elif label in ("Bits", "bit_count"):
                         pool_info["bit_count"] = int(value) if value else 0
-                
+
                 # Filter consumed if requested
                 if not include_consumed and pool_info.get("consumed", False):
                     continue
-                
+
                 pools.append(pool_info)
-            
+
             return pools
-            
+
         except (subprocess.CalledProcessError, json.JSONDecodeError):
             return []
-    
+
     def list_pools_by_source(
         self,
         source: str,
@@ -606,32 +605,32 @@ class EntropyPool:
             List of pool metadata dictionaries matching criteria, sorted by serial number
         """
         all_pools = self.list_pools(include_consumed=include_consumed)
-        
+
         filtered = []
         for pool in all_pools:
             pool_source = pool.get("source", "").lower()
             pool_bits = pool.get("bit_count", 0)
-            
+
             # Match source (partial match to handle 'yubikey' matching 'yubikey_openpgp', etc.)
             if source.lower() not in pool_source:
                 continue
-            
+
             # Check minimum bits
             if min_bits > 0 and pool_bits < min_bits:
                 continue
-            
+
             filtered.append(pool)
-        
+
         # Sort by serial number (oldest first)
         filtered.sort(key=lambda p: int(p.get("serial", 0)))
-        
+
         return filtered
-    
+
     def get_first_available_pool(
         self,
         source: str,
         min_bits: int = 0,
-    ) -> Optional[dict]:
+    ) -> dict | None:
         """Get the first unconsumed pool matching source and bit requirements.
         
         Args:
@@ -672,12 +671,12 @@ def combine_entropy_sources(*sources: bytes) -> bytes:
     """
     if not sources:
         raise ValueError("At least one entropy source required")
-    
+
     if len(sources) == 1:
         return sources[0]  # Nothing to combine
-    
+
     max_len = max(len(s) for s in sources)
-    
+
     # Extend each source to max_len using SHAKE256
     extended = []
     for source in sources:
@@ -688,13 +687,13 @@ def combine_entropy_sources(*sources: bytes) -> bytes:
             # Include original length to differentiate same-content different-length inputs
             shake = hashlib.shake_256(len(source).to_bytes(8, 'big') + source)
             extended.append(shake.digest(max_len))
-    
+
     # XOR all extended sources together
     result = bytearray(max_len)
     for ext in extended:
         for i in range(max_len):
             result[i] ^= ext[i]
-    
+
     return bytes(result)
 
 
@@ -731,17 +730,17 @@ def store_and_combine_entropy_sources(
     """
     if not source_entropies:
         raise ValueError("At least one entropy source required")
-    
+
     pool = EntropyPool()
     source_uuids = []
     all_entropy_bytes = []
-    
+
     # Step 1: Store each source separately (if requested)
     if store_sources:
         for source_name, source_type, entropy_bytes, device_metadata in source_entropies:
             # Analyze each source
             analysis = analyze_entropy_with_ent(entropy_bytes)
-            
+
             # Store source pool
             source_uuid, _ = pool.create_pool(
                 entropy_bytes=entropy_bytes,
@@ -757,18 +756,18 @@ def store_and_combine_entropy_sources(
     else:
         # Just extract entropy bytes without storing
         all_entropy_bytes = [entropy for _, _, entropy, _ in source_entropies]
-    
+
     # Step 2: Combine sources using XOR+SHAKE256
     combined_bytes = combine_entropy_sources(*all_entropy_bytes)
     derivation_method = "xor_shake256"
-    
+
     # Step 3: Analyze combined entropy
     combined_analysis = analyze_entropy_with_ent(combined_bytes)
-    
+
     # Step 4: Build source label for derived pool
     source_names = [name for name, _, _, _ in source_entropies]
     derived_source_label = "+".join(source_names)
-    
+
     # Step 5: Store derived pool with references
     derived_uuid, _ = pool.create_pool(
         entropy_bytes=combined_bytes,
@@ -779,13 +778,13 @@ def store_and_combine_entropy_sources(
         source_uuids=source_uuids if store_sources else None,
         derivation_method=derivation_method,
     )
-    
+
     return (derived_uuid, source_uuids)
 
 
 def derive_salt_from_entropy_pool(
     entropy_pool_uuid: str,
-    info: Optional[str] = None,
+    info: str | None = None,
     output_length: int = 64,
     ident: str = "username-generator",
 ) -> tuple[bytes, str, str]:
@@ -821,35 +820,35 @@ def derive_salt_from_entropy_pool(
         raise RuntimeError(
             "cryptography library required for HKDF. Install with: pip install cryptography"
         ) from None
-    
+
     pool = EntropyPool()
     result = pool.get_pool(entropy_pool_uuid)
-    
+
     if not result:
         raise RuntimeError(f"Entropy pool {entropy_pool_uuid} not found")
-    
+
     entropy_bytes, metadata = result
-    
+
     # Check minimum pool size (512 bits = 64 bytes)
     if len(entropy_bytes) < 64:
         raise RuntimeError(
             f"Entropy pool {entropy_pool_uuid} is too small ({len(entropy_bytes)} bytes). "
             f"Minimum 64 bytes (512 bits) required for salt derivation."
         )
-    
+
     # Check if pool is already consumed
     if metadata.get("consumed", False):
         raise RuntimeError(
             f"Entropy pool {entropy_pool_uuid} has already been consumed. "
             "Create a new entropy pool for additional derivations."
         )
-    
+
     # Generate Bastion Label for info if not provided
     if info is None:
         from datetime import datetime
         date_str = datetime.now().strftime("%Y-%m-%d")
         info = f"Bastion/SALT/HKDF/SHA2/512:{ident}:{date_str}#VERSION=1"
-    
+
     # HKDF-SHA512 derivation
     # Note: cryptography library doesn't support SHA3 in HKDF yet (as of 2025)
     # Using SHA-512 which is still quantum-resistant and widely supported
@@ -859,16 +858,16 @@ def derive_salt_from_entropy_pool(
         salt=None,  # Entropy pool is already high-quality, no additional salt needed
         info=info.encode('utf-8'),
     )
-    
+
     derived_salt = hkdf.derive(entropy_bytes)
-    
+
     # Mark pool as consumed
     pool.mark_consumed(entropy_pool_uuid)
-    
+
     return (derived_salt, entropy_pool_uuid, info)
 
 
-def analyze_entropy_with_ent(entropy_bytes: bytes) -> Optional[EntropyAnalysis]:
+def analyze_entropy_with_ent(entropy_bytes: bytes) -> EntropyAnalysis | None:
     """Analyze entropy using ENT tool.
     
     Args:
@@ -886,7 +885,7 @@ def analyze_entropy_with_ent(entropy_bytes: bytes) -> Optional[EntropyAnalysis]:
         with tempfile.NamedTemporaryFile(mode='wb', delete=False) as f:
             temp_path = Path(f.name)
             f.write(entropy_bytes)
-        
+
         try:
             # Run ENT
             result = subprocess.run(
@@ -896,10 +895,10 @@ def analyze_entropy_with_ent(entropy_bytes: bytes) -> Optional[EntropyAnalysis]:
                 check=True,
                 timeout=30,
             )
-            
+
             # Parse ENT output
             output = result.stdout
-            
+
             # Extract values using regex
             entropy_match = re.search(r'Entropy = ([\d.]+) bits per byte', output)
             chi_square_match = re.search(r'Chi square distribution for \d+ samples is ([\d.]+)', output)
@@ -908,11 +907,11 @@ def analyze_entropy_with_ent(entropy_bytes: bytes) -> Optional[EntropyAnalysis]:
             pi_match = re.search(r'Monte Carlo value for Pi is ([\d.]+)', output)
             pi_error_match = re.search(r'error ([\d.]+) percent', output)
             correlation_match = re.search(r'Serial correlation coefficient is ([-\d.]+)', output)
-            
-            if not all([entropy_match, chi_square_match, pvalue_match, mean_match, 
+
+            if not all([entropy_match, chi_square_match, pvalue_match, mean_match,
                        pi_match, pi_error_match, correlation_match]):
                 raise RuntimeError("Failed to parse ENT output")
-            
+
             return EntropyAnalysis(
                 entropy_bits_per_byte=float(entropy_match.group(1)),
                 chi_square=float(chi_square_match.group(1)),
@@ -922,11 +921,11 @@ def analyze_entropy_with_ent(entropy_bytes: bytes) -> Optional[EntropyAnalysis]:
                 monte_carlo_error=float(pi_error_match.group(1)),
                 serial_correlation=float(correlation_match.group(1)),
             )
-            
+
         finally:
             # Clean up temp file
             temp_path.unlink(missing_ok=True)
-            
+
     except FileNotFoundError:
         # ENT not installed
         return None
@@ -957,15 +956,15 @@ def attach_visualization_to_pool(
         RuntimeError: If 1Password CLI fails
     """
     import tempfile
-    
+
     # Write PDF bytes to temporary files
     with tempfile.TemporaryDirectory() as tmpdir:
         histogram_path = Path(tmpdir) / "histogram.pdf"
         chi_square_path = Path(tmpdir) / "chi-square.pdf"
-        
+
         histogram_path.write_bytes(histogram_pdf)
         chi_square_path.write_bytes(chi_square_pdf)
-        
+
         try:
             # Attach histogram visualization
             # Field name includes escaped .pdf extension for 1Password preview support
@@ -977,7 +976,7 @@ def attach_visualization_to_pool(
                 check=True,
                 timeout=30,
             )
-            
+
             # Attach chi-square visualization
             subprocess.run(
                 ["op", "item", "edit", pool_uuid, f"Visualization.chi-square\\.pdf[file]={chi_square_path}"],
@@ -986,9 +985,9 @@ def attach_visualization_to_pool(
                 check=True,
                 timeout=30,
             )
-            
+
             return True
-            
+
         except subprocess.CalledProcessError as e:
             raise RuntimeError(f"Failed to attach visualization: {e.stderr}") from e
 
@@ -1010,23 +1009,23 @@ def pool_has_visualization(pool_uuid: str) -> bool:
             check=True,
             timeout=30,
         )
-        
+
         item_data = json.loads(result.stdout)
-        
+
         # Check for files in Visualization section
         files = item_data.get("files", [])
         for f in files:
             section = f.get("section", {})
             if section.get("label") == "Visualization":
                 return True
-        
+
         # Also check fields for Visualization section
         for field in item_data.get("fields", []):
             section = field.get("section", {})
             if section.get("label") == "Visualization":
                 return True
-        
+
         return False
-        
+
     except (subprocess.CalledProcessError, json.JSONDecodeError):
         return False

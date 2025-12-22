@@ -9,18 +9,18 @@ Components:
 """
 
 from bastion.ots.anchor import (
-    OTSAnchor,
     AnchorStatus,
-    PendingAnchor,
     CompletedAnchor,
     MerkleTree,
+    OTSAnchor,
+    PendingAnchor,
 )
 from bastion.ots.client import (
+    DEFAULT_CALENDARS,
+    CalendarResponse,
+    CalendarServer,
     OTSCalendar,
     OTSHttpClient,
-    CalendarServer,
-    CalendarResponse,
-    DEFAULT_CALENDARS,
     OTSProof,
     check_ots_available,
 )

@@ -9,19 +9,19 @@ from .models import Database
 def export_to_csv(db: Database, output_path: Path) -> None:
     """Export database to CSV format."""
     headers = [
-        "Account", "Tier", "UUID", "Last Changed", "Next Rotation", "Days Until",
+        "Account", "Risk Level", "UUID", "Last Changed", "Next Rotation", "Days Until",
         "Pre-Baseline", "2FA Method", "2FA Risk", "YubiKeys", "Risk Notes",
         "Mitigation", "Dependency", "URLs", "Notes"
     ]
-    
+
     with open(output_path, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(headers)
-        
+
         for account in db.accounts.values():
             writer.writerow([
                 account.title,
-                account.tier,
+                account.risk_level.value,
                 account.uuid,
                 account.last_password_change,
                 account.next_rotation_date,

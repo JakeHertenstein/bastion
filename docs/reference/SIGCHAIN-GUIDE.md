@@ -61,7 +61,7 @@ The sigchain is inspired by [Keybase's sigchain design](https://book.keybase.io/
 
 ## Storage Locations
 
-### Git Repository (`~/.bsec/sigchain/`)
+### Git Repository (`~/.bastion/sigchain/`)
 ```
 sigchain/
 ├── .git/                  # GPG-signed commits
@@ -85,48 +85,48 @@ sigchain/
 ### Session Management
 ```bash
 # Start interactive session (recommended)
-bsec session start
+bastion session start
 
 # Session with custom timeout
-bsec session start --timeout 30
+bastion session start --timeout 30
 
 # Non-interactive session
-bsec session start --no-interactive
+bastion session start --no-interactive
 ```
 
 ### Sigchain Operations
 ```bash
 # View chain status
-bsec sigchain status
+bastion sigchain status
 
 # View recent events
-bsec sigchain log
-bsec sigchain log --limit 50
-bsec sigchain log --type PASSWORD_ROTATION
-bsec sigchain log --date 2025-01-15
+bastion sigchain log
+bastion sigchain log --limit 50
+bastion sigchain log --type PASSWORD_ROTATION
+bastion sigchain log --date 2025-01-15
 
 # Verify chain integrity
-bsec sigchain verify
-bsec sigchain verify --verbose
+bastion sigchain verify
+bastion sigchain verify --verbose
 
 # Export for external audit
-bsec sigchain export -o audit.json
-bsec sigchain export -o audit.jsonl --format jsonl
+bastion sigchain export -o audit.json
+bastion sigchain export -o audit.jsonl --format jsonl
 ```
 
 ### OpenTimestamps
 ```bash
 # Check OTS status
-bsec ots status
+bastion ots status
 
 # List pending anchors
-bsec ots pending
+bastion ots pending
 
 # Upgrade pending proofs (check for Bitcoin confirmation)
-bsec ots upgrade
+bastion ots upgrade
 
 # Verify specific event's timestamp
-bsec ots verify 42  # seqno 42
+bastion ots verify 42  # seqno 42
 ```
 
 ## Integration with Commands
@@ -135,13 +135,13 @@ Sigchain events are automatically recorded when you use Bastion commands:
 
 ```bash
 # This records a USERNAME_GENERATED event
-bsec generate username github.com
+bastion generate username github.com
 
 # This records an ENTROPY_POOL_CREATED event
-bsec generate entropy yubikey
+bastion generate entropy yubikey
 
 # This records TAG_OPERATION events
-bsec 1p tags apply Bastion/Tier/1 --has-tag Bastion/Type/Bank
+bastion add tag Bastion/Tier/1 --has-tag Bastion/Type/Bank
 ```
 
 ## Programmatic Usage
@@ -242,62 +242,7 @@ Events from the air-gapped Enclave are transferred via QR codes:
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### QR Protocol (BASTION Multi-QR)
-
-For data larger than 2KB, the BASTION multi-QR protocol splits data across multiple QR codes:
-
-```
-Format: BASTION:sequence/total:data
-
-Example (3-part message):
-  BASTION:1/3:<base64_chunk_1>
-  BASTION:2/3:<base64_chunk_2>
-  BASTION:3/3:<base64_chunk_3>
-```
-
-**Properties:**
-- **Max chunk size**: 2KB per QR code
-- **Error correction**: Level H (30% recovery)
-- **Reassembly**: Automatic, order-independent
-- **End detection**: `-----END PGP MESSAGE-----` marker
-
-### Import Commands
-
-The manager machine imports data from airgap via scanner:
-
-```bash
-# Import encrypted salt (decrypts with YubiKey GPG)
-bsec import salt
-# Scan QR code(s), touch YubiKey when prompted
-# Salt stored in 1Password with Bastion/SALT/username tag
-
-# Import public key for encryption
-bsec import pubkey
-# Scan QR code(s)
-# Key imported to local GPG keyring
-
-# Import from file instead of scanner
-bsec import salt --file salt.gpg
-bsec import pubkey --file pubkey.asc
-```
-
-### Airgap Export Commands
-
-The airgap machine exports encrypted data via QR display:
-
-```bash
-# Export encrypted salt (requires manager's public key)
-airgap export salt --recipient <KEY_ID> --bits 256
-# Displays QR code(s) for scanning
-
-# Export with PDF output for printing
-airgap export salt --recipient <KEY_ID> --pdf salt-qr.pdf
-
-# Export public key for manager
-airgap export pubkey --qr
-```
-
-### QR Format Details
+### QR Format
 - **Compression**: zlib level 9
 - **Encoding**: Base64
 - **Max size**: 2KB per QR (Level H error correction)
@@ -309,7 +254,7 @@ Git commits in the sigchain repository are GPG-signed:
 
 ```bash
 # Verify commits
-cd ~/.bsec/sigchain
+cd ~/.bastion/sigchain
 git log --show-signature
 
 # Configure GPG key
@@ -333,7 +278,7 @@ assert result.valid
 ### Chain Integrity
 ```bash
 # Verify hash chain
-bsec sigchain verify
+bastion sigchain verify
 
 # What it checks:
 # 1. Each link's prev_hash matches previous link's hash
@@ -344,7 +289,7 @@ bsec sigchain verify
 ### Bitcoin Attestation
 ```bash
 # Verify specific event has Bitcoin timestamp
-bsec ots verify 42
+bastion ots verify 42
 
 # This proves:
 # - Event existed at time of Bitcoin block
@@ -354,7 +299,7 @@ bsec ots verify 42
 ### Full Audit
 ```bash
 # Export full chain for external audit
-bsec sigchain export -o audit.jsonl --format jsonl
+bastion sigchain export -o audit.jsonl --format jsonl
 
 # Each line contains:
 # - Link metadata (seqno, hashes, timestamps)
@@ -374,7 +319,7 @@ bsec sigchain export -o audit.jsonl --format jsonl
 
 ## Configuration
 
-In `~/.bsec/config.toml`:
+In `~/.bastion/config.toml`:
 ```toml
 [sigchain]
 enabled = true
@@ -395,7 +340,7 @@ calendars = ["alice", "bob", "finney"]
 
 ### "No sigchain initialized"
 ```bash
-bsec session start  # Creates sigchain directory and first session
+bastion session start  # Creates sigchain directory and first session
 ```
 
 ### "GPG signing failed"

@@ -1,20 +1,18 @@
 """Tests for the OTS (OpenTimestamps) module."""
 
 import tempfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
-import pytest
-
 from bastion.ots import (
-    OTSAnchor,
+    DEFAULT_CALENDARS,
     AnchorStatus,
-    PendingAnchor,
+    CalendarServer,
     CompletedAnchor,
     MerkleTree,
+    OTSAnchor,
     OTSCalendar,
-    CalendarServer,
-    DEFAULT_CALENDARS,
+    PendingAnchor,
     check_ots_available,
 )
 
@@ -56,21 +54,21 @@ class TestMerkleTree:
         """Test that same leaves produce same root."""
         tree1 = MerkleTree()
         tree2 = MerkleTree()
-        
+
         for i in range(4):
             tree1.add_leaf(f"data{i}".encode())
             tree2.add_leaf(f"data{i}".encode())
-        
+
         assert tree1.get_root_hex() == tree2.get_root_hex()
 
     def test_different_leaves_different_root(self):
         """Test that different leaves produce different roots."""
         tree1 = MerkleTree()
         tree2 = MerkleTree()
-        
+
         tree1.add_leaf(b"data1")
         tree2.add_leaf(b"data2")
-        
+
         assert tree1.get_root_hex() != tree2.get_root_hex()
 
     def test_add_leaf_hex_string(self):
@@ -85,7 +83,7 @@ class TestMerkleTree:
         tree = MerkleTree()
         for i in range(4):
             tree.add_leaf(f"leaf{i}".encode())
-        
+
         proof = tree.get_proof(0)
         assert len(proof) > 0
 
@@ -95,10 +93,10 @@ class TestMerkleTree:
         leaves = [f"leaf{i}".encode() for i in range(4)]
         for leaf in leaves:
             tree.add_leaf(leaf)
-        
+
         root = tree.get_root()
         proof = tree.get_proof(0)
-        
+
         assert MerkleTree.verify_proof(leaves[0], proof, root)
 
 
@@ -138,7 +136,7 @@ class TestCompletedAnchor:
         anchor = CompletedAnchor(
             merkle_root="abc123def456",
             session_id="session-001",
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
             seqno_range=(1, 10),
             event_count=10,
             ots_proof="base64encodedproof",
@@ -155,20 +153,20 @@ class TestOTSAnchor:
         """Test creating an anchor from event hashes."""
         with tempfile.TemporaryDirectory() as tmpdir:
             anchor_mgr = OTSAnchor(Path(tmpdir))
-            
+
             # Use valid SHA-256 hex hashes
             event_hashes = [
                 "abc123def456abc123def456abc123def456abc123def456abc123def456abcd",
                 "def456abc123def456abc123def456abc123def456abc123def456abc123def4",
                 "123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0",
             ]
-            
+
             pending = anchor_mgr.create_anchor(
                 session_id="test-session",
                 event_hashes=event_hashes,
                 seqno_range=(1, 3),
             )
-            
+
             assert pending.event_count == 3
             assert pending.session_id == "test-session"
             assert len(pending.merkle_root) == 64
@@ -177,7 +175,7 @@ class TestOTSAnchor:
         """Test saving and loading pending anchors."""
         with tempfile.TemporaryDirectory() as tmpdir:
             anchor_mgr = OTSAnchor(Path(tmpdir))
-            
+
             pending = anchor_mgr.create_anchor(
                 session_id="test-session",
                 event_hashes=[
@@ -186,9 +184,9 @@ class TestOTSAnchor:
                 ],
                 seqno_range=(1, 2),
             )
-            
+
             anchor_mgr.save_pending(pending)
-            
+
             loaded = anchor_mgr.load_pending()
             assert len(loaded) == 1
             assert loaded[0].session_id == "test-session"
@@ -197,7 +195,7 @@ class TestOTSAnchor:
         """Test finding anchor by seqno."""
         with tempfile.TemporaryDirectory() as tmpdir:
             anchor_mgr = OTSAnchor(Path(tmpdir))
-            
+
             pending = anchor_mgr.create_anchor(
                 session_id="test-session",
                 event_hashes=[
@@ -210,12 +208,12 @@ class TestOTSAnchor:
                 seqno_range=(10, 14),
             )
             anchor_mgr.save_pending(pending)
-            
+
             # Should find anchor for seqno 12
             found = anchor_mgr.get_anchor_for_seqno(12)
             assert found is not None
             assert found.session_id == "test-session"
-            
+
             # Should not find anchor for seqno 5
             not_found = anchor_mgr.get_anchor_for_seqno(5)
             assert not_found is None
@@ -224,7 +222,7 @@ class TestOTSAnchor:
         """Test getting anchor statistics."""
         with tempfile.TemporaryDirectory() as tmpdir:
             anchor_mgr = OTSAnchor(Path(tmpdir))
-            
+
             # Create some pending anchors with valid hex hashes
             for i in range(3):
                 hashes = [
@@ -237,7 +235,7 @@ class TestOTSAnchor:
                     seqno_range=(i * 5 + 1, i * 5 + 5),
                 )
                 anchor_mgr.save_pending(pending)
-            
+
             stats = anchor_mgr.get_stats()
             assert stats["pending_count"] == 3
             assert stats["completed_count"] == 0

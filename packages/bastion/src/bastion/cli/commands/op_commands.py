@@ -12,7 +12,7 @@ Breaking change in v0.2.0: Commands moved from top-level to `1p` subcommand.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 
 import typer
 from rich.console import Console
@@ -28,15 +28,17 @@ console = Console()
 
 # Register passkey subcommand
 from .passkey import app as passkey_app
+
 op_app.add_typer(passkey_app, name="passkey", help="Passkey health detection")
 
 # Register yubikey commands
 from .yubikey_commands import register_commands as register_yubikey
+
 register_yubikey(op_app)
 
 # Type alias for common db option
 DbPathOption = Annotated[
-    Optional[Path],
+    Path | None,
     typer.Option(
         "--db",
         help="Database file path",
@@ -53,28 +55,28 @@ DbPathOption = Annotated[
 def sync_command(
     noun: Annotated[str, typer.Argument(help="Resource type: vault")] = "vault",
     db_path: DbPathOption = None,
-    tier: Annotated[Optional[int], typer.Option(help="Sync specific tier only")] = None,
-    only_uuid: Annotated[Optional[str], typer.Option(help="Sync single account")] = None,
+    only_uuid: Annotated[str | None, typer.Option(help="Sync single account")] = None,
     all_items: Annotated[bool, typer.Option("--all", help="Sync all items")] = False,
-    tags: Annotated[Optional[list[str]], typer.Option("--tags", "-t", help="Sync items with specific tag(s)")] = None,
-    vault: Annotated[Optional[str], typer.Option("--vault", "-v", help="Sync from specific vault only")] = None,
+    tags: Annotated[list[str] | None, typer.Option("--tags", "-t", help="Sync items with specific tag(s)")] = None,
+    vault: Annotated[str | None, typer.Option("--vault", "-v", help="Sync from specific vault only")] = None,
     quiet: Annotated[bool, typer.Option("--quiet", "-q", help="Suppress item names (for demos)")] = False,
 ) -> None:
-    """Sync database from 1Password.
-    
-    Examples:
+    """
+    \bSync database from 1Password.
+
+    \bExamples:
       bastion 1p sync vault              # Sync items with Bastion/* tags
       bastion 1p sync vault --all        # Sync ALL items from 1Password
-      bastion 1p sync vault --tier 1     # Sync only Tier 1 items
       bastion 1p sync vault --tags YubiKey/Token  # Sync YubiKey items only
       bastion 1p sync vault --vault Bastion       # Sync from specific vault
       bastion 1p sync vault --quiet               # Hide item names (demo mode)
     """
+
     from .sync import sync_vault
-    
+
     if noun == "vault":
         try:
-            sync_vault(db_path, tier, only_uuid, all_items, tags, vault, quiet)
+            sync_vault(db_path, only_uuid, all_items, tags, vault, quiet)
         except RuntimeError as e:
             console.print(f"[red]Error:[/red] {e}")
             raise typer.Exit(1)
@@ -88,22 +90,24 @@ def sync_command(
 def report_status(
     noun: Annotated[str, typer.Argument(help="Must be 'status'")] = "status",
 ) -> None:
-    """Generate rotation status report.
-    
-    Examples:
+    """
+    \bGenerate rotation status report.
+
+    \bExamples:
       bastion 1p report status
     """
-    from ..helpers import get_encrypted_db_manager
+
     from ...reports import ReportGenerator
-    
+    from ..helpers import get_encrypted_db_manager
+
     if noun != "status":
         console.print(f"[red]Error:[/red] Expected 'status', got '{noun}'")
         console.print("Usage: bastion 1p report status [OPTIONS]")
         raise typer.Exit(1)
-    
+
     cache_mgr = get_encrypted_db_manager()
     db = cache_mgr.load()
-    
+
     reporter = ReportGenerator(console)
     reporter.generate_report(db)
 
@@ -113,20 +117,22 @@ def export_command(
     noun: Annotated[str, typer.Argument(help="Export type: 'csv', 'tagging-candidates'")],
     out: Annotated[Path, typer.Option(help="Output file path")] = Path("password-rotation-database.csv"),
 ) -> None:
-    """Export data from database.
-    
-    Examples:
+    """
+    \bExport data from database.
+
+    \bExamples:
       bastion 1p export csv                          # Export to CSV
       bastion 1p export csv --out my-export.csv     # Custom filename
       bastion 1p export tagging-candidates          # Export untagged items
     """
-    from ..helpers import get_encrypted_db_manager
+
     from ...csv_export import export_to_csv
+    from ..helpers import get_encrypted_db_manager
     from .export import export_tagging_candidates
-    
+
     cache_mgr = get_encrypted_db_manager()
     db = cache_mgr.load()
-    
+
     if noun == "csv":
         export_to_csv(db, out)
         console.print(f"[green]✓[/green] Exported to {out}")
@@ -145,26 +151,31 @@ def export_command(
 def analyze_command(
     noun: Annotated[str, typer.Argument(help="'risk' or 'dependencies'")] = "risk",
     db_path: DbPathOption = None,
-    level: Annotated[Optional[str], typer.Option(help="Filter by risk level (critical/high/medium/low)")] = None,
-    has_tag: Annotated[Optional[str], typer.Option(help="Filter by tag")] = None,
-    has_capability: Annotated[Optional[str], typer.Option(help="Filter by capability (e.g., money-transfer)")] = None,
-    weakest_2fa: Annotated[Optional[str], typer.Option(help="Filter by weakest 2FA (fido2/totp/sms/none)")] = None,
-    account: Annotated[Optional[str], typer.Option(help="Account title for dependency analysis")] = None,
+    level: Annotated[str | None, typer.Option(help="Filter by risk level (critical/high/medium/low)")] = None,
+    has_tag: Annotated[str | None, typer.Option(help="Filter by tag")] = None,
+    has_capability: Annotated[str | None, typer.Option(help="Filter by capability (e.g., money-transfer)")] = None,
+    weakest_2fa: Annotated[str | None, typer.Option(help="Filter by weakest 2FA (fido2/totp/sms/none)")] = None,
+    account: Annotated[str | None, typer.Option(help="Account title for risk or dependency analysis")] = None,
+    account_uuid: Annotated[str | None, typer.Option("--account-uuid", help="Account UUID for risk or dependency analysis")] = None,
 ) -> None:
-    """Analyze account risk or dependencies.
-    
-    Examples:
+    """
+    \bAnalyze account risk or dependencies.
+
+    \bExamples:
       bastion 1p analyze risk                           # Show all accounts by risk
       bastion 1p analyze risk --level critical          # Show only CRITICAL accounts
+      bastion 1p analyze risk --account "Google"        # Show risk for a specific account title
+      bastion 1p analyze risk --account-uuid abc123      # Show risk for a specific account UUID
       bastion 1p analyze risk --has-tag bastion-2fa-sms # Show accounts with SMS enabled
       bastion 1p analyze dependencies --account Gmail   # Show dependency tree
     """
-    from .analyze import analyze_risk, analyze_dependencies
-    
+
+    from .analyze import analyze_dependencies, analyze_risk
+
     if noun == "risk":
-        analyze_risk(db_path, level, has_tag, has_capability, weakest_2fa)
+        analyze_risk(db_path, level, has_tag, has_capability, weakest_2fa, account, account_uuid)
     elif noun == "dependencies":
-        analyze_dependencies(db_path, account or "")
+        analyze_dependencies(db_path, account or None, account_uuid)
     else:
         console.print(f"[red]Error:[/red] Expected 'risk' or 'dependencies', got '{noun}'")
         raise typer.Exit(1)
@@ -173,24 +184,26 @@ def analyze_command(
 @op_app.command("query")
 def query_command(
     db_path: DbPathOption = None,
-    has_tag: Annotated[Optional[list[str]], typer.Option(help="Filter by tag (can specify multiple)")] = None,
-    has_capability: Annotated[Optional[str], typer.Option(help="Filter by capability")] = None,
-    weakest_2fa: Annotated[Optional[str], typer.Option(help="Filter by weakest 2FA method")] = None,
+    has_tag: Annotated[list[str] | None, typer.Option(help="Filter by tag (can specify multiple)")] = None,
+    has_capability: Annotated[str | None, typer.Option(help="Filter by capability")] = None,
+    weakest_2fa: Annotated[str | None, typer.Option(help="Filter by weakest 2FA method")] = None,
     show_breach_exposed: Annotated[bool, typer.Option("--breach-exposed", help="Show breach-exposed only")] = False,
     show_no_rate_limit: Annotated[bool, typer.Option("--no-rate-limit", help="Show accounts without rate limiting")] = False,
     show_shared_access: Annotated[bool, typer.Option("--shared-access", help="Show shared access accounts")] = False,
     with_flat_tags: Annotated[bool, typer.Option("--with-flat-tags", help="Show all accounts with legacy flat bastion-* tags")] = False,
-    limit: Annotated[Optional[int], typer.Option(help="Limit results (0 = show all, default: 20)")] = 20,
+    limit: Annotated[int | None, typer.Option(help="Limit results (0 = show all, default: 20)")] = 20,
 ) -> None:
-    """Query accounts with flexible filtering.
-    
-    Examples:
+    """
+    \bQuery accounts with flexible filtering.
+
+    \bExamples:
       bastion 1p query --with-flat-tags                 # All with legacy tags
       bastion 1p query --has-tag bastion-2fa-sms        # All with SMS
       bastion 1p query --breach-exposed                 # Compromised passwords
     """
+
     from .analyze import query_accounts
-    
+
     query_accounts(
         db_path, has_tag, has_capability, weakest_2fa,
         show_breach_exposed, show_no_rate_limit, show_shared_access,
@@ -200,18 +213,20 @@ def query_command(
 
 @op_app.command("audit")
 def audit_command(
-    noun: Annotated[Optional[str], typer.Argument(help="Audit type: 'no-tags', 'untagged-2fa', 'missing-email', 'same-domain', 'same-apps', 'sso-signin', 'yubikey'")] = None,
-    csv_output: Annotated[Optional[Path], typer.Option("--csv", help="Export results to CSV file")] = None,
-    limit: Annotated[Optional[int], typer.Option(help="Limit results (0 = show all, default: 20)")] = 20,
+    noun: Annotated[str | None, typer.Argument(help="Audit type: 'no-tags', 'untagged-2fa', 'missing-email', 'same-domain', 'same-apps', 'sso-signin', 'yubikey'")] = None,
+    csv_output: Annotated[Path | None, typer.Option("--csv", help="Export results to CSV file")] = None,
+    limit: Annotated[int | None, typer.Option(help="Limit results (0 = show all, default: 20)")] = 20,
 ) -> None:
-    """Audit accounts for missing data or tagging issues.
-    
-    Examples:
+    """
+    \bAudit accounts for missing data or tagging issues.
+
+    \bExamples:
       bastion 1p audit no-tags                    # Items with no bastion-* tags
       bastion 1p audit no-tags --csv untagged.csv # Export to CSV
       bastion 1p audit untagged-2fa               # Has 2FA field but no bastion-2fa-* tag
       bastion 1p audit yubikey                    # YubiKey slot usage and gaps
     """
+
     if noun is None:
         console.print("[yellow]Available audit types:[/yellow]")
         console.print("  no-tags       - Items with no Bastion/* tags")
@@ -223,22 +238,23 @@ def audit_command(
         console.print("  yubikey       - YubiKey slot usage and gaps")
         console.print("\n[dim]Example: bsec 1p audit no-tags[/dim]")
         raise typer.Exit(0)
-    from ..helpers import get_encrypted_db_manager, get_yubikey_cache
+
     from ...op_client import OpClient
+    from ..helpers import get_encrypted_db_manager, get_yubikey_cache
     from .audit import (
-        audit_no_tags,
-        audit_untagged_2fa,
         audit_missing_email,
-        audit_same_domain,
+        audit_no_tags,
         audit_same_apps,
+        audit_same_domain,
         audit_sso_signin,
+        audit_untagged_2fa,
     )
     from .yubikey import yubikey_audit_slots
-    
+
     cache_mgr = get_encrypted_db_manager()
     db = cache_mgr.load()
     op_client = OpClient()
-    
+
     if noun == "no-tags":
         audit_no_tags(db, limit, csv_output)
     elif noun == "untagged-2fa":
@@ -266,15 +282,17 @@ def check_command(
     db_path: DbPathOption = None,
     update_tags: Annotated[bool, typer.Option("--update-tags", help="Add bastion-sec-breach-exposed tag to breached accounts")] = False,
 ) -> None:
-    """Check for passwords needing rotation or breached passwords.
-    
-    Examples:
+    """
+    \bCheck for passwords needing rotation or breached passwords.
+
+    \bExamples:
       bastion 1p check rotation                 # Check rotation status
       bastion 1p check breaches                 # Scan against HIBP
       bastion 1p check breaches --update-tags   # Tag breached accounts
     """
-    from .check import check_rotation, check_breaches
-    
+
+    from .check import check_breaches, check_rotation
+
     if noun == "rotation":
         check_rotation(db_path)
     elif noun == "breaches":
@@ -293,14 +311,15 @@ def validate_command(
     noun: Annotated[str, typer.Argument(help="'tags' or 'rules'")] = "tags",
     db_path: DbPathOption = None,
 ) -> None:
-    """Validate database entries for issues.
-    
-    Examples:
+    """
+    \bValidate database entries for issues.
+
+    \bExamples:
       bastion 1p validate tags    # Validate tag consistency
       bastion 1p validate rules   # Validate against security rules
     """
     from .validate import validate_migration, validate_rules
-    
+
     if noun == "tags":
         validate_migration(db_path)
     elif noun == "rules":
@@ -313,15 +332,17 @@ def validate_command(
 @op_app.command("rollback")
 def rollback_command(
     uuid: Annotated[str, typer.Argument(help="Item UUID to rollback")],
-    version: Annotated[Optional[int], typer.Option(help="Target version (default: previous)")] = None,
+    version: Annotated[int | None, typer.Option(help="Target version (default: previous)")] = None,
 ) -> None:
-    """Rollback item to previous version.
-    
-    Examples:
+    """
+    \bRollback item to previous version.
+
+    \bExamples:
       bastion 1p rollback abc123          # Rollback to previous version
       bastion 1p rollback abc123 --version 5  # Rollback to specific version
     """
     from .rollback import rollback_item
+
     rollback_item(uuid, version)
 
 
@@ -332,15 +353,16 @@ def cleanup_command(
     dry_run: Annotated[bool, typer.Option("--dry-run", help="Preview changes without applying")] = False,
     batch: Annotated[bool, typer.Option("--batch", "-y", help="Run non-interactively")] = False,
 ) -> None:
-    """Cleanup duplicate tags or orphaned passkeys.
-    
-    Examples:
+    """
+    \bCleanup duplicate tags or orphaned passkeys.
+
+    \bExamples:
       bastion 1p cleanup tags             # Remove duplicate tags (interactive)
       bastion 1p cleanup tags --batch     # Remove duplicate tags (non-interactive)
       bastion 1p cleanup passkeys         # Detect orphaned passkeys
     """
     from .cleanup import cleanup_duplicate_tags, cleanup_orphaned_passkeys
-    
+
     if noun == "tags":
         cleanup_duplicate_tags(db_path, batch=batch, dry_run=dry_run)
     elif noun == "passkeys":
@@ -358,25 +380,26 @@ def cleanup_command(
 def tags_command(
     action: Annotated[str, typer.Argument(help="'list', 'apply', 'remove', 'rename', or 'migrate'")] = "list",
     db_path: DbPathOption = None,
-    tag: Annotated[Optional[str], typer.Option(help="Tag to apply, remove, or rename (old tag)")] = None,
-    new_tag: Annotated[Optional[str], typer.Option("--new-tag", help="New tag name for rename action")] = None,
-    item_id: Annotated[Optional[str], typer.Option(help="Item UUID (for apply/remove on single item)")] = None,
-    migration_type: Annotated[Optional[str], typer.Option(help="Migration type for 'migrate' action")] = None,
+    tag: Annotated[str | None, typer.Option(help="Tag to apply, remove, or rename (old tag)")] = None,
+    new_tag: Annotated[str | None, typer.Option("--new-tag", help="New tag name for rename action")] = None,
+    item_id: Annotated[str | None, typer.Option(help="Item UUID (for apply/remove on single item)")] = None,
+    migration_type: Annotated[str | None, typer.Option(help="Migration type for 'migrate' action")] = None,
     dry_run: Annotated[bool, typer.Option("--dry-run", help="Preview changes")] = False,
     yes: Annotated[bool, typer.Option("--yes", "-y", help="Skip confirmation prompts")] = False,
 ) -> None:
-    """Manage 1Password tags.
-    
-    Examples:
+    """
+    \bManage 1Password tags.
+
+    \bExamples:
       bsec 1p tags list                                 # List all Bastion tags
       bsec 1p tags apply --tag Bastion/Tier/1 --item-id abc123
       bsec 1p tags remove --tag old-tag --item-id abc123
       bsec 1p tags rename --tag old-tag --new-tag new-tag --dry-run
       bsec 1p tags migrate --migration-type tier-restructure --dry-run
     """
-    from .tags import list_tags, apply_tag, remove_tag, rename_tag
     from .migrations import run_migration
-    
+    from .tags import apply_tag, list_tags, remove_tag, rename_tag
+
     if action == "list":
         list_tags(db_path)
     elif action == "apply":
@@ -411,40 +434,42 @@ def tags_command(
 @op_app.command("link")
 def link_command(
     db_path: DbPathOption = None,
-    parent: Annotated[Optional[str], typer.Option(help="Parent account UUID or title")] = None,
-    child: Annotated[Optional[str], typer.Option(help="Child account UUID or title")] = None,
+    parent: Annotated[str | None, typer.Option(help="Parent account UUID or title")] = None,
+    child: Annotated[str | None, typer.Option(help="Child account UUID or title")] = None,
 ) -> None:
-    """Link two accounts (parent-child relationship).
-    
-    Examples:
+    """
+    \bLink two accounts (parent-child relationship).
+
+    \bExamples:
       bastion 1p link --parent Gmail --child GitHub
     """
     from .relationships import link_accounts
-    
+
     if not parent or not child:
         console.print("[red]Error: --parent and --child required[/red]")
         raise typer.Exit(1)
-    
+
     link_accounts(db_path, parent, child)
 
 
 @op_app.command("unlink")
 def unlink_command(
     db_path: DbPathOption = None,
-    parent: Annotated[Optional[str], typer.Option(help="Parent account UUID or title")] = None,
-    child: Annotated[Optional[str], typer.Option(help="Child account UUID or title")] = None,
+    parent: Annotated[str | None, typer.Option(help="Parent account UUID or title")] = None,
+    child: Annotated[str | None, typer.Option(help="Child account UUID or title")] = None,
 ) -> None:
-    """Unlink two accounts.
-    
-    Examples:
+    """
+    \bUnlink two accounts.
+
+    \bExamples:
       bastion 1p unlink --parent Gmail --child GitHub
     """
     from .relationships import unlink_accounts
-    
+
     if not parent or not child:
         console.print("[red]Error: --parent and --child required[/red]")
         raise typer.Exit(1)
-    
+
     unlink_accounts(db_path, parent, child)
 
 
@@ -456,20 +481,21 @@ def unlink_command(
 def icons_command(
     action: Annotated[str, typer.Argument(help="'status', 'apply', 'scan', or 'update'")] = "status",
     db_path: DbPathOption = None,
-    item_id: Annotated[Optional[str], typer.Option(help="Item UUID")] = None,
+    item_id: Annotated[str | None, typer.Option(help="Item UUID")] = None,
     force: Annotated[bool, typer.Option("--force", help="Force update even if icon exists")] = False,
     dry_run: Annotated[bool, typer.Option("--dry-run", help="Preview changes")] = False,
 ) -> None:
-    """Manage account icons from aegis-icons.
-    
-    Examples:
+    """
+    \bManage account icons from aegis-icons.
+
+    \bExamples:
       bastion 1p icons status                    # Show icon coverage
       bastion 1p icons apply --item-id abc123    # Apply icon to item
       bastion 1p icons scan                      # Scan for missing icons
       bastion 1p icons update --dry-run          # Preview icon updates
     """
-    from .icons import icons_status, apply_icon, scan_missing_icons, update_icons
-    
+    from .icons import apply_icon, icons_status, scan_missing_icons, update_icons
+
     if action == "status":
         icons_status(db_path)
     elif action == "apply":

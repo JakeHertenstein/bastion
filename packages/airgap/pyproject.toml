@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "bastion-airgap"
-version = "0.3.0"
+dynamic = ["version"]
 description = "Air-gapped cryptographic key generation system for SLIP-39 secret sharing"
 readme = "README.md"
 license = { text = "PolyForm-Noncommercial-1.0.0" }
@@ -48,6 +48,12 @@ airgap = "airgap.cli.main:app"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/airgap"]
+
+[tool.hatch.version]
+path = "../../VERSION"
+# The VERSION file contains a plain SemVer string (e.g., 0.3.1)
+# Capture the entire content as the version.
+pattern = "(?P<version>.*)"
 
 [tool.black]
 line-length = 100

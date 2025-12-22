@@ -1,25 +1,20 @@
-"""Main Bastion CLI application (bsec).
+"""Main Bastion CLI application.
 
 This module creates the Typer application and registers all command modules.
 Each domain has its own module with related commands.
 
-CLI entry points:
-  - bsec (primary)
-  - bastion (backward compatibility alias)
-
-Version 0.3.0 Breaking Changes:
-  - CLI renamed from `bastion` to `bsec`
-  - Cache directory moved from ~/.bastion to ~/.bsec (auto-migrated)
-  - 1Password-specific commands under `bsec 1p` subcommand.
+Version 0.2.0 Breaking Change:
+  1Password-specific commands moved under `bastion 1p` subcommand.
+  General utilities remain at top level: generate, config, visualize.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 
-import typer
 import click
+import typer
 from rich.console import Console
 
 from .. import __version__
@@ -33,8 +28,8 @@ class NaturalOrderGroup(typer.core.TyperGroup):
 
 # Create the main app
 app = typer.Typer(
-    name="bsec",
-    help="Bastion Security (bsec) - Ground-level defense for 1Password credential security",
+    name="bastion",
+    help="Bastion - Ground-level defense for 1Password credential security",
     add_completion=False,
     cls=NaturalOrderGroup,
 )
@@ -43,7 +38,7 @@ console = Console()
 
 # Global options type annotation
 DbPathOption = Annotated[
-    Optional[Path],
+    Path | None,
     typer.Option(
         "--db",
         help="Database file path",
@@ -58,6 +53,7 @@ DbPathOption = Annotated[
 # All 1Password-dependent commands are now under `bastion 1p`
 
 from .commands.op_commands import op_app
+
 app.add_typer(op_app, name="1p", help="1Password vault operations")
 
 
@@ -66,18 +62,16 @@ app.add_typer(op_app, name="1p", help="1Password vault operations")
 # =============================================================================
 # These commands work without 1Password or are general utilities
 
-from .commands.generate_commands import register_commands as register_generate
 from .commands.config_commands import register_commands as register_config
-from .commands.visualize_commands import register_commands as register_visualize
+from .commands.generate_commands import register_commands as register_generate
 from .commands.sigchain_commands import register_commands as register_sigchain
-from .commands.verify_commands import register_commands as register_verify
+from .commands.visualize_commands import register_commands as register_visualize
 
 # Register top-level command groups
 register_generate(app)  # generate entropy, generate username, generate mermaid
 register_config(app)    # config management
 register_visualize(app) # entropy visualization
 register_sigchain(app)  # sigchain, session, ots commands
-register_verify(app)    # verify username
 
 
 # =============================================================================
@@ -94,7 +88,7 @@ def _version_callback(value: bool) -> None:
 @app.callback()
 def main(
     version: Annotated[
-        Optional[bool],
+        bool | None,
         typer.Option("--version", callback=_version_callback, is_eager=True, help="Show version"),
     ] = None,
 ) -> None:

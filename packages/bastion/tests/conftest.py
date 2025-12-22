@@ -12,7 +12,6 @@ Run markers:
     pytest -m crypto         # Run only crypto tests
 """
 
-import os
 import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -27,7 +26,7 @@ def pytest_collection_modifyitems(config, items):
         # Mark tests using mock_op_cli as unit tests
         if "mock_op_cli" in item.fixturenames:
             item.add_marker(pytest.mark.unit)
-        
+
         # Mark tests in certain modules
         if "test_entropy" in str(item.fspath) or "test_db_encryption" in str(item.fspath):
             item.add_marker(pytest.mark.crypto)

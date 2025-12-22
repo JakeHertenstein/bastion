@@ -1,24 +1,23 @@
 """Tests for the airgap SLIP-39 module."""
 
 import secrets
-import pytest
-from datetime import datetime, timezone
+from datetime import datetime
 from unittest.mock import MagicMock
 
+import pytest
 from airgap.slip39 import (
     SLIP39Config,
     SLIP39Share,
-    SLIP39ShareSet,
-    compute_share_fingerprint,
     compute_master_fingerprint,
-    normalize_mnemonic,
-    verify_share_reentry,
-    validate_share,
-    generate_shares,
-    recover_secret,
-    verify_shares,
+    compute_share_fingerprint,
     format_share_for_display,
     format_share_summary,
+    generate_shares,
+    normalize_mnemonic,
+    recover_secret,
+    validate_share,
+    verify_share_reentry,
+    verify_shares,
 )
 
 

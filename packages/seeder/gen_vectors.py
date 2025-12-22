@@ -5,6 +5,7 @@ import hashlib
 import hmac
 import json
 
+
 def hkdf_expand(prk, info, length):
     """HKDF-Expand per RFC 5869 with SHA-512."""
     hash_len = 64

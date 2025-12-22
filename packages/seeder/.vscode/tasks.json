@@ -1,0 +1,333 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "🧪 Run All Tests",
+			"type": "shell",
+			"command": "${workspaceFolder}/venv/bin/python",
+			"args": [
+				"-m",
+				"pytest",
+				"tests/",
+				"-v",
+				"--tb=short"
+			],
+			"group": {
+				"kind": "test",
+				"isDefault": true
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": false
+			},
+			"options": {
+				"env": {
+					"PYTHONPATH": "${workspaceFolder}/src"
+				}
+			},
+			"problemMatcher": [
+				"$python"
+			]
+		},
+		{
+			"label": "🔧 Run Seeder CLI",
+			"type": "shell",
+			"command": "${workspaceFolder}/venv/bin/python",
+			"args": [
+				"${workspaceFolder}/seeder",
+				"generate",
+				"grid",
+				"--simple",
+				"test"
+			],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			},
+			"options": {
+				"env": {
+					"PYTHONPATH": "${workspaceFolder}/src"
+				}
+			}
+		},
+		{
+			"label": "📦 Install Dependencies",
+			"type": "shell",
+			"command": "${workspaceFolder}/venv/bin/pip",
+			"args": [
+				"install",
+				"-e",
+				".[dev]"
+			],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "🎨 Format Code",
+			"type": "shell",
+			"command": "${workspaceFolder}/venv/bin/black",
+			"args": [
+				"src/",
+				"tests/",
+				"--line-length",
+				"88"
+			],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "silent",
+				"focus": false,
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "📋 Sort Imports",
+			"type": "shell",
+			"command": "${workspaceFolder}/venv/bin/isort",
+			"args": [
+				"src/",
+				"tests/",
+				"--profile",
+				"black"
+			],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "silent",
+				"focus": false,
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "🔍 Type Check",
+			"type": "shell",
+			"command": "${workspaceFolder}/venv/bin/mypy",
+			"args": [
+				"src/seeder"
+			],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			},
+			"options": {
+				"env": {
+					"PYTHONPATH": "${workspaceFolder}/src"
+				}
+			},
+			"problemMatcher": [
+				"$python"
+			]
+		},
+		{
+			"label": "🧹 Lint Code",
+			"type": "shell",
+			"command": "${workspaceFolder}/venv/bin/flake8",
+			"args": [
+				"src/",
+				"tests/"
+			],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			},
+			"problemMatcher": [
+				"$python"
+			]
+		},
+		{
+			"label": "🔄 Full Code Quality Check",
+			"dependsOrder": "sequence",
+			"dependsOn": [
+				"🎨 Format Code",
+				"📋 Sort Imports",
+				"🔍 Type Check",
+				"🧹 Lint Code",
+				"🧪 Run All Tests"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
+		{
+			"label": "📊 Generate Coverage Report",
+			"type": "shell",
+			"command": "${workspaceFolder}/venv/bin/python",
+			"args": [
+				"-m",
+				"pytest",
+				"tests/",
+				"--cov=src/seeder",
+				"--cov-report=html",
+				"--cov-report=term"
+			],
+			"group": "test",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			},
+			"options": {
+				"env": {
+					"PYTHONPATH": "${workspaceFolder}/src"
+				}
+			}
+		},
+		{
+			"label": "🚀 Build Package",
+			"type": "shell",
+			"command": "${workspaceFolder}/venv/bin/python",
+			"args": [
+				"-m",
+				"build"
+			],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "🔒 Security Check",
+			"type": "shell",
+			"command": "${workspaceFolder}/venv/bin/safety",
+			"args": [
+				"check"
+			],
+			"group": "test",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "🔢 Generate Base10 Grid",
+			"type": "shell",
+			"command": "${workspaceFolder}/venv/bin/python",
+			"args": [
+				"-m",
+				"seeder.cli.main",
+				"generate",
+				"grid",
+				"--simple",
+				"my seed",
+				"--base",
+				"base10"
+			]
+		},
+		{
+			"label": "🌐 Start Web Server",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"dev"
+			],
+			"isBackground": true
+		},
+		{
+			"label": "🌐 Start Web Dev Server",
+			"type": "shell",
+			"command": "cd docs/web && npm run dev",
+			"isBackground": true
+		},
+		{
+			"label": "Test Argon2 Export",
+			"type": "shell",
+			"command": "${workspaceFolder}/venv/bin/python",
+			"args": [
+				"-m",
+				"seeder",
+				"generate",
+				"grid",
+				"--simple",
+				"test",
+				"--export",
+				"/tmp/test_argon2.csv"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Test Argon2 Export",
+			"type": "shell",
+			"command": "${workspaceFolder}/seeder",
+			"args": [
+				"generate",
+				"grid",
+				"--simple",
+				"test",
+				"--export",
+				"/tmp/test_argon2.csv"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Test Argon2 Export 2",
+			"type": "shell",
+			"command": "${workspaceFolder}/venv/bin/python",
+			"args": [
+				"${workspaceFolder}/seeder",
+				"generate",
+				"grid",
+				"--simple",
+				"test",
+				"--export",
+				"/tmp/test_argon2.csv"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Test Determinism 1",
+			"type": "shell",
+			"command": "${workspaceFolder}/venv/bin/python",
+			"args": [
+				"${workspaceFolder}/seeder",
+				"generate",
+				"grid",
+				"--simple",
+				"test",
+				"--nonce",
+				"TESTNONCE"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Test Determinism 2",
+			"type": "shell",
+			"command": "${workspaceFolder}/venv/bin/python",
+			"args": [
+				"${workspaceFolder}/seeder",
+				"generate",
+				"grid",
+				"--simple",
+				"test",
+				"--nonce",
+				"TESTNONCE"
+			],
+			"group": "test"
+		}
+	]
+}

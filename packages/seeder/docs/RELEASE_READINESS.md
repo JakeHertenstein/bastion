@@ -16,7 +16,7 @@ The Seed Card project is **production-ready** with comprehensive documentation, 
 - **Security warnings prominently displayed**: Clear threat model and appropriate use cases
 - **Complete command reference**: All CLI functions documented with examples
 - **Technical specifications**: Detailed cryptographic explanations and entropy analysis
-- **Multiple documentation layers**: README.md, design.md, copilot-instructions.md, TEST_SUMMARY.md
+- **Multiple documentation layers**: README.md, design.md, TEST_SUMMARY.md
 
 ### ✅ **Robust Architecture** 
 - **Modular design**: Clean separation of concerns across 9 core modules
@@ -116,7 +116,6 @@ requirements.txt       # Python dependencies
 README.md              # Primary documentation (512 lines)
 design.md              # Technical specification
 TEST_SUMMARY.md        # Testing documentation
-.github/copilot-instructions.md  # Development guidance
 ```
 
 ### **Supporting Files:**

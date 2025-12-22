@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "bastion-seeder"
-version = "0.3.0"
+dynamic = ["version"]
 description = "Secure password token matrix generator with CLI and web interface"
 readme = "README.md"
 license = { text = "PolyForm-Noncommercial-1.0.0" }
@@ -52,12 +52,16 @@ dev = [
 seeder = "seeder.cli.main:main"
 
 [project.urls]
-Homepage = "https://github.com/jakehertenstein/bastion"
-Repository = "https://github.com/jakehertenstein/bastion"
-Documentation = "https://github.com/jakehertenstein/bastion/blob/main/packages/seeder/README.md"
+Homepage = "https://github.com/JakeHertenstein/bastion"
+Repository = "https://github.com/JakeHertenstein/bastion"
+Documentation = "https://github.com/JakeHertenstein/bastion/blob/main/packages/seeder/README.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/seeder"]
+
+[tool.hatch.version]
+path = "../../VERSION"
+pattern = "(?P<version>.*)"
 
 [tool.hatch.build.targets.editable]
 dev-mode-dirs = ["src"]

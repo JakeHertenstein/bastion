@@ -8,7 +8,7 @@
 # - Clear terminal: clear
 # - Set clean prompt: export PS1='$ '
 
-VAULT="Bastion"
+VAULT="Bastion DEMO"
 
 # Show what we're doing
 echo "# Bastion Initial Setup Demo"
@@ -40,7 +40,7 @@ sleep 2
 echo "$ bsec 1p sync vault --vault $VAULT --all"
 sleep 0.5
 cat << 'EOF'
-Syncing from 1Password from vault 'Bastion'...
+Syncing from 1Password from vault 'Bastion DEMO'...
 Listing all items...
 Found 8 items
   Fetched 8 items   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:01

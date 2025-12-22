@@ -1,18 +1,17 @@
 """Tests for sigchain integration helpers."""
 
-import pytest
 
+from bastion.sigchain.events import (
+    ConfigChangePayload,
+    EntropyPoolCreatedPayload,
+    PasswordRotationPayload,
+    TagOperationPayload,
+    UsernameGeneratedPayload,
+)
 from bastion.sigchain.integration import (
     get_active_session,
-    set_active_session,
     is_sigchain_enabled,
-)
-from bastion.sigchain.events import (
-    PasswordRotationPayload,
-    UsernameGeneratedPayload,
-    EntropyPoolCreatedPayload,
-    TagOperationPayload,
-    ConfigChangePayload,
+    set_active_session,
 )
 
 
@@ -30,12 +29,12 @@ class TestSessionState:
         # Create a mock session-like object
         class MockSession:
             active = True
-        
+
         mock = MockSession()
         set_active_session(mock)
-        
+
         assert get_active_session() is mock
-        
+
         # Clean up
         set_active_session(None)
 
@@ -43,10 +42,10 @@ class TestSessionState:
         """Test clearing session state."""
         class MockSession:
             active = True
-        
+
         set_active_session(MockSession())
         set_active_session(None)
-        
+
         assert get_active_session() is None
 
 
@@ -76,7 +75,7 @@ class TestEventPayloadHelpers:
             domain="example.com",
             new_change_date="2025-01-15",
         )
-        
+
         assert payload.account_uuid == "test-uuid"
         assert payload.domain == "example.com"
         assert payload.new_change_date == "2025-01-15"
@@ -91,7 +90,7 @@ class TestEventPayloadHelpers:
             username_hash="abc123",
             length=16,
         )
-        
+
         assert payload.domain == "github.com"
         assert payload.algorithm == "sha3-512"
         assert payload.length == 16
@@ -107,7 +106,7 @@ class TestEventPayloadHelpers:
             quality_rating="EXCELLENT",
             entropy_per_byte=7.99,
         )
-        
+
         assert payload.serial_number == 42
         assert payload.source == "yubikey"
         assert payload.bits == 8192
@@ -120,11 +119,11 @@ class TestEventPayloadHelpers:
             account_title="Test",
             action="add",
             tags_before=[],
-            tags_after=["Bastion/Tier/1"],
+            tags_after=["Bastion/Capability/Recovery"],
         )
-        
+
         assert payload.action == "add"
-        assert payload.tags_after == ["Bastion/Tier/1"]
+        assert payload.tags_after == ["Bastion/Capability/Recovery"]
         assert payload.compute_hash()
 
     def test_config_change_payload_structure(self):
@@ -135,7 +134,7 @@ class TestEventPayloadHelpers:
             old_value="true",
             new_value="false",
         )
-        
+
         assert payload.config_section == "sigchain"
         assert payload.config_key == "enabled"
         assert payload.compute_hash()

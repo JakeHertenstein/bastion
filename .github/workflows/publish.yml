@@ -9,7 +9,41 @@ permissions:
 
 jobs:
 
+  verify-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Verify version consistency
+        run: |
+          VER=$(cat VERSION)
+          echo "Canonical version: $VER"
+          # Check bastion-security pyproject
+          if ! grep -q 'dynamic = \["version"\]' packages/bastion/pyproject.toml; then
+            echo "ERROR: bastion pyproject not using dynamic version"
+            exit 1
+          fi
+          # Check bastion-core pyproject
+          if ! grep -q 'dynamic = \["version"\]' packages/core/pyproject.toml; then
+            echo "ERROR: core pyproject not using dynamic version"
+            exit 1
+          fi
+          # Check bastion-airgap pyproject
+          if ! grep -q 'dynamic = \["version"\]' packages/airgap/pyproject.toml; then
+            echo "ERROR: airgap pyproject not using dynamic version"
+            exit 1
+          fi
+          # Check bastion-seeder pyproject
+          if ! grep -q 'dynamic = \["version"\]' packages/seeder/pyproject.toml; then
+            echo "ERROR: seeder pyproject not using dynamic version"
+            exit 1
+          fi
+          echo "✓ All packages using dynamic version"
+
   build-core:
+    needs: verify-version
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

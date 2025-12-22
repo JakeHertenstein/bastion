@@ -2,7 +2,9 @@
 
 **Version:** 1.0  
 **Date:** 2025-11-30  
-**Status:** Draft
+**Status:** Stable
+
+> **Note on Examples:** Version numbers shown in examples (e.g., `VERSION=0.3.0`) are illustrative. Refer to [VERSION](../../VERSION) for the canonical tool version used during label generation.
 
 ## Overview
 

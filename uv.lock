@@ -111,7 +111,6 @@ wheels = [
 
 [[package]]
 name = "bastion-airgap"
-version = "0.3.0"
 source = { editable = "packages/airgap" }
 dependencies = [
     { name = "bastion-core" },
@@ -151,11 +150,10 @@ requires-dist = [
     { name = "shamir-mnemonic", specifier = ">=0.3.0" },
     { name = "typer", extras = ["all"], specifier = ">=0.9.0" },
 ]
-provides-extras = ["dev", "camera"]
+provides-extras = ["camera", "dev"]
 
 [[package]]
 name = "bastion-core"
-version = "0.3.0"
 source = { editable = "packages/core" }
 
 [package.optional-dependencies]
@@ -169,7 +167,6 @@ provides-extras = ["network"]
 
 [[package]]
 name = "bastion-security"
-version = "0.3.0"
 source = { editable = "packages/bastion" }
 dependencies = [
     { name = "bastion-core" },
@@ -179,6 +176,7 @@ dependencies = [
     { name = "numpy" },
     { name = "pendulum" },
     { name = "pydantic" },
+    { name = "qrcode" },
     { name = "rich" },
     { name = "typer" },
 ]
@@ -192,13 +190,13 @@ requires-dist = [
     { name = "numpy", specifier = ">=1.26.0" },
     { name = "pendulum", specifier = ">=3.0.0" },
     { name = "pydantic", specifier = ">=2.7.0" },
+    { name = "qrcode", specifier = ">=7.4.2" },
     { name = "rich", specifier = ">=13.9.0" },
     { name = "typer", specifier = ">=0.12.0" },
 ]
 
 [[package]]
 name = "bastion-seeder"
-version = "0.3.0"
 source = { editable = "packages/seeder" }
 dependencies = [
     { name = "argon2-cffi" },

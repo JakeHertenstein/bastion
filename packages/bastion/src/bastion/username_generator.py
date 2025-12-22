@@ -45,17 +45,15 @@ The security guarantee: If the 256-bit salt remains secret in 1Password,
 usernames cannot be correlated across services or predicted by attackers.
 """
 
-import hmac
+import base64 as base64_module
 import hashlib
-import secrets
-import subprocess
+import hmac
 import json
 import re
-import base64 as base64_module
-from typing import Optional
+import secrets
+import subprocess
 
 from .label_spec import BastionLabel, decode_params
-
 
 # =============================================================================
 # Encoding Functions
@@ -88,14 +86,14 @@ def base36_encode(number: int) -> str:
     """
     if number == 0:
         return '0'
-    
+
     alphabet = '0123456789abcdefghijklmnopqrstuvwxyz'
     result = []
-    
+
     while number:
         number, remainder = divmod(number, 36)
         result.append(alphabet[remainder])
-    
+
     return ''.join(reversed(result))
 
 
@@ -165,7 +163,7 @@ def generate_username_v1_sha256(
     secret_salt: str,
     length: int = 16,
     encoding: int = 36,
-    nonce: Optional[str] = None,
+    nonce: str | None = None,
 ) -> str:
     """Generate username using HMAC-SHA256.
     
@@ -193,7 +191,7 @@ def generate_username_v1_sha512(
     secret_salt: str,
     length: int = 16,
     encoding: int = 36,
-    nonce: Optional[str] = None,
+    nonce: str | None = None,
 ) -> str:
     """Generate username using HMAC-SHA512 (default algorithm).
     
@@ -221,7 +219,7 @@ def generate_username_v1_sha3_512(
     secret_salt: str,
     length: int = 16,
     encoding: int = 36,
-    nonce: Optional[str] = None,
+    nonce: str | None = None,
 ) -> str:
     """Generate username using HMAC-SHA3-512 (quantum-resistant option).
     
@@ -249,7 +247,7 @@ def generate_username(
     secret_salt: str,
     length: int = 16,
     encoding: int = 36,
-    nonce: Optional[str] = None,
+    nonce: str | None = None,
 ) -> str:
     """Generate username (legacy SHA256 wrapper for backward compatibility).
     
@@ -274,7 +272,7 @@ def verify_username(
     username: str,
     secret_salt: str,
     encoding: int = 36,
-    nonce: Optional[str] = None,
+    nonce: str | None = None,
 ) -> bool:
     """Verify a username was generated from the given label and salt.
     
@@ -305,7 +303,7 @@ class LabelParser:
     NOTE: Owner is no longer stored in labels. Store owner in 1Password
     metadata section instead.
     """
-    
+
     # Algorithm normalization map
     ALGORITHM_MAP = {
         'sha256': 'SHA256',
@@ -313,14 +311,14 @@ class LabelParser:
         'sha3': 'SHA3-512',
         'sha3-512': 'SHA3-512',
     }
-    
+
     # Reverse map for compatibility
     ALGORITHM_REVERSE = {
         'SHA256': 'sha256',
         'SHA512': 'sha512',
         'SHA3-512': 'sha3-512',
     }
-    
+
     def __init__(self, label: str):
         """Parse a label string.
         
@@ -331,15 +329,15 @@ class LabelParser:
             label: Full label string
         """
         self.raw_label = label
-        self._bastion_label: Optional[BastionLabel] = None
-        self.version: Optional[str] = None
-        self.algorithm: Optional[str] = None
-        self.owner: Optional[str] = None  # Deprecated: always empty for new labels
-        self.domain: Optional[str] = None
-        self.date: Optional[str] = None
+        self._bastion_label: BastionLabel | None = None
+        self.version: str | None = None
+        self.algorithm: str | None = None
+        self.owner: str | None = None  # Deprecated: always empty for new labels
+        self.domain: str | None = None
+        self.date: str | None = None
         self.length: int = 16  # Default length
         self._parse()
-    
+
     def _parse(self) -> None:
         """Parse label components."""
         # Try parsing as new hierarchical BastionLabel format (Bastion/TYPE/ALGO:...)
@@ -355,7 +353,7 @@ class LabelParser:
                     'SHA3/512': 'sha3-512',
                 }
                 self.algorithm = algo_reverse.get(
-                    self._bastion_label.algo, 
+                    self._bastion_label.algo,
                     self._bastion_label.algo.lower().replace('/', '-')
                 )
                 self.owner = ''  # Owner not in new format
@@ -367,7 +365,7 @@ class LabelParser:
                 return
             except ValueError:
                 pass
-        
+
         # Try old BastionLabel format (v1:USER:ALGO:PARAMS:IDENT:DATE)
         parts = self.raw_label.split(':')
         if len(parts) >= 6 and parts[1] == 'USER':
@@ -385,7 +383,7 @@ class LabelParser:
                 return
             except (ValueError, IndexError):
                 pass
-        
+
         # Legacy format: v1:sha512:owner:domain:date
         if len(parts) >= 5:
             self.version = parts[0]
@@ -399,7 +397,7 @@ class LabelParser:
             self.version = 'legacy'
             self.algorithm = 'sha256'
             self.domain = parts[0]
-    
+
     def is_valid(self) -> bool:
         """Check if label is valid.
         
@@ -409,7 +407,7 @@ class LabelParser:
         if self._bastion_label:
             return len(self._bastion_label.validate()) == 0
         return all([self.version, self.algorithm, self.domain, self.date])
-    
+
     def get_generation_function(self):
         """Get the appropriate generation function for this label's algorithm.
         
@@ -428,7 +426,7 @@ class LabelParser:
             return generate_username_v1_sha3_512
         else:
             raise ValueError(f"Unknown algorithm: {self.algorithm}")
-    
+
     def get_max_length(self) -> int:
         """Get maximum username length for this algorithm.
         
@@ -440,7 +438,7 @@ class LabelParser:
             return 51
         else:
             return 100
-    
+
     @staticmethod
     def build_label(
         version: str,
@@ -450,9 +448,9 @@ class LabelParser:
         length: int = 16,
         owner: str = '',  # Deprecated: ignored, kept for compatibility
         with_check: bool = True,
-        nonce: Optional[str] = None,
+        nonce: str | None = None,
         encoding: int = 36,
-        bastion_version: Optional[str] = None,
+        bastion_version: str | None = None,
     ) -> str:
         """Build a label from components using new BastionLabel format.
         
@@ -481,7 +479,7 @@ class LabelParser:
             'sha3-256': 'SHA3/256',
         }
         algo_hier = algo_map.get(algorithm.lower(), algorithm.upper())
-        
+
         # Build params string (URL query-string format, canonical order)
         # VERSION = Bastion tool SemVer (required)
         params_parts = []
@@ -494,7 +492,7 @@ class LabelParser:
         if encoding != 36:
             params_parts.append(f'ENCODING={encoding}')
         params = '&'.join(params_parts)
-        
+
         # Create BastionLabel with new format
         label = BastionLabel(
             tool='Bastion',
@@ -504,7 +502,7 @@ class LabelParser:
             date=date,
             params=params,
         )
-        
+
         return label.build(with_check=with_check)
 
 
@@ -515,7 +513,7 @@ class UsernameGeneratorConfig:
     with JSON content containing default_owner, default_algorithm, default_length,
     and service_rules.
     """
-    
+
     CONFIG_ITEM_TITLE = "Bastion Username Generator Config"
     DEFAULT_CONFIG = {
         "default_owner": "",
@@ -528,11 +526,11 @@ class UsernameGeneratorConfig:
             "aws": {"min": 1, "max": 64},
         }
     }
-    
+
     def __init__(self):
         """Initialize config manager."""
-        self._cached_config: Optional[dict] = None
-    
+        self._cached_config: dict | None = None
+
     def load_config_from_1password(self) -> dict:
         """Load configuration from 1Password Secure Note.
         
@@ -544,7 +542,7 @@ class UsernameGeneratorConfig:
         """
         if self._cached_config:
             return self._cached_config
-        
+
         try:
             result = subprocess.run(
                 ["op", "item", "get", self.CONFIG_ITEM_TITLE, "--format", "json"],
@@ -553,9 +551,9 @@ class UsernameGeneratorConfig:
                 check=True,
                 timeout=30,
             )
-            
+
             item_data = json.loads(result.stdout)
-            
+
             # Extract config from section fields
             config = {
                 "default_owner": "",
@@ -563,13 +561,13 @@ class UsernameGeneratorConfig:
                 "default_length": 16,
                 "service_rules": {}
             }
-            
+
             for field in item_data.get("fields", []):
                 section = field.get("section", {})
                 section_label = section.get("label", "") if section else ""
                 field_label = field.get("label", "")
                 field_value = field.get("value")
-                
+
                 if section_label == "Defaults":
                     if field_label == "owner":
                         config["default_owner"] = field_value or ""
@@ -577,23 +575,23 @@ class UsernameGeneratorConfig:
                         config["default_algorithm"] = field_value or "sha512"
                     elif field_label == "length":
                         config["default_length"] = int(field_value) if field_value else 16
-                
+
                 elif section_label.startswith("Service Rules: "):
                     service = section_label.replace("Service Rules: ", "")
                     if service not in config["service_rules"]:
                         config["service_rules"][service] = {}
                     if field_label in ["min", "max"]:
                         config["service_rules"][service][field_label] = int(field_value) if field_value else 0
-            
+
             self._cached_config = config
             return config
-            
+
         except subprocess.CalledProcessError:
             # Item doesn't exist, create it
             return self._create_default_config()
         except (json.JSONDecodeError, KeyError, ValueError) as e:
             raise RuntimeError(f"Failed to parse config: {e}") from e
-    
+
     def _create_default_config(self) -> dict:
         """Create default config in 1Password.
         
@@ -604,7 +602,7 @@ class UsernameGeneratorConfig:
         owner = self._detect_owner()
         config = self.DEFAULT_CONFIG.copy()
         config["default_owner"] = owner
-        
+
         # Build field list using native 1Password sections
         fields = [
             "--category", "Secure Note",
@@ -615,7 +613,7 @@ class UsernameGeneratorConfig:
             f"Defaults.algorithm[text]={config['default_algorithm']}",
             f"Defaults.length[text]={config['default_length']}",
         ]
-        
+
         # Add service rules as separate sections
         for service, rules in config.get("service_rules", {}).items():
             section_name = f"Service Rules: {service}"
@@ -623,9 +621,9 @@ class UsernameGeneratorConfig:
                 fields.append(f"{section_name}.max[text]={rules['max']}")
             if "min" in rules:
                 fields.append(f"{section_name}.min[text]={rules['min']}")
-        
+
         fields.extend(["--format", "json"])
-        
+
         try:
             subprocess.run(
                 ["op", "item", "create"] + fields,
@@ -634,13 +632,13 @@ class UsernameGeneratorConfig:
                 check=True,
                 timeout=30,
             )
-            
+
             self._cached_config = config
             return config
-            
+
         except subprocess.CalledProcessError as e:
             raise RuntimeError(f"Failed to create config: {e.stderr}") from e
-    
+
     def _detect_owner(self) -> str:
         """Detect owner email from 1Password account.
         
@@ -655,13 +653,13 @@ class UsernameGeneratorConfig:
                 check=True,
                 timeout=30,
             )
-            
+
             account_data = json.loads(result.stdout)
             return account_data.get("email", "")
-            
+
         except (subprocess.CalledProcessError, json.JSONDecodeError, KeyError):
             return ""
-    
+
     def save_config_to_1password(self, config: dict) -> None:
         """Save configuration to 1Password Secure Note.
         
@@ -677,7 +675,7 @@ class UsernameGeneratorConfig:
             f"Defaults.algorithm[text]={config.get('default_algorithm', 'sha512')}",
             f"Defaults.length[text]={config.get('default_length', 16)}",
         ]
-        
+
         # Add service rules
         for service, rules in config.get("service_rules", {}).items():
             section_name = f"Service Rules: {service}"
@@ -685,7 +683,7 @@ class UsernameGeneratorConfig:
                 fields.append(f"{section_name}.max[text]={rules['max']}")
             if "min" in rules:
                 fields.append(f"{section_name}.min[text]={rules['min']}")
-        
+
         try:
             subprocess.run(
                 ["op", "item", "edit", self.CONFIG_ITEM_TITLE] + fields,
@@ -694,12 +692,12 @@ class UsernameGeneratorConfig:
                 check=True,
                 timeout=30,
             )
-            
+
             self._cached_config = config
-            
+
         except subprocess.CalledProcessError as e:
             raise RuntimeError(f"Failed to save config: {e.stderr}") from e
-    
+
     def get_default_owner(self) -> str:
         """Get default owner from config.
         
@@ -708,7 +706,7 @@ class UsernameGeneratorConfig:
         """
         config = self.load_config_from_1password()
         return config.get("default_owner", "")
-    
+
     def get_default_algorithm(self) -> str:
         """Get default algorithm from config.
         
@@ -717,7 +715,7 @@ class UsernameGeneratorConfig:
         """
         config = self.load_config_from_1password()
         return config.get("default_algorithm", "sha512")
-    
+
     def get_default_length(self) -> int:
         """Get default length from config.
         
@@ -726,7 +724,7 @@ class UsernameGeneratorConfig:
         """
         config = self.load_config_from_1password()
         return config.get("default_length", 16)
-    
+
     def get_service_rules(self) -> dict:
         """Get service-specific rules from config.
         
@@ -735,7 +733,7 @@ class UsernameGeneratorConfig:
         """
         config = self.load_config_from_1password()
         return config.get("service_rules", {})
-    
+
     def set_default_owner(self, owner: str) -> None:
         """Set default owner in config.
         
@@ -745,7 +743,7 @@ class UsernameGeneratorConfig:
         config = self.load_config_from_1password()
         config["default_owner"] = owner
         self.save_config_to_1password(config)
-    
+
     def set_default_algorithm(self, algorithm: str) -> None:
         """Set default algorithm in config.
         
@@ -755,7 +753,7 @@ class UsernameGeneratorConfig:
         config = self.load_config_from_1password()
         config["default_algorithm"] = algorithm
         self.save_config_to_1password(config)
-    
+
     def set_default_length(self, length: int) -> None:
         """Set default length in config.
         
@@ -765,8 +763,8 @@ class UsernameGeneratorConfig:
         config = self.load_config_from_1password()
         config["default_length"] = length
         self.save_config_to_1password(config)
-    
-    def get_service_max_length(self, service: str) -> Optional[int]:
+
+    def get_service_max_length(self, service: str) -> int | None:
         """Get maximum length for a specific service.
         
         Args:
@@ -782,11 +780,11 @@ class UsernameGeneratorConfig:
 
 class UsernameGenerator:
     """Username generator with 1Password integration."""
-    
+
     SALT_ITEM_PREFIX = "Bastion Salt"
     SALT_TAG = "Bastion/SALT"
-    
-    def __init__(self, op_client=None, config: Optional[UsernameGeneratorConfig] = None):
+
+    def __init__(self, op_client=None, config: UsernameGeneratorConfig | None = None):
         """Initialize generator.
         
         Args:
@@ -795,8 +793,8 @@ class UsernameGenerator:
         """
         self.op_client = op_client
         self.config = config or UsernameGeneratorConfig()
-        self._cached_salt: Optional[tuple[str, str]] = None  # (salt_value, salt_uuid)
-    
+        self._cached_salt: tuple[str, str] | None = None  # (salt_value, salt_uuid)
+
     def find_highest_serial_number(self, version: str = "v1") -> int:
         """Find the highest serial number for salt items of a given version.
         
@@ -815,30 +813,30 @@ class UsernameGenerator:
                 check=True,
                 timeout=30,
             )
-            
+
             items = json.loads(result.stdout)
-            
+
             # Parse serial numbers from titles - format: "Bastion Username Generator Salt #123"
             serial_pattern = re.compile(rf'{re.escape(self.SALT_ITEM_PREFIX)} #(\d+)')
             max_serial = 0
-            
+
             for item in items:
                 title = item.get("title", "")
                 match = serial_pattern.search(title)
                 if match:
                     serial = int(match.group(1))
                     max_serial = max(max_serial, serial)
-            
+
             return max_serial
-            
+
         except (subprocess.CalledProcessError, json.JSONDecodeError, ValueError):
             return 0
-    
+
     def get_latest_salt_by_serial(
         self,
         version: str = "v1",
         algorithm: str = "sha512"
-    ) -> Optional[tuple[str, str, int]]:
+    ) -> tuple[str, str, int] | None:
         """Get the latest salt item by highest serial number.
         
         Args:
@@ -850,16 +848,16 @@ class UsernameGenerator:
         """
         if self._cached_salt:
             return (self._cached_salt[0], self._cached_salt[1], 0)  # Return cached (serial unknown)
-        
+
         try:
             highest_serial = self.find_highest_serial_number(version)
-            
+
             if highest_serial == 0:
                 return None
-            
+
             # Get the item with highest serial
             title = f"{self.SALT_ITEM_PREFIX} #{highest_serial}"
-            
+
             result = subprocess.run(
                 ["op", "item", "get", title, "--format", "json"],
                 capture_output=True,
@@ -867,26 +865,26 @@ class UsernameGenerator:
                 check=True,
                 timeout=30,
             )
-            
+
             item_data = json.loads(result.stdout)
             salt_uuid = item_data.get("id", "")
-            
+
             # Extract password field (salt value)
             for field in item_data.get("fields", []):
                 if field.get("id") == "password" and field.get("value"):
                     salt_value = field["value"]
                     self._cached_salt = (salt_value, salt_uuid)
                     return (salt_value, salt_uuid, highest_serial)
-            
+
             return None
-            
+
         except (subprocess.CalledProcessError, json.JSONDecodeError):
             return None
-    
+
     def get_salt_from_1password(
         self,
-        salt_uuid: Optional[str] = None
-    ) -> Optional[tuple[str, str]]:
+        salt_uuid: str | None = None
+    ) -> tuple[str, str] | None:
         """Retrieve salt from 1Password by UUID or get latest.
         
         Args:
@@ -905,15 +903,15 @@ class UsernameGenerator:
                     check=True,
                     timeout=30,
                 )
-                
+
                 item_data = json.loads(result.stdout)
-                
+
                 for field in item_data.get("fields", []):
                     if field.get("id") == "password" and field.get("value"):
                         return (field["value"], salt_uuid)
-                
+
                 return None
-                
+
             except (subprocess.CalledProcessError, json.JSONDecodeError):
                 return None
         else:
@@ -922,14 +920,14 @@ class UsernameGenerator:
             if result:
                 return (result[0], result[1])
             return None
-    
+
     def create_salt_item(
         self,
-        salt: Optional[str] = None,
+        salt: str | None = None,
         vault: str = "Private",
         version: str = "v1",
         algorithm: str = "sha512",
-        entropy_pool_uuid: Optional[str] = None,
+        entropy_pool_uuid: str | None = None,
     ) -> tuple[str, str, int]:
         """Create a new salt item in 1Password with serial number.
         
@@ -953,12 +951,13 @@ class UsernameGenerator:
             RuntimeError: If creation fails or entropy pool is invalid
         """
         import secrets
+
         from .entropy import derive_salt_from_entropy_pool
-        
+
         # Track derivation metadata
         entropy_source_uuid = None
         derivation_label = None
-        
+
         if salt is None:
             if entropy_pool_uuid:
                 # Derive salt from entropy pool using HKDF-SHA512
@@ -970,14 +969,14 @@ class UsernameGenerator:
             else:
                 # Generate 512-bit (64 byte) random salt using system RNG
                 salt = secrets.token_hex(64)
-        
+
         # Find next serial number (simple increment, no padding, no limit)
         highest_serial = self.find_highest_serial_number(version)
         next_serial = highest_serial + 1
-        
+
         # Build title (version in metadata, not title)
         title = f"{self.SALT_ITEM_PREFIX} #{next_serial}"
-        
+
         # Build field list
         fields = [
             "op", "item", "create",
@@ -991,7 +990,7 @@ class UsernameGenerator:
             f"Salt Info.Serial Number[text]={next_serial}",
             f"Salt Info.Algorithm[text]={algorithm}",
         ]
-        
+
         # Add derivation metadata if derived from entropy pool
         if entropy_source_uuid:
             fields.extend([
@@ -1002,9 +1001,9 @@ class UsernameGenerator:
             ])
         else:
             fields.append("Derivation.Source[text]=system RNG (secrets.token_hex)")
-        
+
         fields.extend(["--format", "json"])
-        
+
         try:
             # Create password item with salt using sections
             result = subprocess.run(
@@ -1014,22 +1013,22 @@ class UsernameGenerator:
                 check=True,
                 timeout=30,
             )
-            
+
             item_data = json.loads(result.stdout)
             salt_uuid = item_data.get("id", "")
-            
+
             self._cached_salt = (salt, salt_uuid)
             return (salt, salt_uuid, next_serial)
-            
+
         except subprocess.CalledProcessError as e:
             raise RuntimeError(f"Failed to create salt item: {e.stderr}") from e
-    
+
     def generate(
         self,
         label: str,
         length: int = 16,
-        salt_uuid: Optional[str] = None,
-        nonce: Optional[str] = None,
+        salt_uuid: str | None = None,
+        nonce: str | None = None,
         encoding: int = 36,
     ) -> str:
         """Generate a username for the given service label.
@@ -1053,37 +1052,37 @@ class UsernameGenerator:
         """
         # Parse label
         parser = LabelParser(label)
-        
+
         if not parser.is_valid():
             raise ValueError(f"Invalid label format: {label}")
-        
+
         # Get salt
         salt_result = self.get_salt_from_1password(salt_uuid)
-        
+
         if not salt_result:
             raise RuntimeError(
                 "Salt item not found in 1Password. "
                 "Run 'bastion generate username --init' to create it."
             )
-        
+
         salt_value, _ = salt_result
-        
+
         # Get generation function for algorithm
         gen_func = parser.get_generation_function()
-        
+
         # Validate length
         max_length = parser.get_max_length()
         if length > max_length:
             raise ValueError(f"Length {length} exceeds maximum {max_length} for {parser.algorithm}")
-        
+
         return gen_func(label, salt_value, length, encoding, nonce)
-    
+
     def verify(
         self,
         label: str,
         username: str,
-        salt_uuid: Optional[str] = None,
-        nonce: Optional[str] = None,
+        salt_uuid: str | None = None,
+        nonce: str | None = None,
         encoding: int = 36,
     ) -> bool:
         """Verify a username was generated from the given label.
@@ -1102,16 +1101,16 @@ class UsernameGenerator:
             RuntimeError: If salt is not found in 1Password
         """
         salt_result = self.get_salt_from_1password(salt_uuid)
-        
+
         if not salt_result:
             raise RuntimeError("Salt item not found in 1Password")
-        
+
         salt_value, _ = salt_result
-        
+
         expected = self.generate(label, len(username), salt_uuid, nonce, encoding)
         return username == expected
-    
-    def check_label_collision(self, label: str) -> Optional[dict]:
+
+    def check_label_collision(self, label: str) -> dict | None:
         """Check if a label already exists in 1Password.
         
         Args:
@@ -1129,14 +1128,14 @@ class UsernameGenerator:
                 check=True,
                 timeout=30,
             )
-            
+
             items = json.loads(result.stdout)
-            
+
             # Check each item for matching label
             for item in items:
                 item_uuid = item.get("id", "")
                 item_title = item.get("title", "")
-                
+
                 # Get full item details to check custom fields
                 detail_result = subprocess.run(
                     ["op", "item", "get", item_uuid, "--format", "json"],
@@ -1145,9 +1144,9 @@ class UsernameGenerator:
                     check=True,
                     timeout=30,
                 )
-                
+
                 detail_data = json.loads(detail_result.stdout)
-                
+
                 # Check username_label field
                 for field in detail_data.get("fields", []):
                     if field.get("label") == "username_label" and field.get("value") == label:
@@ -1156,12 +1155,12 @@ class UsernameGenerator:
                             "uuid": item_uuid,
                             "label": label
                         }
-            
+
             return None
-            
+
         except (subprocess.CalledProcessError, json.JSONDecodeError):
             return None
-    
+
     def suggest_collision_suffix(self, label: str) -> list[str]:
         """Suggest alternative labels for collision resolution.
         
@@ -1174,9 +1173,9 @@ class UsernameGenerator:
         parser = LabelParser(label)
         if not parser.is_valid():
             return []
-        
+
         suggestions = []
-        
+
         # Try suffixes on the date: 2025-11-21-b, 2025-11-21-c, etc.
         for letter in "bcdefghij":  # First 10 suggestions
             new_label = LabelParser.build_label(
@@ -1187,9 +1186,9 @@ class UsernameGenerator:
                 length=parser.length,
             )
             suggestions.append(new_label)
-        
+
         return suggestions
-    
+
     def create_login_with_username(
         self,
         title: str,
@@ -1198,7 +1197,7 @@ class UsernameGenerator:
         vault: str = "Private",
         length: int = 16,
         tags: list[str] | None = None,
-        salt_uuid: Optional[str] = None,
+        salt_uuid: str | None = None,
     ) -> dict:
         """Create a 1Password login item with generated username and full metadata.
         
@@ -1220,21 +1219,21 @@ class UsernameGenerator:
         """
         # Parse label for algorithm info
         parser = LabelParser(label)
-        
+
         if not parser.is_valid():
             raise ValueError(f"Invalid label format: {label}")
-        
+
         # Get salt and UUID
         salt_result = self.get_salt_from_1password(salt_uuid)
-        
+
         if not salt_result:
             raise RuntimeError("Salt item not found in 1Password")
-        
+
         _, used_salt_uuid = salt_result
-        
+
         # Generate username
         username = self.generate(label, length, salt_uuid)
-        
+
         # Build tags list from parsed label hierarchy
         # Tag format: Bastion/USER/SHA2/512 (algorithm hierarchy)
         # Build tags list from parsed label hierarchy
@@ -1244,7 +1243,7 @@ class UsernameGenerator:
         all_tags = [generated_tag]
         if tags:
             all_tags.extend(tags)
-        
+
         # Build op item create command
         cmd = [
             "op", "item", "create",
@@ -1256,10 +1255,10 @@ class UsernameGenerator:
             "--tags", ",".join(all_tags),
             "--format", "json",
         ]
-        
+
         # Remove empty url if not provided
         cmd = [arg for arg in cmd if arg]
-        
+
         try:
             result = subprocess.run(
                 cmd,
@@ -1268,10 +1267,10 @@ class UsernameGenerator:
                 check=True,
                 timeout=30,
             )
-            
+
             item_data = json.loads(result.stdout)
             uuid = item_data.get("id")
-            
+
             # Build metadata edit command with unified Bastion Label section
             # and separate Salt section (fields in label order)
             edit_args = [
@@ -1287,7 +1286,7 @@ class UsernameGenerator:
                 # Salt section - reference to salt item
                 f"Salt.UUID[text]={used_salt_uuid}",
             ]
-            
+
             subprocess.run(
                 edit_args,
                 capture_output=True,
@@ -1295,7 +1294,7 @@ class UsernameGenerator:
                 check=True,
                 timeout=30,
             )
-            
+
             return {
                 "uuid": uuid,
                 "title": title,
@@ -1307,6 +1306,6 @@ class UsernameGenerator:
                 "algorithm": bl.algo if bl else "SHA2/512",
                 "length": bl.get_param('length', length) if bl else length,
             }
-            
+
         except subprocess.CalledProcessError as e:
             raise RuntimeError(f"Failed to create login item: {e.stderr}") from e

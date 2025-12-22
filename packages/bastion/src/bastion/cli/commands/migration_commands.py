@@ -3,16 +3,16 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 
 import typer
 from rich.console import Console
 
 from .migrations import (
-    migrate_tags,
-    convert_single_to_note,
     convert_bulk_to_notes,
+    convert_single_to_note,
     migrate_from_bastion_impl,
+    migrate_tags,
 )
 from .yubikey import migrate_yubikey_fields, sync_yubikey_accounts
 
@@ -20,7 +20,7 @@ console = Console()
 
 # Type alias for common db option
 DbPathOption = Annotated[
-    Optional[Path],
+    Path | None,
     typer.Option(
         "--db",
         help="Database file path",
@@ -31,7 +31,7 @@ DbPathOption = Annotated[
 
 def register_commands(app: typer.Typer) -> None:
     """Register migration-related commands with the app."""
-    
+
     @app.command("migrate")
     def migrate_command(
         object_type: Annotated[
@@ -39,11 +39,11 @@ def register_commands(app: typer.Typer) -> None:
             typer.Argument(help="Object type: tags, fields, from-bastion"),
         ],
         second_arg: Annotated[
-            Optional[str],
+            str | None,
             typer.Argument(help="For fields: resource type (yubikey)"),
         ] = None,
         third_arg: Annotated[
-            Optional[str],
+            str | None,
             typer.Argument(help="Reserved for future use"),
         ] = None,
         # Common options
@@ -58,42 +58,43 @@ def register_commands(app: typer.Typer) -> None:
         # migrate from-bastion options
         skip_cache: Annotated[bool, typer.Option("--skip-cache", help="[from-bastion] Skip cache migration")] = False,
     ) -> None:
-        """Migrate tags, fields, or from legacy Bastion format.
-        
-        NOTE: For TOTP migration, use 'bastion add totp' instead.
-        
-        Examples:
+        """
+        \bMigrate tags, fields, or from legacy Bastion format.
+
+        \bNOTE: For TOTP migration, use 'bastion add totp' instead.
+
+        \bExamples:
             # Migrate tags
             bastion migrate tags --dry-run
             bastion migrate tags --yes
-            
+
             # Migrate YubiKey fields
             bastion migrate fields yubikey --status
             bastion migrate fields yubikey --uuid <UUID>
             bastion migrate fields yubikey --all
-            
+
             # Migrate from legacy Bastion format
             bastion migrate from-bastion --dry-run
             bastion migrate from-bastion
         """
-        
+
         if object_type == "tags":
             # Migrate flat bastion-* tags to nested Bastion/* structure
             migrate_tags(db_path, dry_run, yes)
-            
+
         elif object_type == "fields":
             # bastion migrate fields yubikey [options]
             if not second_arg or second_arg != "yubikey":
                 console.print(f"[red]Expected 'yubikey' after 'fields', got '{second_arg}'[/red]")
                 console.print("Usage: bastion migrate fields yubikey [--status|--uuid UUID|--all]")
                 raise typer.Exit(1)
-            
+
             migrate_yubikey_fields(uuid, all_items, non_interactive, dry_run, status)
-        
+
         elif object_type == "from-bastion":
             # Migrate from legacy Bastion format
             migrate_from_bastion_impl(dry_run=dry_run, skip_cache=skip_cache)
-            
+
         elif object_type == "totp":
             console.print("[yellow]⚠️  'bastion migrate totp' is deprecated[/yellow]")
             console.print("[cyan]Use the new 'bastion add totp' command instead:[/cyan]\n")
@@ -120,29 +121,31 @@ def register_commands(app: typer.Typer) -> None:
         tag: Annotated[str, typer.Option("--tag", help="[tokens-to-notes] Tag to filter items")] = "bastion-token",
         dry_run: Annotated[bool, typer.Option("--dry-run", help="Show what would be converted without making changes")] = False,
     ) -> None:
-        """Convert CUSTOM items to SECURE_NOTE for compatibility.
-        
-        CUSTOM items with category_id cannot be edited via 1Password CLI due to a bug.
-        Converting them to SECURE_NOTE preserves all data and enables linking.
-        
-        Examples:
-          bastion convert to-note abc123xyz                    # Convert single item
-          bastion convert to-note abc123xyz --dry-run          # Preview conversion
-          bastion convert tokens-to-notes                      # Convert all bastion-token items
-          bastion convert tokens-to-notes --tag bastion-entropy    # Convert items with specific tag
         """
-        
+        \bConvert CUSTOM items to SECURE_NOTE for compatibility.
+
+        \bDetails:
+            CUSTOM items with category_id cannot be edited via 1Password CLI due to a bug.
+            Converting them to SECURE_NOTE preserves all data and enables linking.
+
+        \bExamples:
+            bastion convert to-note abc123xyz                    # Convert single item
+            bastion convert to-note abc123xyz --dry-run          # Preview conversion
+            bastion convert tokens-to-notes                      # Convert all bastion-token items
+            bastion convert tokens-to-notes --tag bastion-entropy    # Convert items with specific tag
+        """
+
         if noun == "to-note":
             if not item_uuid:
                 console.print("[red]Error: to-note requires an item UUID[/red]")
                 console.print("Usage: bastion convert to-note ITEM_UUID")
                 raise typer.Exit(1)
-            
+
             convert_single_to_note(item_uuid, dry_run)
-        
+
         elif noun == "tokens-to-notes":
             convert_bulk_to_notes(tag, dry_run)
-        
+
         else:
             console.print(f"[red]Error: Unknown conversion type '{noun}'[/red]")
             console.print("Available: to-note, tokens-to-notes")
@@ -155,11 +158,12 @@ def register_commands(app: typer.Typer) -> None:
         target: Annotated[str, typer.Option("--to", help="Target YubiKey serial or 'all'")],
         db_path: DbPathOption = None,
     ) -> None:
-        """Copy OATH accounts between YubiKeys.
-        
-        Examples:
-          bastion copy accounts --from 12345678 --to 24014077    # Copy from one to another
-          bastion copy accounts --from 12345678 --to all         # Copy to all other YubiKeys
+        """
+        \bCopy OATH accounts between YubiKeys.
+
+        \bExamples:
+            bastion copy accounts --from 12345678 --to 24014077    # Copy from one to another
+            bastion copy accounts --from 12345678 --to all         # Copy to all other YubiKeys
         """
         if noun == "accounts":
             sync_yubikey_accounts(source, target, db_path)

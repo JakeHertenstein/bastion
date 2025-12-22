@@ -5,20 +5,19 @@ Main CLI application for Seeder.
 Organized, refactored entry point that imports from the proper package structure.
 """
 
-import sys
-from pathlib import Path
 
 import typer
 from rich.console import Console
 
+from ..core.grid import SeederGrid
+
 # Import from the new organized structure
 from ..core.seed_sources import SeedSources
-from ..core.grid import SeederGrid
-from .display import print_grid_table, create_info_panel
+from .commands.analyze import analyze_app
+from .commands.export import export_app
 from .commands.generate import generate_app
 from .commands.verify import verify_app
-from .commands.export import export_app
-from .commands.analyze import analyze_app
+from .display import create_info_panel, print_grid_table
 
 console = Console()
 
@@ -58,15 +57,15 @@ def show_grid(
         else:
             console.print("❌ Error: Must specify a seed source", style="bold red")
             raise typer.Exit(1)
-        
+
         grid = SeederGrid(seed_bytes)
         print_grid_table(grid)
-        
+
         if with_hash:
             from ..core.crypto import SeedCardDigest
             hash_value = SeedCardDigest.generate_sha512_hash(seed_bytes)
             console.print(f"\n🔍 SHA-512: [cyan]{hash_value}[/cyan]")
-        
+
     except Exception as e:
         console.print(f"❌ Error: {e}", style="bold red")
         raise typer.Exit(1)
@@ -85,11 +84,11 @@ def demo(
     """🎮 Run demo with default BIP-39 test vector."""
     console.print("🎮 Running demo with BIP-39 test vector", style="bold cyan")
     default_mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
-    
+
     try:
         seed_bytes = SeedSources.bip39_to_seed(default_mnemonic, "")
         grid = SeederGrid(seed_bytes)
-        
+
         if output_format == "table":
             print_grid_table(grid)
         else:
@@ -97,9 +96,9 @@ def demo(
                 row_letter = chr(ord('A') + r)
                 row_vals = [grid.get_token(f"{row_letter}{c}") for c in range(10)]
                 typer.echo(" ".join(row_vals))
-        
+
         console.print("\n💡 Use [cyan]--help[/cyan] for more commands")
-        
+
     except Exception as e:
         console.print(f"❌ Error: {e}", style="bold red")
         raise typer.Exit(1)

@@ -15,9 +15,8 @@ Key characteristics:
 Reference: https://github.com/leetronics/infnoise
 """
 
-import subprocess
 import re
-from typing import Optional
+import subprocess
 from dataclasses import dataclass
 
 
@@ -29,7 +28,7 @@ class InfNoiseMetadata:
     whitened: bool
     multiplier: int
     collection_method: str = "infnoise CLI"
-    
+
     def to_dict(self) -> dict[str, str | int | bool]:
         """Convert to dictionary for storage in 1Password.
         
@@ -63,23 +62,23 @@ def list_infnoise_devices() -> list[dict[str, str]]:
             text=True,
             timeout=10,
         )
-        
+
         # Parse output - infnoise outputs "ID: N, Manufacturer: X, Description: Y, Serial: Z"
         devices = []
         output = result.stdout + result.stderr
-        
+
         # Look for "Serial: XXXXX" pattern (handles serial like "1337-151562E9")
         serial_pattern = re.findall(r'Serial:\s*([A-Za-z0-9-]+)', output)
         if serial_pattern:
             for serial in serial_pattern:
                 devices.append({"serial": serial})
-        
+
         # If no serials found but command succeeded, device may be present
         if not devices and result.returncode == 0:
             devices.append({"serial": "unknown"})
-        
+
         return devices
-        
+
     except subprocess.TimeoutExpired:
         raise InfNoiseError(
             "infnoise --list-devices timed out"
@@ -91,7 +90,7 @@ def list_infnoise_devices() -> list[dict[str, str]]:
         ) from None
 
 
-def check_infnoise_available() -> tuple[bool, Optional[str]]:
+def check_infnoise_available() -> tuple[bool, str | None]:
     """Check if Infinite Noise TRNG is available.
     
     Returns:
@@ -133,35 +132,35 @@ def collect_infnoise_entropy(
     """
     if bits % 8 != 0:
         raise ValueError(f"Bits must be multiple of 8, got {bits}")
-    
+
     byte_count = bits // 8
-    
+
     if byte_count == 0:
         raise ValueError("Must request at least 8 bits (1 byte)")
-    
+
     # Check device availability first
     available, error = check_infnoise_available()
     if not available:
         raise InfNoiseError(error)
-    
+
     # Get device serial for metadata
     try:
         devices = list_infnoise_devices()
         serial = devices[0]["serial"] if devices else "unknown"
     except InfNoiseError:
         serial = "unknown"
-    
+
     try:
         # Build command
         # infnoise outputs to stdout continuously, we need to read exact bytes
         cmd = ["infnoise"]
-        
+
         if raw:
             cmd.append("--raw")
-        
+
         if multiplier > 0:
             cmd.extend(["--multiplier", str(multiplier)])
-        
+
         # Run infnoise and read exactly byte_count bytes
         # Use head -c to limit output, or read from process directly
         process = subprocess.Popen(
@@ -169,25 +168,25 @@ def collect_infnoise_entropy(
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        
+
         try:
             # Read exactly the bytes we need
             entropy_bytes = process.stdout.read(byte_count)
-            
+
             # Terminate the process since we have what we need
             process.terminate()
             process.wait(timeout=5)
-            
+
         except Exception as e:
             process.kill()
             raise InfNoiseError(f"Failed to read entropy: {e}") from e
-        
+
         if len(entropy_bytes) != byte_count:
             raise InfNoiseError(
                 f"Expected {byte_count} bytes, got {len(entropy_bytes)}. "
                 "Device may have disconnected or failed health check."
             )
-        
+
         # Create metadata
         metadata = InfNoiseMetadata(
             serial=serial,
@@ -195,9 +194,9 @@ def collect_infnoise_entropy(
             whitened=not raw,
             multiplier=multiplier,
         )
-        
+
         return (entropy_bytes, metadata)
-        
+
     except subprocess.TimeoutExpired:
         raise InfNoiseError(
             "infnoise timed out. Is device connected and working?"
@@ -225,8 +224,8 @@ def estimate_collection_time(bits: int) -> tuple[int, float]:
     # With overhead, estimate conservatively at 30,000 bytes/second
     bytes_needed = bits // 8
     seconds = bytes_needed / 30000.0
-    
+
     # Minimum estimate is 0.1 seconds for device initialization
     seconds = max(0.1, seconds)
-    
+
     return (bits, seconds)

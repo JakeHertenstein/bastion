@@ -134,6 +134,29 @@ Bastion/2FA/None            # No 2FA available or enabled
 
 **Important**: List ALL enabled methods to compute strongest and weakest 2FA.
 
+#### YubiKey TOTP Profile Tags
+
+For managing which TOTP accounts get provisioned to specific YubiKey devices:
+
+```
+Bastion/2FA/TOTP/YubiKey/Include/<Profile>  # Include in specified profile
+Bastion/2FA/TOTP/YubiKey/Exclude/<Profile>  # Exclude from specified profile
+```
+
+**Profile-based provisioning**:
+- Define profiles on YubiKey items (e.g., "Primary", "Backup", "Travel")
+- Tag accounts with `Include/<Profile>` to provision them to devices with that profile
+- Tag accounts with `Exclude/<Profile>` to exclude from specific profiles
+- Accounts require explicit `Include` tag to be provisioned (opt-in)
+- Exclude takes precedence over Include
+
+**Examples**:
+```
+Bastion/2FA/TOTP/YubiKey/Include/Primary   # Provision to primary carry device
+Bastion/2FA/TOTP/YubiKey/Include/Backup    # Provision to backup device
+Bastion/2FA/TOTP/YubiKey/Exclude/Travel    # Don't provision to travel device
+```
+
 ### 6. Security Tags (`Bastion/Security/*`)
 
 Account-level security status:

@@ -36,20 +36,20 @@ def generate_unique_oath_name(
     # Helper to truncate with limit
     def truncate(s: str, limit: int) -> str:
         return s[:limit] if s else ""
-    
+
     # Issuer: Clean title only (20 char limit for icon matching)
     issuer = truncate(title, 20)
-    
+
     # Account base: username
     username_part = username if username else "user"
-    
+
     # Try 1: username (https://domain) - full URL for best disambiguation
     if website:
         try:
             # Clean URL: remove trailing slashes, fragments
             clean_url = website.rstrip('/').split('#')[0].split('?')[0]
             full_account = f"{username_part} ({clean_url})"
-            
+
             if len(full_account) <= 54:
                 candidate = f"{issuer}:{full_account}"
                 if candidate not in existing_names:
@@ -59,20 +59,20 @@ def generate_unique_oath_name(
                 parsed = urlparse(clean_url)
                 simple_url = f"https://{parsed.netloc}"
                 full_account = f"{username_part} ({simple_url})"
-                
+
                 if len(full_account) <= 54:
                     candidate = f"{issuer}:{full_account}"
                     if candidate not in existing_names:
                         return issuer, full_account
         except Exception:
             pass
-    
+
     # Try 2: username (domain) - domain only if URL didn't fit
     if website:
         try:
             domain = urlparse(website).netloc.replace("www.", "")
             account_with_domain = f"{username_part} ({domain})"
-            
+
             if len(account_with_domain) <= 54:
                 candidate = f"{issuer}:{account_with_domain}"
                 if candidate not in existing_names:
@@ -89,13 +89,13 @@ def generate_unique_oath_name(
                         return issuer, account_with_domain
         except Exception:
             pass
-    
+
     # Try 3: username only (simple fallback)
     account_simple = truncate(username_part, 54)
     candidate = f"{issuer}:{account_simple}"
     if candidate not in existing_names:
         return issuer, account_simple
-    
+
     # Try 4: username [UUID-short] (guaranteed unique)
     uuid_short = uuid[:6]
     account_with_uuid = truncate(f"{username_part} [{uuid_short}]", 54)
@@ -120,7 +120,7 @@ def get_yubikey_field(item_data: dict, field_name: str, section_name: str | None
         For "serials"/"tokens", returns comma-separated list from Token sections
     """
     fields = item_data.get("fields", [])
-    
+
     # Special handling for "serials" or "tokens" - aggregate from Token N sections
     if field_name in ["serials", "tokens"]:
         # Try new Token N sections first
@@ -129,7 +129,7 @@ def get_yubikey_field(item_data: dict, field_name: str, section_name: str | None
             section = field.get("section", {})
             section_label = section.get("label", "") if section else ""
             field_label = field.get("label", "")
-            
+
             if section_label.startswith("Token "):
                 try:
                     token_num = int(section_label.split(" ")[1])
@@ -137,31 +137,31 @@ def get_yubikey_field(item_data: dict, field_name: str, section_name: str | None
                         token_serials[token_num] = field.get("value", "")
                 except (IndexError, ValueError):
                     pass
-        
+
         if token_serials:
             # Return serials in order
             return ",".join([token_serials[i] for i in sorted(token_serials.keys())])
-        
+
         # Fall back to legacy Tokens section with token_N fields
         legacy_tokens = {}
         for field in fields:
             section = field.get("section", {})
             section_label = section.get("label", "") if section else ""
             field_label = field.get("label", "")
-            
+
             if section_label == "Tokens" and field_label.startswith("token_"):
                 try:
                     token_num = int(field_label.split("_")[1])
                     legacy_tokens[token_num] = field.get("value", "")
                 except (IndexError, ValueError):
                     pass
-        
+
         if legacy_tokens:
             return ",".join([legacy_tokens[i] for i in sorted(legacy_tokens.keys())])
-        
+
         # Fall back to old yubikey_serials CSV field
         field_name = "serials"
-    
+
     # Special handling for "oath_name" - get from first Token section with OATH Name
     if field_name == "oath_name":
         # Try Token N sections (YubiKey or Phone App types have OATH Name)
@@ -170,7 +170,7 @@ def get_yubikey_field(item_data: dict, field_name: str, section_name: str | None
             section = field.get("section", {})
             section_label = section.get("label", "") if section else ""
             field_label = field.get("label", "")
-            
+
             if section_label.startswith("Token "):
                 try:
                     token_num = int(section_label.split(" ")[1])
@@ -180,44 +180,44 @@ def get_yubikey_field(item_data: dict, field_name: str, section_name: str | None
                         token_sections[token_num][field_label] = field.get("value", "")
                 except (IndexError, ValueError):
                     pass
-        
+
         # Return OATH Name from first YubiKey or Phone App token
         for token_num in sorted(token_sections.keys()):
             token_data = token_sections[token_num]
             token_type = token_data.get("Type", "")
             if token_type in ["YubiKey", "Phone App"] and "OATH Name" in token_data:
                 return token_data["OATH Name"]
-        
+
         # Fall back to old yubikey_oath_name field
         # (will be handled by code below)
-    
+
     # Try legacy section-based format (YubiKey TOTP section)
     if section_name:
         for field in fields:
             section = field.get("section", {})
             section_label = section.get("label", "") if section else ""
             field_label = field.get("label", "")
-            
+
             if section_label == section_name and field_label == field_name:
                 return field.get("value")
-    
+
     # Fall back to old flat format
     old_field_map = {
         "oath_name": "yubikey_oath_name",
         "serials": "yubikey_serials"
     }
-    
+
     old_field_name = old_field_map.get(field_name, field_name)
-    
+
     for field in fields:
         section = field.get("section", {})
         section_label = section.get("label", "") if section else ""
         field_label = field.get("label", "")
-        
+
         # Only match if it's NOT in a section (flat field)
         if not section_label and field_label == old_field_name:
             return field.get("value")
-    
+
     return None
 
 
@@ -235,16 +235,16 @@ def get_all_oath_names_from_tokens(item_data: dict) -> list[str]:
     """
     oath_names = []
     fields = item_data.get("fields", [])
-    
+
     for field in fields:
         section = field.get("section", {})
         section_label = section.get("label", "") if section else ""
         field_label = field.get("label", "")
-        
+
         # Check Token N sections for OATH Name fields
         if section_label.startswith("Token ") and field_label == "OATH Name":
             oath_name = field.get("value", "")
             if oath_name:
                 oath_names.append(oath_name)
-    
+
     return oath_names

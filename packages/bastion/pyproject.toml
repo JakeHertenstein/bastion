@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "bastion-security"
-version = "0.3.0"
+dynamic = ["version"]
 description = "Password rotation tracking, deterministic username generation, and entropy management with 1Password integration"
 readme = "README.md"
 license = {text = "PolyForm Noncommercial 1.0.0"}
@@ -26,9 +26,11 @@ classifiers = [
     "Environment :: Console",
     "Intended Audience :: Developers",
     "Intended Audience :: System Administrators",
-    "Operating System :: OS Independent",
+    "Operating System :: MacOS :: MacOS X",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Security",
     "Topic :: Security :: Cryptography",
     "Typing :: Typed",
@@ -43,6 +45,7 @@ dependencies = [
     "numpy>=1.26.0",
     "matplotlib>=3.8.0",
     "cryptography>=42.0.0",
+    "qrcode>=7.4.2",
 ]
 
 [project.urls]
@@ -57,3 +60,7 @@ bastion = "bastion.cli:app"  # Backward compatibility alias
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/bastion"]
+
+[tool.hatch.version]
+path = "../../VERSION"
+pattern = "(?P<version>.*)"

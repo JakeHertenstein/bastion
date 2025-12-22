@@ -4,82 +4,80 @@ from datetime import datetime
 
 import pendulum
 
-from .models import Account
+from .models import Account, RiskLevel
 
 
 class RotationPlanner:
     """Calculate rotation schedules and process 1Password items."""
 
-    TIER_INTERVALS = {
-        "Tier 1": 90,
-        "Tier 2": 180,
-        "Tier 3": 365,
+    RISK_INTERVALS = {
+        RiskLevel.CRITICAL: 30,
+        RiskLevel.HIGH: 60,
+        RiskLevel.MEDIUM: 90,
+        RiskLevel.LOW: 180,
     }
 
     def process_item(self, item: dict, baseline: str) -> Account:
         """Process a 1Password item into an Account model."""
         uuid = item["id"]
         title = item["title"]
-        
+
         # Extract vault
         vault_name = item.get("vault", {}).get("name", "Private")
-        
+
         # Extract username
         username = self._extract_username(item)
-        
+
         # Extract tags
         tags = item.get("tags", [])
         tags_str = ", ".join(tags) if isinstance(tags, list) else ""
-        
-        # Determine tier from tags
-        tier = self._determine_tier(tags)
-        
+
         # Extract URLs
         urls = [url.get("href", "") for url in item.get("urls", [])]
         urls_str = ", ".join(urls)
-        
+
         # Extract password updated timestamp
         password_updated = self._extract_password_timestamp(item)
-        
+
         # Extract custom fields
         fields = item.get("fields", [])
         custom_fields = {f.get("label", ""): f.get("value", "") for f in fields}
-        
+
         # Extract alternate recovery email if present
         alternate_recovery_email = custom_fields.get("alternate_recovery_email", "") or custom_fields.get("Alternate Recovery Email", "")
-        
+
         # Cache fields for audit commands (to avoid re-fetching from 1Password)
         fields_cache = fields if fields else []
-        
+
         # Detect rotation tags
         rotation_tag, rotation_interval = self._detect_rotation_tag(tags)
-        
+
         # Calculate rotation schedule
+        # Note: Will be determined by risk_level at runtime
         if rotation_interval is None:
-            rotation_interval = self.TIER_INTERVALS.get(tier, 180)
-        
+            rotation_interval = 90  # Default, will be overridden by risk level
+
         next_rotation_date = ""
         days_until = None
         if password_updated:
             next_rotation_date = self._calculate_next_rotation(password_updated, rotation_interval)
             if next_rotation_date:
                 days_until = self._calculate_days_until(next_rotation_date)
-        
+
         # Check if pre-baseline
         is_pre_baseline = False
         if password_updated:
             is_pre_baseline = password_updated < baseline
-        
+
         # Extract 2FA info
         twofa_flags = self._extract_2fa_flags(tags)
-        
+
         return Account(
             uuid=uuid,
             title=title,
             vault_name=vault_name,
             username=username,
             alternate_recovery_email=alternate_recovery_email,
-            tier=tier,
             fields_cache=fields_cache,
             tags=tags_str,
             urls=urls_str,
@@ -104,17 +102,6 @@ class RotationPlanner:
             last_synced=datetime.now().isoformat(),
         )
 
-    def _determine_tier(self, tags: list[str]) -> str:
-        """Determine tier from tags."""
-        tags_lower = [t.lower() for t in tags]
-        if "tier1" in tags_lower:
-            return "Tier 1"
-        elif "tier2" in tags_lower:
-            return "Tier 2"
-        elif "tier3" in tags_lower:
-            return "Tier 3"
-        return "Tier 2"  # default
-
     def _extract_password_timestamp(self, item: dict) -> str:
         """Extract password field update timestamp."""
         fields = item.get("fields", [])
@@ -123,7 +110,7 @@ class RotationPlanner:
                 updated_at = field.get("updated_at")
                 if updated_at:
                     return updated_at
-        
+
         # Fallback to item updated_at
         return item.get("updated_at", "")
 
@@ -167,26 +154,26 @@ class RotationPlanner:
             "no2fa": "no-2fa" in tags,
             "downgraded": "2fa-downgraded" in tags,
         }
-    
+
     def _extract_username(self, item: dict) -> str:
         """Extract username/email field from 1Password item."""
         fields = item.get("fields", [])
-        
+
         # Look for username field
         for field in fields:
             field_id = field.get("id", "")
             field_type = field.get("type", "")
             field_label = field.get("label", "").lower()
-            
+
             # Common username field patterns
             if field_id == "username" or field_type == "STRING" and "username" in field_label:
                 return field.get("value", "")
             if "email" in field_label and field_type == "EMAIL":
                 return field.get("value", "")
-        
+
         # Fallback: check for any email-type field
         for field in fields:
             if field.get("type") == "EMAIL":
                 return field.get("value", "")
-        
+
         return ""

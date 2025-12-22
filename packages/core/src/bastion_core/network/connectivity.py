@@ -39,7 +39,7 @@ def can_reach_host(host: str, port: int = 443, timeout: float = 3.0) -> bool:
         result = sock.connect_ex((host, port))
         sock.close()
         return result == 0
-    except (OSError, socket.error):
+    except OSError:
         return False
 
 

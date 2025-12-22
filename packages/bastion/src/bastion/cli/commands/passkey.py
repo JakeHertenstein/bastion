@@ -14,14 +14,13 @@ from typing import Annotated
 
 import typer
 
-from ..console import console
 from ...op_client import OpClient
 from ...passkey_health import (
     get_clipboard_json,
     get_item_info_from_export,
     get_passkey_status,
 )
-
+from ..console import console
 
 # Tag applied to items with orphaned passkeys
 ORPHANED_PASSKEY_TAG = "Bastion/Problem/Passkey/Orphaned"
@@ -87,19 +86,19 @@ def check_clipboard(
     if status == "healthy":
         console.print("[green]✓ Passkey is healthy[/green]")
         console.print("[dim]  Both public metadata and private key are present[/dim]")
-        
+
         # Mark as verified if requested
         if mark_verified and info["uuid"]:
             _apply_tag(info["uuid"], info["title"], VERIFIED_PASSKEY_TAG)
-            
+
     elif status == "orphaned":
         console.print("[red]✗ Passkey is ORPHANED[/red]")
         console.print("[yellow]  Public metadata exists but private key was deleted[/yellow]")
-        
+
         # Apply tag if requested
         if tag_if_orphaned and info["uuid"]:
             _apply_tag(info["uuid"], info["title"], ORPHANED_PASSKEY_TAG)
-        
+
         console.print()
         console.print("[dim]This passkey cannot be used for authentication.[/dim]")
         console.print("[dim]You'll need to delete it and re-register with the service.[/dim]")
@@ -140,16 +139,16 @@ def audit_passkeys(
     """
     # Check for macOS automation if --auto requested
     if auto_open:
-        from ...macos_automation import is_macos, is_1password_running
-        
+        from ...macos_automation import is_1password_running, is_macos
+
         if not is_macos():
             console.print("[red]Error:[/red] --auto flag requires macOS")
             raise typer.Exit(1)
-        
+
         if not is_1password_running():
             console.print("[red]Error:[/red] 1Password is not running. Please open 1Password first.")
             raise typer.Exit(1)
-        
+
         console.print("[cyan]Auto-open mode enabled - items will open in 1Password automatically[/cyan]")
         console.print()
 
@@ -161,7 +160,7 @@ def audit_passkeys(
 
     # Get items with software passkey tag
     items = op.list_items_by_tag(SOFTWARE_PASSKEY_TAG)
-    
+
     if not items:
         console.print(f"[dim]No items found with tag '{SOFTWARE_PASSKEY_TAG}'[/dim]")
         return
@@ -196,94 +195,94 @@ def audit_passkeys(
         title = item.get("title", "Unknown")
         uuid = item.get("id", "")
         vault_id = item.get("vault", {}).get("id")
-        
+
         console.print(f"[bold][{i}/{len(items)}] {title}[/bold]")
         console.print(f"[dim]UUID: {uuid}[/dim]")
         console.print()
-        
+
         # Auto-open in 1Password if requested
         if auto_open:
             from ...macos_automation import (
+                activate_terminal,
+                get_clipboard_content,
                 open_item_and_prompt,
                 ring_bell,
-                get_clipboard_content,
                 wait_for_clipboard_change,
-                activate_terminal,
             )
-            
+
             # Get current clipboard before opening item
             original_clipboard = get_clipboard_content()
-            
+
             console.print("[yellow]→ Opening in 1Password...[/yellow]")
             if not open_item_and_prompt(uuid, vault_id):
                 console.print("[yellow]→ Could not auto-open. Please find the item manually.[/yellow]")
-            
+
             console.print("[cyan]→ Waiting for JSON copy (right-click → Copy as JSON)...[/cyan]")
-            
+
             # Keep waiting until we get valid JSON with matching UUID
             export_json = None
             last_clipboard = original_clipboard
-            
+
             while export_json is None:
                 # Wait for clipboard to change
                 new_content = wait_for_clipboard_change(last_clipboard, timeout=120.0, check_interval=0.3)
-                
+
                 if new_content is None:
                     console.print("[red]✗ Timeout waiting for clipboard[/red]")
                     skipped.append(title)
                     break
-                
+
                 last_clipboard = new_content
-                
+
                 # Try to parse as JSON
                 try:
                     parsed = json.loads(new_content)
                 except json.JSONDecodeError:
                     console.print("[dim]  (not JSON, still waiting...)[/dim]")
                     continue
-                
+
                 # Verify UUID matches
                 clipboard_uuid = parsed.get("uuid", "")
                 if clipboard_uuid and clipboard_uuid != uuid:
                     console.print(f"[yellow]  Wrong item ({clipboard_uuid[:8]}...), waiting for {uuid[:8]}...[/yellow]")
                     continue
-                
+
                 # Success!
                 export_json = parsed
-            
+
             if export_json is None:
                 # Timed out - already added to skipped
                 console.print()
                 continue
-            
+
             # Success! Bring focus back to terminal
             ring_bell()
             activate_terminal()
             console.print("[green]✓ JSON captured[/green]")
-            
+
         else:
             # Manual mode - prompt user
             console.print("[yellow]→ Copy this item's JSON from 1Password UI[/yellow]")
             console.print("[dim]  (Right-click item → Copy as JSON)[/dim]")
             console.print()
-            
+
             proceed = typer.confirm("Ready? (JSON copied to clipboard)", default=True)
-            
+
             if not proceed:
                 console.print("[dim]Skipped[/dim]")
                 skipped.append(title)
                 console.print()
                 continue
-            
+
             # Read clipboard
             export_json = get_clipboard_json()
-            
+
             if not export_json:
                 console.print("[red]✗ No valid JSON in clipboard[/red]")
                 skipped.append(title)
                 console.print()
                 continue
-            
+
             # Verify UUID matches (safety check)
             clipboard_uuid = export_json.get("uuid", "")
             if clipboard_uuid and clipboard_uuid != uuid:
@@ -292,23 +291,23 @@ def audit_passkeys(
                 skipped.append(title)
                 console.print()
                 continue
-        
+
         # Check passkey status
         status = get_passkey_status(export_json)
-        
+
         if status == "healthy":
             console.print("[green]✓ Passkey is healthy[/green]")
             healthy.append(title)
-            
+
             if not dry_run:
                 _apply_tag(uuid, title, VERIFIED_PASSKEY_TAG)
             else:
                 console.print(f"[dim]Would apply tag: {VERIFIED_PASSKEY_TAG}[/dim]")
-                
+
         elif status == "orphaned":
             console.print("[red]✗ Passkey is ORPHANED[/red]")
             orphaned.append(title)
-            
+
             if not dry_run:
                 _apply_tag(uuid, title, ORPHANED_PASSKEY_TAG)
             else:
@@ -316,9 +315,9 @@ def audit_passkeys(
         else:
             console.print("[dim]○ No passkey found (tag may be incorrect)[/dim]")
             no_passkey.append(title)
-        
+
         console.print()
-        
+
         # Show next item message and delay (only in auto mode)
         if auto_open and i < len(items):
             next_title = items[i].get("title", "Unknown")
@@ -332,13 +331,13 @@ def audit_passkeys(
     console.print(f"[red]Orphaned:[/red] {len(orphaned)}")
     console.print(f"[dim]Skipped:[/dim] {len(skipped)}")
     console.print(f"[dim]No passkey:[/dim] {len(no_passkey)}")
-    
+
     if orphaned:
         console.print()
         console.print("[red]Orphaned items:[/red]")
         for title in orphaned:
             console.print(f"  • {title}")
-        
+
     if dry_run:
         console.print()
         console.print("[yellow]Dry run - no tags applied. Run without --dry-run to apply tags.[/yellow]")
@@ -349,14 +348,14 @@ def _apply_tag(uuid: str, title: str, tag: str) -> None:
     try:
         op = OpClient()
         current_tags = op.get_current_tags(uuid)
-        
+
         if tag in current_tags:
             console.print(f"[dim]Tag '{tag}' already present[/dim]")
             return
-        
+
         new_tags = current_tags + [tag]
         result = op.edit_item_tags(uuid, new_tags)
-        
+
         if result is True:
             console.print(f"[green]✓ Applied tag: {tag}[/green]")
         else:

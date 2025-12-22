@@ -6,8 +6,6 @@ Common functionality shared across CLI commands.
 
 import sys
 from datetime import date
-from pathlib import Path
-from typing import List, Optional, Tuple
 
 from rich.console import Console
 
@@ -32,7 +30,7 @@ except ImportError as e:
     sys.exit(1)
 
 
-def _create_enhanced_card_id(card_id: Optional[str], card_date: Optional[str]) -> Optional[str]:
+def _create_enhanced_card_id(card_id: str | None, card_date: str | None) -> str | None:
     """Create enhanced card ID with date labeling for HMAC domain separation.
     
     DEPRECATED: Use create_grid_from_args_v2 with full Argon2 label instead.
@@ -40,15 +38,15 @@ def _create_enhanced_card_id(card_id: Optional[str], card_date: Optional[str]) -
     """
     if not card_date:
         return card_id
-    
+
     # Sanitize date for safe label use - allow ASCII alphanumeric, hyphens, underscores
     safe_date = "".join(c if c.isalnum() or c in "-_" else "-" for c in card_date)
     safe_date = safe_date.strip("-").replace("--", "-")  # Clean up multiple separators
-    
+
     if not safe_date:
         console.print("⚠️  Warning: Card date sanitization resulted in empty string, ignoring", style="yellow")
         return card_id
-    
+
     # Create enhanced card ID for HMAC label
     if card_id:
         return f"{card_id}|{safe_date}"  # Use | as separator (simple, visible, ASCII-safe)
@@ -66,22 +64,22 @@ def _display_label_info(label: str, kdf: str = "ARGON2") -> None:
 
 
 def create_grid_from_args(
-    simple: Optional[str] = None,
-    bip39: Optional[str] = None,
-    slip39: Optional[List[str]] = None,
+    simple: str | None = None,
+    bip39: str | None = None,
+    slip39: list[str] | None = None,
     passphrase: str = "",
     iterations: int = 2048,
-    card_id: Optional[str] = None,
-    card_date: Optional[str] = None,
+    card_id: str | None = None,
+    card_date: str | None = None,
     base: str = "base90",
     # Argon2 parameters
-    nonce: Optional[str] = None,
+    nonce: str | None = None,
     memory_mb: int = ARGON2_MEMORY_COST_MB,
     time_cost: int = ARGON2_TIME_COST,
-    parallelism: Optional[int] = None,
+    parallelism: int | None = None,
     card_index: str = "A0",
     use_argon2: bool = True,
-) -> Tuple[SeederGrid, bytes, str]:
+) -> tuple[SeederGrid, bytes, str]:
     """
     Create a token grid from command arguments.
     
@@ -93,7 +91,7 @@ def create_grid_from_args(
     # Auto-detect parallelism if not specified
     if parallelism is None:
         parallelism = get_auto_parallelism()
-    
+
     # Determine seed source type
     if simple:
         source_type = "SIMPLE"
@@ -107,16 +105,16 @@ def create_grid_from_args(
     else:
         console.print("❌ Error: Must specify a seed source", style="bold red")
         raise ValueError("No seed source specified")
-    
+
     # For --simple with Argon2 (new default)
     if simple and use_argon2:
         # Generate nonce if not provided
         if nonce is None:
             nonce = generate_nonce()
-        
+
         # Use today's date if no card_date specified
         card_date_val = card_date or date.today().strftime('%Y-%m-%d')
-        
+
         # Build the full v1 label (9-field format matching web app)
         kdf_params = encode_argon2_params(time_cost, memory_mb, parallelism)
         label = build_label(
@@ -129,12 +127,12 @@ def create_grid_from_args(
             card_id=card_id or "",
             card_index=card_index,
         )
-        
+
         _display_label_info(label, "ARGON2")
-        
+
         # Convert memory from MB to KB for argon2-cffi
         memory_kb = memory_mb * 1024
-        
+
         # Use label as salt for Argon2 derivation
         seed_bytes = SeedSources.argon2_to_seed(
             seed_phrase=seed_phrase,
@@ -143,9 +141,9 @@ def create_grid_from_args(
             memory_cost_kb=memory_kb,
             parallelism=parallelism,
         )
-        
+
         return SeederGrid(seed_bytes, card_id, base, card_index), seed_bytes, label
-    
+
     # Legacy mode: BIP-39, SLIP-39, or --simple with --no-argon2
     if simple:
         console.print("🔑 Using simple SHA-512 seed derivation (legacy)", style="dim")
@@ -159,30 +157,30 @@ def create_grid_from_args(
         console.print("🔒 Using SLIP-39 shares", style="dim")
         seed_bytes = SeedSources.slip39_to_seed(slip39)
         kdf = "SLIP39"
-    
+
     # Create legacy enhanced card_id with date if provided
     enhanced_card_id = _create_enhanced_card_id(card_id, card_date)
-    
+
     # Build a simple label for legacy mode
     card_date_val = card_date or date.today().strftime('%Y-%m-%d')
     label = f"legacy|{source_type}|{kdf}|{base.upper()}|{card_date_val}|{card_id or ''}"
-    
+
     if enhanced_card_id:
         console.print(f"🏷️  Using card ID: [cyan]{enhanced_card_id}[/cyan]", style="dim")
-    
+
     return SeederGrid(seed_bytes, enhanced_card_id, base), seed_bytes, label
 
 
 def create_grid_with_desc(
-    simple: Optional[str] = None,
-    bip39: Optional[str] = None,
-    slip39: Optional[List[str]] = None,
+    simple: str | None = None,
+    bip39: str | None = None,
+    slip39: list[str] | None = None,
     passphrase: str = "",
     iterations: int = 2048,
-    card_id: Optional[str] = None,
-    card_date: Optional[str] = None,
+    card_id: str | None = None,
+    card_date: str | None = None,
     base: str = "base90"
-) -> Tuple[SeederGrid, bytes, str]:
+) -> tuple[SeederGrid, bytes, str]:
     """Create a token grid with seed description for CSV export.
     
     DEPRECATED: Use create_grid_from_args which now returns label as third element.
@@ -197,7 +195,7 @@ def create_grid_with_desc(
         card_date=card_date,
         base=base,
     )
-    
+
     # Create a seed description for backward compatibility
     if simple:
         seed_desc = simple
@@ -207,7 +205,7 @@ def create_grid_with_desc(
         seed_desc = f"{len(slip39)} SLIP-39 shares"
     else:
         seed_desc = "unknown"
-    
+
     return grid, seed_bytes, seed_desc
 
 
@@ -215,7 +213,7 @@ def get_password_from_pattern(grid: SeederGrid, pattern: str) -> str:
     """Generate password from coordinate pattern."""
     coords = pattern.split()
     password_parts = []
-    
+
     for coord in coords:
         coord = coord.upper().strip()
         try:
@@ -223,11 +221,11 @@ def get_password_from_pattern(grid: SeederGrid, pattern: str) -> str:
             password_parts.append(token)
         except CoordinateError as e:
             raise ValueError(f"Invalid coordinate: {coord}") from e
-    
+
     return "".join(password_parts)
 
 
-def validate_coordinates(coordinates: List[str]) -> List[str]:
+def validate_coordinates(coordinates: list[str]) -> list[str]:
     """Validate and normalize coordinate format."""
     validated = []
     for coord in coordinates:
@@ -241,7 +239,7 @@ def validate_coordinates(coordinates: List[str]) -> List[str]:
 def show_security_warning():
     """Display security warning panel."""
     from rich.panel import Panel
-    
+
     console.print(Panel.fit(
         "[bold red]⚠️  SECURITY WARNING[/bold red]\n\n"
         "This tool is designed for [yellow]online passwords with low lockout thresholds[/yellow].\n"

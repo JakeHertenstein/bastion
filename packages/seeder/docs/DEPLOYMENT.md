@@ -40,7 +40,7 @@ git init
 git add .
 git commit -m "Initial web deployment"
 git branch -M gh-pages
-git remote add origin https://github.com/your-username/seed-card.git
+git remote add origin https://github.com/JakeHertenstein/bastion.git
 git push -u origin gh-pages
 ```
 

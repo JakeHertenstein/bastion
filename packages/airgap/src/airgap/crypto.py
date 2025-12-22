@@ -17,28 +17,26 @@ import base64
 import fcntl
 import hashlib
 import json
-import os
 import re
 import secrets
 import struct
 import subprocess
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any
 
 
 class EntropyQuality(str, Enum):
     """Quality ratings for entropy based on ENT analysis."""
-    
+
     EXCELLENT = "EXCELLENT"
     GOOD = "GOOD"
     FAIR = "FAIR"
     POOR = "POOR"
-    
+
     @classmethod
-    def meets_threshold(cls, rating: str, minimum: "EntropyQuality") -> bool:
+    def meets_threshold(cls, rating: str, minimum: EntropyQuality) -> bool:
         """Check if a rating meets the minimum threshold."""
         order = [cls.EXCELLENT, cls.GOOD, cls.FAIR, cls.POOR]
         try:
@@ -51,7 +49,7 @@ class EntropyQuality(str, Enum):
 @dataclass
 class ENTAnalysis:
     """Results from ENT statistical analysis."""
-    
+
     entropy_bits_per_byte: float
     chi_square: float
     chi_square_pvalue: float
@@ -59,7 +57,7 @@ class ENTAnalysis:
     monte_carlo_pi: float
     monte_carlo_error: float
     serial_correlation: float
-    
+
     def quality_rating(self) -> EntropyQuality:
         """Get quality rating based on statistical analysis.
         
@@ -74,11 +72,11 @@ class ENTAnalysis:
             return EntropyQuality.FAIR
         else:
             return EntropyQuality.POOR
-    
+
     def is_acceptable(self, minimum: EntropyQuality = EntropyQuality.GOOD) -> bool:
         """Check if entropy meets minimum quality threshold."""
         return EntropyQuality.meets_threshold(self.quality_rating().value, minimum)
-    
+
     def to_dict(self) -> dict[str, float]:
         """Convert to dictionary for storage/logging."""
         return {
@@ -96,18 +94,18 @@ class ENTAnalysis:
 @dataclass
 class EntropyCollection:
     """Result of entropy collection."""
-    
+
     data: bytes
     source: str
     analysis: ENTAnalysis | None = None
     device_info: dict[str, str] = field(default_factory=dict)
-    collected_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    
+    collected_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+
     @property
     def bits(self) -> int:
         """Number of bits collected."""
         return len(self.data) * 8
-    
+
     @property
     def quality(self) -> str:
         """Quality rating string."""
@@ -132,7 +130,7 @@ def run_ent_analysis(data: bytes) -> ENTAnalysis:
     """
     if len(data) < 100:
         raise ValueError("Data too small for meaningful ENT analysis (minimum 100 bytes)")
-    
+
     try:
         result = subprocess.run(
             ["ent"],
@@ -141,12 +139,12 @@ def run_ent_analysis(data: bytes) -> ENTAnalysis:
             text=True,
             timeout=30,
         )
-        
+
         if result.returncode != 0:
             raise RuntimeError(f"ENT analysis failed: {result.stderr}")
-        
+
         return _parse_ent_output(result.stdout)
-        
+
     except FileNotFoundError:
         raise RuntimeError("ENT tool not installed. Install with: apt install ent")
     except subprocess.TimeoutExpired:
@@ -168,11 +166,11 @@ def _parse_ent_output(output: str) -> ENTAnalysis:
     if not entropy_match:
         raise ValueError("Could not parse entropy from ENT output")
     entropy_bits = float(entropy_match.group(1))
-    
+
     # Extract chi-square
     chi_match = re.search(r"Chi square.*?is\s*([\d.]+)", output)
     chi_square = float(chi_match.group(1)) if chi_match else 0.0
-    
+
     # Extract chi-square p-value (percentage)
     # Format: "would randomly exceed this value XX.XX percent of the times"
     chi_pvalue_match = re.search(r"exceed this value\s*([\d.]+)\s*percent", output)
@@ -186,23 +184,23 @@ def _parse_ent_output(output: str) -> ENTAnalysis:
             chi_pvalue = 0.999
         else:
             chi_pvalue = 0.5  # Default if not parseable
-    
+
     # Extract arithmetic mean
     mean_match = re.search(r"Arithmetic mean.*?is\s*([\d.]+)", output)
     arithmetic_mean = float(mean_match.group(1)) if mean_match else 127.5
-    
+
     # Extract Monte Carlo Pi
     pi_match = re.search(r"Monte Carlo.*?Pi is\s*([\d.]+)", output)
     monte_carlo_pi = float(pi_match.group(1)) if pi_match else 3.14159
-    
+
     # Calculate Pi error percentage
     actual_pi = 3.14159265358979
     monte_carlo_error = abs(monte_carlo_pi - actual_pi) / actual_pi * 100
-    
+
     # Extract serial correlation
     serial_match = re.search(r"Serial correlation.*?is\s*(-?[\d.]+)", output)
     serial_correlation = float(serial_match.group(1)) if serial_match else 0.0
-    
+
     return ENTAnalysis(
         entropy_bits_per_byte=entropy_bits,
         chi_square=chi_square,
@@ -227,7 +225,7 @@ def collect_entropy_infnoise(bits: int = 4096) -> EntropyCollection:
         RuntimeError: If collection fails
     """
     byte_count = bits // 8
-    
+
     try:
         # Get device info first
         list_result = subprocess.run(
@@ -236,7 +234,7 @@ def collect_entropy_infnoise(bits: int = 4096) -> EntropyCollection:
             text=True,
             timeout=5,
         )
-        
+
         serial = "unknown"
         if "Serial:" in list_result.stdout:
             serial_match = re.search(r"Serial:\s*(\S+)", list_result.stdout)
@@ -246,30 +244,30 @@ def collect_entropy_infnoise(bits: int = 4096) -> EntropyCollection:
             serial_match = re.search(r"Serial:\s*(\S+)", list_result.stderr)
             if serial_match:
                 serial = serial_match.group(1)
-        
+
         # Collect entropy
         result = subprocess.run(
             ["infnoise", f"--bytes={byte_count}", "--raw"],
             capture_output=True,
             timeout=60,
         )
-        
+
         if result.returncode != 0:
             raise RuntimeError(f"infnoise failed: {result.stderr.decode()}")
-        
+
         if len(result.stdout) < byte_count:
             raise RuntimeError(
                 f"Insufficient entropy: got {len(result.stdout)} bytes, expected {byte_count}"
             )
-        
+
         data = result.stdout[:byte_count]
-        
+
         return EntropyCollection(
             data=data,
             source="infnoise",
             device_info={"serial": serial, "type": "Infinite Noise TRNG"},
         )
-        
+
     except FileNotFoundError:
         raise RuntimeError("infnoise command not installed")
     except subprocess.TimeoutExpired:
@@ -287,7 +285,7 @@ def collect_entropy_system(bits: int = 4096) -> EntropyCollection:
     """
     byte_count = bits // 8
     data = secrets.token_bytes(byte_count)
-    
+
     return EntropyCollection(
         data=data,
         source="system",
@@ -310,7 +308,7 @@ def collect_entropy_yubikey(bits: int = 160, slot: int = 2) -> EntropyCollection
     """
     # HMAC-SHA1 produces 160 bits per challenge
     challenges_needed = (bits + 159) // 160
-    
+
     try:
         # Get YubiKey info
         list_result = subprocess.run(
@@ -319,36 +317,36 @@ def collect_entropy_yubikey(bits: int = 160, slot: int = 2) -> EntropyCollection
             text=True,
             timeout=5,
         )
-        
+
         serial = list_result.stdout.strip().split("\n")[0] if list_result.stdout else "unknown"
-        
+
         # Collect entropy with random challenges
         entropy_parts = []
         for _ in range(challenges_needed):
             challenge = secrets.token_hex(32)  # 64-char hex challenge
-            
+
             result = subprocess.run(
                 ["ykman", "otp", "calculate", str(slot), challenge],
                 capture_output=True,
                 text=True,
                 timeout=10,
             )
-            
+
             if result.returncode != 0:
                 raise RuntimeError(f"YubiKey HMAC failed: {result.stderr}")
-            
+
             # Response is hex-encoded 20 bytes
             response_hex = result.stdout.strip()
             entropy_parts.append(bytes.fromhex(response_hex))
-        
+
         data = b"".join(entropy_parts)[:bits // 8]
-        
+
         return EntropyCollection(
             data=data,
             source="yubikey",
             device_info={"serial": serial, "slot": str(slot), "type": "HMAC-SHA1"},
         )
-        
+
     except FileNotFoundError:
         raise RuntimeError("ykman command not installed")
     except subprocess.TimeoutExpired:
@@ -382,13 +380,13 @@ def collect_verified_entropy(
         collection = collect_entropy_yubikey(bits)
     else:
         raise ValueError(f"Unknown entropy source: {source}")
-    
+
     # Run ENT analysis (requires at least 1KB for meaningful results)
     if len(collection.data) >= 1024:
         try:
             analysis = run_ent_analysis(collection.data)
             collection.analysis = analysis
-            
+
             # Check quality threshold
             if not analysis.is_acceptable(min_quality):
                 raise RuntimeError(
@@ -401,7 +399,7 @@ def collect_verified_entropy(
                 pass
             else:
                 raise
-    
+
     return collection
 
 
@@ -434,19 +432,19 @@ def inject_kernel_entropy(
     if entropy_bits is None:
         # Conservative estimate: assume 7 bits per byte for verified entropy
         entropy_bits = len(data) * 7
-    
+
     # Check if we're on Linux
     if not Path("/dev/random").exists():
         raise RuntimeError("Kernel entropy injection only supported on Linux")
-    
+
     try:
         with open("/dev/random", "wb") as f:
             # struct rand_pool_info { int entropy_count; int buf_size; char buf[]; }
             header = struct.pack("ii", entropy_bits, len(data))
             fcntl.ioctl(f.fileno(), RNDADDENTROPY, header + data)
-        
+
         return True
-        
+
     except PermissionError:
         if require_sudo:
             # Try with sudo
@@ -455,7 +453,7 @@ def inject_kernel_entropy(
                 tf.write(data)
                 tf.flush()
                 temp_path = tf.name
-            
+
             try:
                 # Use a helper script for sudo injection
                 script = f'''
@@ -479,12 +477,12 @@ print("Entropy injected successfully")
                     text=True,
                     timeout=30,
                 )
-                
+
                 if result.returncode != 0:
                     raise RuntimeError(f"Sudo entropy injection failed: {result.stderr}")
-                
+
                 return True
-                
+
             finally:
                 Path(temp_path).unlink(missing_ok=True)
         else:
@@ -497,16 +495,16 @@ print("Entropy injected successfully")
 @dataclass
 class SaltPayload:
     """Structured payload for encrypted salt transfer."""
-    
+
     type: str = "bastion/salt/v1"
     purpose: str = "username-generator"
     salt: bytes = field(default_factory=bytes)
     bits: int = 256
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     device_id: str = "airgap"
     entropy_source: str = "unknown"
     entropy_quality: str = "UNKNOWN"
-    
+
     def to_json(self) -> str:
         """Serialize to JSON for encryption."""
         return json.dumps({
@@ -519,9 +517,9 @@ class SaltPayload:
             "entropy_source": self.entropy_source,
             "entropy_quality": self.entropy_quality,
         }, indent=2)
-    
+
     @classmethod
-    def from_json(cls, json_str: str) -> "SaltPayload":
+    def from_json(cls, json_str: str) -> SaltPayload:
         """Deserialize from JSON after decryption."""
         data = json.loads(json_str)
         return cls(
@@ -559,7 +557,7 @@ def generate_salt(
     # For salt generation, we need more entropy than the salt size
     # to account for extraction loss. Collect 2x for safety.
     collection_bits = max(bits * 2, 1024)  # At least 1KB for ENT analysis
-    
+
     if verify:
         collection = collect_verified_entropy(
             bits=collection_bits,
@@ -575,12 +573,12 @@ def generate_salt(
             collection = collect_entropy_yubikey(collection_bits)
         else:
             raise ValueError(f"Unknown entropy source: {source}")
-    
+
     # Extract salt using SHAKE256 for uniform output
     shake = hashlib.shake_256()
     shake.update(collection.data)
     salt = shake.digest(bits // 8)
-    
+
     return SaltPayload(
         salt=salt,
         bits=bits,
@@ -610,10 +608,10 @@ def gpg_encrypt(
         RuntimeError: If encryption fails
     """
     cmd = [gpg_path, "--encrypt", "--recipient", recipient, "--trust-model", "always"]
-    
+
     if armor:
         cmd.append("--armor")
-    
+
     try:
         result = subprocess.run(
             cmd,
@@ -621,13 +619,13 @@ def gpg_encrypt(
             capture_output=True,
             timeout=30,
         )
-        
+
         if result.returncode != 0:
             error = result.stderr.decode() if result.stderr else "Unknown error"
             raise RuntimeError(f"GPG encryption failed: {error}")
-        
+
         return result.stdout
-        
+
     except FileNotFoundError:
         raise RuntimeError(f"GPG not found at {gpg_path}")
     except subprocess.TimeoutExpired:
@@ -648,7 +646,7 @@ def gpg_import_key(key_data: bytes, gpg_path: str = "gpg") -> str:
         RuntimeError: If import fails
     """
     cmd = [gpg_path, "--import", "--status-fd", "1"]
-    
+
     try:
         result = subprocess.run(
             cmd,
@@ -656,7 +654,7 @@ def gpg_import_key(key_data: bytes, gpg_path: str = "gpg") -> str:
             capture_output=True,
             timeout=30,
         )
-        
+
         # Parse imported key ID
         key_id = None
         for line in result.stdout.decode().split("\n"):
@@ -665,13 +663,13 @@ def gpg_import_key(key_data: bytes, gpg_path: str = "gpg") -> str:
                 if len(parts) >= 4:
                     key_id = parts[3]
                     break
-        
+
         if result.returncode != 0 and not key_id:
             error = result.stderr.decode() if result.stderr else "Unknown error"
             raise RuntimeError(f"Key import failed: {error}")
-        
+
         return key_id or "unknown"
-        
+
     except FileNotFoundError:
         raise RuntimeError(f"GPG not found at {gpg_path}")
     except subprocess.TimeoutExpired:
@@ -690,20 +688,20 @@ def gpg_list_keys(secret: bool = False, gpg_path: str = "gpg") -> list[dict[str,
     """
     cmd = [gpg_path, "--list-keys" if not secret else "--list-secret-keys",
            "--keyid-format", "long", "--with-colons"]
-    
+
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
         if result.returncode != 0:
             return []
-        
+
         keys = []
         current_key: dict[str, str] = {}
-        
+
         for line in result.stdout.split("\n"):
             parts = line.split(":")
             if not parts:
                 continue
-            
+
             record_type = parts[0]
             if record_type in ("pub", "sec"):
                 if current_key:
@@ -717,11 +715,11 @@ def gpg_list_keys(secret: bool = False, gpg_path: str = "gpg") -> list[dict[str,
                 current_key["fingerprint"] = parts[9] if len(parts) > 9 else ""
             elif record_type == "uid" and current_key and not current_key["uid"]:
                 current_key["uid"] = parts[9] if len(parts) > 9 else ""
-        
+
         if current_key:
             keys.append(current_key)
-        
+
         return keys
-        
+
     except (FileNotFoundError, subprocess.TimeoutExpired):
         return []

@@ -20,26 +20,25 @@ from __future__ import annotations
 
 import hashlib
 import threading
+from collections.abc import Iterator
 from contextlib import contextmanager
-from datetime import datetime, timezone
-from pathlib import Path
-from typing import TYPE_CHECKING, Iterator
+from typing import TYPE_CHECKING
 
 from rich.console import Console
 
 if TYPE_CHECKING:
+    from .chain import Sigchain
     from .events import EventPayload
     from .session import SessionManager
-    from .chain import Sigchain
 
 console = Console()
 
 # Global session state
-_active_session: "SessionManager | None" = None
+_active_session: SessionManager | None = None
 _session_lock = threading.Lock()
 
 
-def get_active_session() -> "SessionManager | None":
+def get_active_session() -> SessionManager | None:
     """Get the currently active session, if any.
     
     Returns:
@@ -48,7 +47,7 @@ def get_active_session() -> "SessionManager | None":
     return _active_session
 
 
-def set_active_session(session: "SessionManager | None") -> None:
+def set_active_session(session: SessionManager | None) -> None:
     """Set the active session.
     
     Args:
@@ -74,7 +73,7 @@ def is_sigchain_enabled() -> bool:
 
 
 def emit_event(
-    payload: "EventPayload",
+    payload: EventPayload,
     require_session: bool = False,
     silent: bool = True,
 ) -> bool:
@@ -92,9 +91,9 @@ def emit_event(
         True if event was recorded successfully
     """
     from .session import SessionManager
-    
+
     session = get_active_session()
-    
+
     if session and session.active:
         # Use existing session
         try:
@@ -106,14 +105,14 @@ def emit_event(
             if not silent:
                 console.print(f"[yellow]Warning: Failed to record event: {e}[/yellow]")
             return False
-    
+
     if require_session:
         return False
-    
+
     # Check if sigchain is enabled
     if not is_sigchain_enabled():
         return False
-    
+
     # Create single-event mini-session (no anchor, quick commit)
     try:
         single_session = SessionManager(timeout_minutes=1)
@@ -133,7 +132,7 @@ def emit_event(
 def sigchain_session(
     timeout_minutes: int | None = None,
     anchor_on_end: bool = True,
-) -> Iterator["Sigchain"]:
+) -> Iterator[Sigchain]:
     """Context manager for sigchain sessions.
     
     Usage:
@@ -149,9 +148,9 @@ def sigchain_session(
         Sigchain instance
     """
     from .session import SessionManager
-    
+
     session = SessionManager(timeout_minutes=timeout_minutes)
-    
+
     try:
         chain = session.start()
         set_active_session(session)
@@ -190,10 +189,10 @@ def record_username_generated(
         True if recorded successfully
     """
     from .events import UsernameGeneratedPayload
-    
+
     # Hash the username - we don't store the actual username in the audit log
     username_hash = hashlib.sha256(username.encode()).hexdigest()
-    
+
     payload = UsernameGeneratedPayload(
         domain=domain,
         algorithm=algorithm,
@@ -203,7 +202,7 @@ def record_username_generated(
         saved_to_1password=saved_to_1password,
         account_uuid=account_uuid,
     )
-    
+
     return emit_event(payload)
 
 
@@ -231,7 +230,7 @@ def record_entropy_pool_created(
         True if recorded successfully
     """
     from .events import EntropyPoolCreatedPayload
-    
+
     payload = EntropyPoolCreatedPayload(
         pool_uuid=pool_uuid,
         serial_number=serial_number,
@@ -241,7 +240,7 @@ def record_entropy_pool_created(
         entropy_per_byte=entropy_per_byte,
         device_serial=device_serial,
     )
-    
+
     return emit_event(payload)
 
 
@@ -265,11 +264,11 @@ def record_tag_operation(
         True if recorded successfully
     """
     from .events import TagOperationPayload
-    
+
     # Validate action
     if action not in ("add", "remove", "replace"):
         return False
-    
+
     payload = TagOperationPayload(
         account_uuid=account_uuid,
         account_title=account_title,
@@ -277,7 +276,7 @@ def record_tag_operation(
         tags_before=tags_before,
         tags_after=tags_after,
     )
-    
+
     return emit_event(payload)
 
 
@@ -288,7 +287,7 @@ def record_password_rotation(
     new_change_date: str,
     previous_change_date: str | None = None,
     rotation_interval_days: int = 90,
-    tier: str = "Tier 2",
+    risk_level: str = "medium",
 ) -> bool:
     """Record a password rotation event.
     
@@ -299,13 +298,13 @@ def record_password_rotation(
         new_change_date: New password change date (YYYY-MM-DD)
         previous_change_date: Previous change date
         rotation_interval_days: Days until next rotation
-        tier: Account tier
+        risk_level: Account risk level (critical, high, medium, low)
         
     Returns:
         True if recorded successfully
     """
     from .events import PasswordRotationPayload
-    
+
     payload = PasswordRotationPayload(
         account_uuid=account_uuid,
         account_title=account_title,
@@ -313,9 +312,9 @@ def record_password_rotation(
         new_change_date=new_change_date,
         previous_change_date=previous_change_date,
         rotation_interval_days=rotation_interval_days,
-        tier=tier,
+        risk_level=risk_level,
     )
-    
+
     return emit_event(payload)
 
 
@@ -339,7 +338,7 @@ def record_config_change(
         True if recorded successfully
     """
     from .events import ConfigChangePayload
-    
+
     payload = ConfigChangePayload(
         config_section=config_section,
         config_key=config_key,
@@ -347,5 +346,5 @@ def record_config_change(
         new_value=new_value,
         source=source,
     )
-    
+
     return emit_event(payload)

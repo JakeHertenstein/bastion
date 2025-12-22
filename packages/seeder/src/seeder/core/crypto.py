@@ -9,20 +9,14 @@ import hashlib
 import hmac
 import math
 import os
-import re
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
+from collections.abc import Iterator
+from typing import Any
 
 from .config import (
     ALPHABET,
     ALPHABET_SIZE,
-    ARGON2_MEMORY_COST_MB,
-    ARGON2_PARALLELISM,
-    ARGON2_TIME_COST,
     CHARS_PER_TOKEN,
-    HMAC_LABEL_TOKENS,
-    LABEL_VERSION,
     NONCE_BYTES,
-    STREAM_BUFFER_SIZE,
     decode_argon2_params,
     encode_argon2_params,
 )
@@ -49,7 +43,7 @@ def luhn_mod36_check(body: str) -> str:
     """
     # Convert body to uppercase for consistent mapping
     body_upper = body.upper()
-    
+
     # Map each character to its position in the alphabet
     # Characters not in alphabet are mapped by their Unicode codepoint mod 36
     def char_to_value(c: str) -> int:
@@ -57,7 +51,7 @@ def luhn_mod36_check(body: str) -> str:
         if idx >= 0:
             return idx
         return ord(c) % LUHN_BASE
-    
+
     total = 0
     # Process from right to left, doubling every second digit
     for i, c in enumerate(reversed(body_upper)):
@@ -68,7 +62,7 @@ def luhn_mod36_check(body: str) -> str:
             if value >= LUHN_BASE:
                 value = (value // LUHN_BASE) + (value % LUHN_BASE)
         total += value
-    
+
     # Check digit makes total divisible by base
     check_value = (LUHN_BASE - (total % LUHN_BASE)) % LUHN_BASE
     return LUHN_ALPHABET[check_value]
@@ -92,16 +86,16 @@ def luhn_mod36_validate(label: str) -> tuple[bool, str]:
     if "|" not in label:
         # No check digit, return as-is (unverified but valid format)
         return True, label
-    
+
     # Find the last | which separates body from check digit
     last_pipe = label.rfind("|")
     body = label[:last_pipe]
     check = label[last_pipe + 1:]
-    
+
     # Check digit should be single character
     if len(check) != 1:
         return False, body
-    
+
     expected = luhn_mod36_check(body)
     return check.upper() == expected, body
 
@@ -140,11 +134,11 @@ def generate_nonce(num_bytes: int = NONCE_BYTES) -> str:
 def build_label(
     seed_type: str,
     kdf: str = "ARGON2ID",
-    kdf_params: Optional[str] = None,
+    kdf_params: str | None = None,
     base: str = "BASE90",
-    date: Optional[str] = None,
-    nonce: Optional[str] = None,
-    card_id: Optional[str] = None,
+    date: str | None = None,
+    nonce: str | None = None,
+    card_id: str | None = None,
     card_index: str = "A0",
 ) -> str:
     """
@@ -172,29 +166,29 @@ def build_label(
     """
     if kdf_params is None:
         kdf_params = encode_argon2_params()
-    
+
     if nonce is None:
         nonce = generate_nonce()
-    
+
     # Parse params (Bastion format only)
     time_cost, memory_mb, parallelism = decode_argon2_params(kdf_params)
-    
+
     # Build ALGO: SEED_TYPE-KDF (e.g., SIMPLE-ARGON2ID)
     algo = f"{seed_type.upper()}-{kdf.upper()}"
-    
+
     # Build IDENT: {card_id}.{card_index} (lowercase card_id recommended)
     ident = f"{(card_id or 'card').lower()}.{card_index or 'A0'}"
-    
+
     # Extract encoding number from base (BASE90 -> 90)
     encoding = base.upper().replace("BASE", "")
-    
+
     # Build PARAMS in Bastion canonical order using URL-style format
     # Order: VERSION, TIME, MEMORY, PARALLELISM, NONCE, ENCODING
     params = f"VERSION=1&TIME={time_cost}&MEMORY={memory_mb}&PARALLELISM={parallelism}&NONCE={nonce}&ENCODING={encoding}"
-    
+
     # Build body: Bastion/TOKEN/ALGO:IDENT:DATE#PARAMS
     body = f"Bastion/TOKEN/{algo}:{ident}:{date or ''}#{params}"
-    
+
     # Append Luhn check digit
     return build_label_with_check(body)
 
@@ -218,15 +212,15 @@ def build_hmac_label(card_index: str, token_coord: str) -> str:
     """
     # Build IDENT: {card_index}.{token_coord}
     ident = f"{card_index or 'A0'}.{token_coord}"
-    
+
     # Build body: Bastion/TOKEN/HMAC:IDENT:#VERSION=1
     # Note: DATE field is empty for HMAC labels
     body = f"Bastion/TOKEN/HMAC:{ident}:#VERSION=1"
-    
+
     return build_label_with_check(body)
 
 
-def parse_hmac_label(label: str) -> Dict[str, str]:
+def parse_hmac_label(label: str) -> dict[str, str]:
     """
     Parse an HMAC info label.
     
@@ -244,38 +238,38 @@ def parse_hmac_label(label: str) -> Dict[str, str]:
     # Bastion format (starts with Bastion/)
     if not label.startswith("Bastion/"):
         raise ValueError(f"Invalid HMAC label format: expected 'Bastion/' prefix, got: {label}")
-    
+
     # Validate and strip Luhn check digit
     is_valid, body = luhn_mod36_validate(label)
     if not is_valid:
         raise ValueError(f"Invalid Luhn check digit in label: {label}")
-    
+
     # Parse: Bastion/TOKEN/HMAC:IDENT:#VERSION=1
     if "#" not in body:
-        raise ValueError(f"Invalid Bastion HMAC label format: missing # params")
-    
+        raise ValueError("Invalid Bastion HMAC label format: missing # params")
+
     metadata, params_str = body.split("#", 1)
-    
+
     # Parse metadata: Bastion/TOKEN/HMAC:IDENT:
     slash_parts = metadata.split("/")
     if len(slash_parts) < 3:
-        raise ValueError(f"Invalid Bastion HMAC label: missing Tool/TYPE/ALGO")
-    
+        raise ValueError("Invalid Bastion HMAC label: missing Tool/TYPE/ALGO")
+
     # Get algo and rest after second slash
     algo_and_rest = "/".join(slash_parts[2:])
     colon_parts = algo_and_rest.split(":")
-    
+
     if len(colon_parts) < 2 or colon_parts[0] != "HMAC":
         raise ValueError(f"Invalid HMAC label format: {label}")
-    
+
     ident = colon_parts[1]
     ident_parts = ident.split(".")
     if len(ident_parts) != 2:
         raise ValueError(f"Invalid HMAC label IDENT: {ident}")
-    
+
     # Parse version from params
     params_dict = _parse_url_params(params_str)
-    
+
     return {
         "version": str(params_dict.get("version", "1")),
         "card_index": ident_parts[0],
@@ -283,7 +277,7 @@ def parse_hmac_label(label: str) -> Dict[str, str]:
     }
 
 
-def parse_label(label: str) -> Dict[str, Any]:
+def parse_label(label: str) -> dict[str, Any]:
     """
     Parse a label string into its components.
     
@@ -300,11 +294,11 @@ def parse_label(label: str) -> Dict[str, Any]:
     """
     if not label.startswith("Bastion/"):
         raise ValueError(f"Invalid label format: expected 'Bastion/' prefix, got: {label}")
-    
+
     return _parse_new_bastion_label(label)
 
 
-def _parse_new_bastion_label(label: str) -> Dict[str, Any]:
+def _parse_new_bastion_label(label: str) -> dict[str, Any]:
     """
     Parse the Bastion format label.
     
@@ -319,52 +313,52 @@ def _parse_new_bastion_label(label: str) -> Dict[str, Any]:
     is_valid, body = luhn_mod36_validate(label)
     if not is_valid:
         raise ValueError(f"Invalid Luhn check digit in label: {label}")
-    
+
     # Split on # to separate metadata from params
     if "#" not in body:
-        raise ValueError(f"Invalid Bastion label format: missing # params separator")
-    
+        raise ValueError("Invalid Bastion label format: missing # params separator")
+
     metadata, params_str = body.split("#", 1)
-    
+
     # Parse metadata: Seeder/TOKEN/ALGO:IDENT:DATE
     # Split by "/" first to get tool/type/algo, then by ":" for the rest
     slash_parts = metadata.split("/")
     if len(slash_parts) < 3:
-        raise ValueError(f"Invalid Bastion label format: expected Tool/TYPE/ALGO prefix")
-    
+        raise ValueError("Invalid Bastion label format: expected Tool/TYPE/ALGO prefix")
+
     tool = slash_parts[0]
     label_type = slash_parts[1]
-    
+
     # Everything after second "/" contains ALGO:IDENT:DATE
     algo_and_rest = "/".join(slash_parts[2:])
     colon_parts = algo_and_rest.split(":")
-    
+
     if len(colon_parts) != 3:
         raise ValueError(f"Invalid Bastion label format: expected ALGO:IDENT:DATE, got {len(colon_parts)} parts")
-    
+
     algo = colon_parts[0]
     ident = colon_parts[1]
     date = colon_parts[2] if colon_parts[2] else None
-    
+
     # Parse ALGO: SEED_TYPE-KDF
     algo_parts = algo.split("-", 1)
     if len(algo_parts) != 2:
         raise ValueError(f"Invalid ALGO format: {algo}")
     seed_type, kdf = algo_parts
-    
+
     # Parse IDENT: {card_id}.{card_index}
     ident_parts = ident.rsplit(".", 1)
     if len(ident_parts) != 2:
         raise ValueError(f"Invalid IDENT format: {ident}")
     card_id, card_index = ident_parts
-    
+
     # Parse PARAMS (URL-style)
     params_dict = _parse_url_params(params_str)
-    
+
     # Build base from encoding
     encoding = params_dict.get("encoding", "90")
     base = f"BASE{encoding}"
-    
+
     result = {
         "version": str(params_dict.get("version", "1")),
         "type": label_type,
@@ -378,17 +372,17 @@ def _parse_new_bastion_label(label: str) -> Dict[str, Any]:
         "card_id": card_id.upper() if card_id else "CARD",
         "card_index": card_index.upper() if card_index else "A0",
     }
-    
+
     # Add parsed Argon2 params
     if kdf.upper() in ("ARGON2", "ARGON2ID"):
         result["argon2_time"] = params_dict.get("time", 3)
         result["argon2_memory_mb"] = params_dict.get("memory", 2048)
         result["argon2_parallelism"] = params_dict.get("parallelism", 4)
-    
+
     return result
 
 
-def _parse_url_params(params_str: str) -> Dict[str, Any]:
+def _parse_url_params(params_str: str) -> dict[str, Any]:
     """
     Parse URL-style parameters.
     
@@ -397,14 +391,14 @@ def _parse_url_params(params_str: str) -> Dict[str, Any]:
     
     Returns dict with lowercase keys and appropriate value types.
     """
-    result: Dict[str, Any] = {}
-    
+    result: dict[str, Any] = {}
+
     for part in params_str.split("&"):
         if "=" not in part:
             continue
         key, value = part.split("=", 1)
         key_lower = key.lower()
-        
+
         # Convert numeric values
         if key_lower in ("version", "time", "memory", "parallelism", "encoding"):
             try:
@@ -413,13 +407,13 @@ def _parse_url_params(params_str: str) -> Dict[str, Any]:
                 result[key_lower] = value
         else:
             result[key_lower] = value
-    
+
     return result
 
 
 class SeedCardCrypto:
     """Core cryptographic operations for deterministic token generation."""
-    
+
     @staticmethod
     def hkdf_expand(prk: bytes, info: bytes, length: int) -> bytes:
         """
@@ -441,26 +435,26 @@ class SeedCardCrypto:
         """
         hash_len = 64  # SHA-512 output size
         max_length = 255 * hash_len
-        
+
         if length > max_length:
             raise ValueError(f"HKDF-Expand length {length} exceeds maximum {max_length}")
-        
+
         # Number of blocks needed
         n = (length + hash_len - 1) // hash_len
-        
+
         okm = b""
         t = b""
-        
+
         for i in range(1, n + 1):
             # T(i) = HMAC(PRK, T(i-1) || info || i)
             # Each block chains the previous block's output
             t = hmac.new(prk, t + info + bytes([i]), hashlib.sha512).digest()
             okm += t
-        
+
         return okm[:length]
-    
+
     @staticmethod
-    def hkdf_stream(seed_bytes: bytes, info_label: bytes, needed_bytes: int, card_id: Optional[str] = None) -> bytes:
+    def hkdf_stream(seed_bytes: bytes, info_label: bytes, needed_bytes: int, card_id: str | None = None) -> bytes:
         """
         Generate deterministic byte stream using standard HKDF-Expand (RFC 5869).
         
@@ -479,17 +473,17 @@ class SeedCardCrypto:
         """
         if len(seed_bytes) != 64:
             raise ValueError(f"Expected 64-byte seed, got {len(seed_bytes)} bytes")
-        
+
         # Incorporate card_id into info_label for domain separation
         working_info = info_label
         if card_id:
             working_info = info_label + b"-" + card_id.encode('utf-8')
-        
+
         return SeedCardCrypto.hkdf_expand(seed_bytes, working_info, needed_bytes)
-    
+
     # Backward compatibility alias
     @staticmethod
-    def hkdf_like_stream(seed_bytes: bytes, info_label: bytes, needed_bytes: int, card_id: Optional[str] = None) -> bytes:
+    def hkdf_like_stream(seed_bytes: bytes, info_label: bytes, needed_bytes: int, card_id: str | None = None) -> bytes:
         """
         Generate deterministic byte stream using standard HKDF-Expand (RFC 5869).
         
@@ -506,9 +500,9 @@ class SeedCardCrypto:
             Deterministic byte stream of requested length
         """
         return SeedCardCrypto.hkdf_stream(seed_bytes, info_label, needed_bytes, card_id)
-    
+
     @staticmethod
-    def byte_to_symbol(byte_value: int, alphabet_size: int) -> Optional[int]:
+    def byte_to_symbol(byte_value: int, alphabet_size: int) -> int | None:
         """
         Map byte value to alphabet index using rejection sampling.
         
@@ -521,18 +515,18 @@ class SeedCardCrypto:
         """
         if not (0 <= byte_value <= 255):
             raise ValueError(f"Byte value must be 0-255, got {byte_value}")
-        
+
         # Calculate maximum usable value to avoid modulo bias
         max_usable = (256 // alphabet_size) * alphabet_size
-        
+
         if byte_value < max_usable:
             return byte_value % alphabet_size
         else:
             return None  # Reject this byte
-    
+
     @classmethod
-    def generate_token_from_stream(cls, byte_stream_iter: Iterator[int], 
-                                   alphabet: Optional[List[str]] = None) -> str:
+    def generate_token_from_stream(cls, byte_stream_iter: Iterator[int],
+                                   alphabet: list[str] | None = None) -> str:
         """
         Generate a single token from byte stream using rejection sampling.
         
@@ -548,27 +542,27 @@ class SeedCardCrypto:
         """
         if alphabet is None:
             alphabet = ALPHABET
-            
-        token_chars: List[str] = []
+
+        token_chars: list[str] = []
         alphabet_size = len(alphabet)
-        
+
         while len(token_chars) < CHARS_PER_TOKEN:
             try:
                 byte_val = next(byte_stream_iter)
             except StopIteration as exc:
                 raise RuntimeError("Out of entropy bytes unexpectedly") from exc
-            
+
             symbol_index = cls.byte_to_symbol(byte_val, alphabet_size)
             if symbol_index is not None:
                 token_chars.append(alphabet[symbol_index])
-        
+
         return "".join(token_chars)
-    
+
     @classmethod
-    def generate_token_stream(cls, seed_bytes: bytes, num_tokens: int, 
-                            card_id: Optional[str] = None, 
-                            alphabet: Optional[List[str]] = None,
-                            card_index: str = "A0") -> List[str]:
+    def generate_token_stream(cls, seed_bytes: bytes, num_tokens: int,
+                            card_id: str | None = None,
+                            alphabet: list[str] | None = None,
+                            card_index: str = "A0") -> list[str]:
         """
         Generate a stream of tokens from seed material using per-token HMAC labels.
         
@@ -588,48 +582,48 @@ class SeedCardCrypto:
         """
         if alphabet is None:
             alphabet = ALPHABET
-        
+
         from .config import TOKENS_TALL, TOKENS_WIDE
-        
+
         tokens = []
         token_count = 0
-        
+
         # Generate each token with unique HMAC label matching web app format
         for row in range(TOKENS_TALL):
             for col in range(TOKENS_WIDE):
                 if token_count >= num_tokens:
                     return tokens
-                    
+
                 # Spreadsheet convention: letter=column (A-J), number=row (0-9)
                 token_coord = f"{chr(ord('A') + col)}{row}"
-                
+
                 # Build per-token HMAC label: v1|{card_index}|TOKEN|{token_coord}
                 hmac_label = build_hmac_label(card_index, token_coord)
-                
+
                 # Generate byte stream for this specific token
                 # 64 bytes is plenty for ~20 bytes needed per token with rejection sampling
                 byte_stream = cls.hkdf_like_stream(
-                    seed_bytes, 
+                    seed_bytes,
                     hmac_label.encode('utf-8'),
                     64
                 )
                 byte_iter = iter(byte_stream)
-                
+
                 token = cls.generate_token_from_stream(byte_iter, alphabet)
                 tokens.append(token)
                 token_count += 1
-        
+
         return tokens
 
 
 class SeedCardDigest:
     """Generate integrity digests and verification hashes."""
-    
+
     @staticmethod
     def generate_sha512_hash(seed_bytes: bytes) -> str:
         """Generate SHA-512 hex digest of seed bytes for integrity verification."""
         return hashlib.sha512(seed_bytes).hexdigest()
-    
+
     @staticmethod
     def generate_hmac_digest(seed_bytes: bytes, label: bytes) -> str:
         """Generate HMAC-SHA512 digest for specific label."""
@@ -639,9 +633,9 @@ class SeedCardDigest:
 
 class PasswordEntropyAnalyzer:
     """Analyze entropy and security properties of passwords generated from coordinate patterns."""
-    
+
     @staticmethod
-    def calculate_token_entropy(alphabet_size: Optional[int] = None) -> float:
+    def calculate_token_entropy(alphabet_size: int | None = None) -> float:
         """
         Calculate bits of entropy per token.
         
@@ -654,9 +648,9 @@ class PasswordEntropyAnalyzer:
         if alphabet_size is None:
             alphabet_size = ALPHABET_SIZE
         return math.log2(alphabet_size ** CHARS_PER_TOKEN)
-    
+
     @staticmethod
-    def calculate_password_entropy(num_tokens: int, alphabet_size: Optional[int] = None) -> float:
+    def calculate_password_entropy(num_tokens: int, alphabet_size: int | None = None) -> float:
         """
         Calculate total entropy for a password with given number of tokens.
         
@@ -669,17 +663,17 @@ class PasswordEntropyAnalyzer:
         """
         token_entropy = PasswordEntropyAnalyzer.calculate_token_entropy(alphabet_size)
         return token_entropy * num_tokens
-    
+
     @staticmethod
     def calculate_memorized_word_entropy(word_length: int, charset_size: int = 26) -> float:
         """Calculate entropy for a memorized word component."""
         return math.log2(charset_size ** word_length)
-    
+
     @staticmethod
     def calculate_punctuation_entropy(num_punctuation: int, charset_size: int = 32) -> float:
         """Calculate entropy for punctuation separators."""
         return math.log2(charset_size ** num_punctuation)
-    
+
     @staticmethod
     def calculate_rolling_token_entropy(rotation_period_days: int = 90) -> float:
         """
@@ -692,16 +686,16 @@ class PasswordEntropyAnalyzer:
         # Conservative estimate: attacker knows approximate time period
         time_uncertainty_bits = math.log2(rotation_period_days / 7)  # Weekly uncertainty
         return max(1.0, time_uncertainty_bits)  # Minimum 1 bit
-    
+
     @staticmethod
     def analyze_composite_password(
         num_fixed_tokens: int = 2,
-        num_rolling_tokens: int = 1, 
+        num_rolling_tokens: int = 1,
         memorized_word_length: int = 6,
         num_separators: int = 4,
         rotation_days: int = 90,
         include_order_entropy: bool = True
-    ) -> Dict[str, Union[str, int, bool]]:
+    ) -> dict[str, str | int | bool]:
         """
         Analyze composite password formats like: TokenA-TokenB-TokenC-MemWord!
         
@@ -719,21 +713,21 @@ class PasswordEntropyAnalyzer:
         rolling_time_entropy = PasswordEntropyAnalyzer.calculate_rolling_token_entropy(rotation_days)
         memorized_entropy = PasswordEntropyAnalyzer.calculate_memorized_word_entropy(memorized_word_length)
         separator_entropy = PasswordEntropyAnalyzer.calculate_punctuation_entropy(num_separators)
-        
+
         # Component ordering entropy (if components can be rearranged)
         total_components = 3 + (1 if memorized_word_length > 0 else 0)  # tokens + rolling + memorized + separators
         order_entropy = math.log2(math.factorial(total_components)) if include_order_entropy else 0
-        
+
         # Total entropy is sum of independent components
         total_entropy = (
-            fixed_token_entropy + 
-            rolling_token_entropy + 
+            fixed_token_entropy +
+            rolling_token_entropy +
             rolling_time_entropy +
-            memorized_entropy + 
+            memorized_entropy +
             separator_entropy +
             order_entropy
         )
-        
+
         # Security classification (RFC 4086 compliant thresholds)
         # RFC 4086: "29 bits for online attacks, up to 96 bits for cryptographic keys"
         if total_entropy < 29:
@@ -742,7 +736,7 @@ class PasswordEntropyAnalyzer:
         elif total_entropy < 48:  # Online attack protection
             security_level = "BASIC"
             security_color = "yellow"
-        elif total_entropy < 64:  # Strong offline protection  
+        elif total_entropy < 64:  # Strong offline protection
             security_level = "GOOD"
             security_color = "green"
         elif total_entropy < 80:  # Very strong protection
@@ -751,7 +745,7 @@ class PasswordEntropyAnalyzer:
         else:  # Approaching cryptographic key strength (96+ bits)
             security_level = "EXCELLENT"
             security_color = "bright_cyan"
-        
+
         # Example password format
         example_format = []
         if num_fixed_tokens > 0:
@@ -760,14 +754,14 @@ class PasswordEntropyAnalyzer:
             example_format.extend([f"Roll{i+1}" for i in range(num_rolling_tokens)])
         if memorized_word_length > 0:
             example_format.append("MemWord")
-        
+
         format_string = "-".join(example_format) if num_separators > 0 else "".join(example_format)
-        
+
         return {
             "format_example": format_string,
             "total_components": total_components,
             "fixed_token_entropy": f"{fixed_token_entropy:.1f}",
-            "rolling_token_entropy": f"{rolling_token_entropy:.1f}", 
+            "rolling_token_entropy": f"{rolling_token_entropy:.1f}",
             "rolling_time_entropy": f"{rolling_time_entropy:.1f}",
             "memorized_word_entropy": f"{memorized_entropy:.1f}",
             "separator_entropy": f"{separator_entropy:.1f}",
@@ -782,16 +776,16 @@ class PasswordEntropyAnalyzer:
             "rotation_days": rotation_days,
             "include_order_entropy": include_order_entropy
         }
-    
+
     @staticmethod
     def analyze_compromised_card_scenario(
         num_fixed_tokens: int = 2,
-        num_rolling_tokens: int = 1, 
+        num_rolling_tokens: int = 1,
         memorized_word_length: int = 6,
         num_separators: int = 4,
         rotation_days: int = 90,
         include_order_entropy: bool = True
-    ) -> Dict[str, Union[str, float]]:
+    ) -> dict[str, str | float]:
         """
         Analyze security when the physical card is compromised but secrets remain.
         
@@ -810,46 +804,46 @@ class PasswordEntropyAnalyzer:
             num_fixed_tokens, num_rolling_tokens, memorized_word_length,
             num_separators, rotation_days, include_order_entropy
         )
-        
+
         # Calculate what remains secret if card is compromised
         # COMPROMISED: All token values are visible (entropy = 0 for tokens themselves)
         # SECRET: Which coordinates to use, memorized word, separators, order, timing
-        
+
         # Coordinate selection entropy (which tokens to pick from 100 available)
         total_tokens = num_fixed_tokens + num_rolling_tokens
         if total_tokens > 0:
             coordinate_selection_entropy = math.log2(math.comb(100, total_tokens)) if total_tokens <= 100 else 0
         else:
             coordinate_selection_entropy = 0
-        
+
         # Rolling schedule uncertainty (when to rotate)
         rolling_schedule_entropy = PasswordEntropyAnalyzer.calculate_rolling_token_entropy(rotation_days)
-        
+
         # Memorized components remain fully secret
         memorized_entropy = PasswordEntropyAnalyzer.calculate_memorized_word_entropy(memorized_word_length)
-        
+
         # Separator choice remains secret
         separator_entropy = PasswordEntropyAnalyzer.calculate_punctuation_entropy(num_separators)
-        
+
         # Component ordering remains secret
         total_components = 2 + (1 if memorized_word_length > 0 else 0)  # tokens + memorized + separators
         order_entropy = math.log2(math.factorial(total_components)) if include_order_entropy else 0
-        
+
         # Total "card compromised" entropy
         card_compromised_entropy = (
             coordinate_selection_entropy +
-            rolling_schedule_entropy + 
+            rolling_schedule_entropy +
             memorized_entropy +
             separator_entropy +
             order_entropy
         )
-        
+
         # Security assessment for compromised scenario (RFC 4086 compliant)
         if card_compromised_entropy < 20:
             compromised_security_level = "CRITICAL"
             compromised_security_color = "bright_red"
         elif card_compromised_entropy < 29:  # Below RFC 4086 minimum
-            compromised_security_level = "INSUFFICIENT" 
+            compromised_security_level = "INSUFFICIENT"
             compromised_security_color = "red"
         elif card_compromised_entropy < 48:  # Online attack protection
             compromised_security_level = "BASIC"
@@ -860,33 +854,33 @@ class PasswordEntropyAnalyzer:
         else:  # Strong protection even when compromised
             compromised_security_level = "STRONG"
             compromised_security_color = "bright_green"
-        
+
         # Calculate the vulnerability ratio
         total_entropy = float(full_analysis["total_entropy"])
         vulnerability_ratio = (total_entropy - card_compromised_entropy) / total_entropy
-        
+
         return {
             # Full scenario (no compromise)
             "full_entropy": full_analysis["total_entropy"],
             "full_security_level": full_analysis["security_level"],
             "full_security_color": full_analysis["security_color"],
-            
+
             # Card compromised scenario
             "compromised_entropy": f"{card_compromised_entropy:.1f}",
             "compromised_security_level": compromised_security_level,
             "compromised_security_color": compromised_security_color,
-            
+
             # Breakdown of what remains secret
             "coordinate_selection_entropy": f"{coordinate_selection_entropy:.1f}",
             "rolling_schedule_entropy": f"{rolling_schedule_entropy:.1f}",
             "memorized_entropy": f"{memorized_entropy:.1f}",
             "separator_entropy": f"{separator_entropy:.1f}",
             "order_entropy": f"{order_entropy:.1f}",
-            
+
             # Vulnerability analysis
             "vulnerability_ratio": f"{vulnerability_ratio:.1%}",
             "entropy_loss": f"{total_entropy - card_compromised_entropy:.1f}",
-            
+
             # Component details
             "num_fixed_tokens": num_fixed_tokens,
             "num_rolling_tokens": num_rolling_tokens,
@@ -895,9 +889,9 @@ class PasswordEntropyAnalyzer:
             "total_tokens": total_tokens,
             "format_example": full_analysis["format_example"]
         }
-    
+
     @staticmethod
-    def estimate_crack_time(entropy_bits: float, guesses_per_second: int = 1000) -> Dict[str, str]:
+    def estimate_crack_time(entropy_bits: float, guesses_per_second: int = 1000) -> dict[str, str]:
         """
         Estimate time to crack password given entropy and attack rate.
         
@@ -910,13 +904,13 @@ class PasswordEntropyAnalyzer:
             Dictionary with time estimates for 50% and 99% probability of cracking
         """
         total_combinations = 2 ** entropy_bits
-        
+
         # Time to crack with 50% probability (half the keyspace)
         avg_time_seconds = (total_combinations / 2) / guesses_per_second
-        
+
         # Time to crack with 99% probability (nearly full keyspace)
         worst_time_seconds = (total_combinations * 0.99) / guesses_per_second
-        
+
         def format_time(seconds: float) -> str:
             """Format seconds into human-readable time."""
             if seconds < 60:
@@ -937,7 +931,7 @@ class PasswordEntropyAnalyzer:
                     return f"{years/1000000:.1f} million years"
                 else:
                     return f"{years/1000000000:.1f} billion years"
-        
+
         return {
             "entropy_bits": f"{entropy_bits:.1f}",
             "total_combinations": f"{total_combinations:.2e}",
@@ -945,9 +939,9 @@ class PasswordEntropyAnalyzer:
             "worst_crack_time": format_time(worst_time_seconds),
             "guesses_per_second": f"{guesses_per_second:,}"
         }
-    
+
     @staticmethod
-    def analyze_coordinate_pattern(coordinates: List[str]) -> Dict[str, Any]:
+    def analyze_coordinate_pattern(coordinates: list[str]) -> dict[str, Any]:
         """
         Analyze the entropy and security properties of a coordinate pattern.
         
@@ -960,18 +954,18 @@ class PasswordEntropyAnalyzer:
         num_tokens = len(coordinates)
         token_entropy = PasswordEntropyAnalyzer.calculate_token_entropy()
         total_entropy = PasswordEntropyAnalyzer.calculate_password_entropy(num_tokens)
-        
+
         # Calculate pattern entropy (predictability of coordinate selection)
         total_grid_positions = 100  # 10x10 grid
         pattern_combinations = math.comb(total_grid_positions, num_tokens) if num_tokens <= total_grid_positions else 0
         pattern_entropy = math.log2(pattern_combinations) if pattern_combinations > 0 else 0
-        
+
         # Effective entropy is limited by the weaker of token or pattern entropy
         effective_entropy = min(total_entropy, pattern_entropy)
-        
+
         # Security levels based on RFC 4086 entropy thresholds
         if effective_entropy < 29:
-            security_level = "INSUFFICIENT" 
+            security_level = "INSUFFICIENT"
             security_color = "bright_red"
         elif effective_entropy < 48:
             security_level = "BASIC"
@@ -985,13 +979,13 @@ class PasswordEntropyAnalyzer:
         else:
             security_level = "EXCELLENT"
             security_color = "bright_cyan"
-        
+
         # Attack scenarios (2025 threat model)
         # Note: Modern GPU attacks can achieve 7B+ guesses/sec for simple hashes
         # We use conservative rates assuming proper key stretching/salting
         online_attack = PasswordEntropyAnalyzer.estimate_crack_time(effective_entropy, 1000)  # Rate-limited online
         offline_attack = PasswordEntropyAnalyzer.estimate_crack_time(effective_entropy, 1000000)  # Conservative offline
-        
+
         return {
             "coordinates": coordinates,
             "num_tokens": num_tokens,
@@ -1010,7 +1004,7 @@ class PasswordEntropyAnalyzer:
 
 
 # === REJECTION SAMPLING ANALYSIS ===
-def analyze_rejection_rate(alphabet_size: int = ALPHABET_SIZE) -> Dict[str, Union[int, float, str]]:
+def analyze_rejection_rate(alphabet_size: int = ALPHABET_SIZE) -> dict[str, int | float | str]:
     """
     Analyze rejection sampling statistics for given alphabet size.
     
@@ -1020,7 +1014,7 @@ def analyze_rejection_rate(alphabet_size: int = ALPHABET_SIZE) -> Dict[str, Unio
     max_usable = (256 // alphabet_size) * alphabet_size
     rejected_count = 256 - max_usable
     rejection_rate = (rejected_count / 256) * 100
-    
+
     return {
         "alphabet_size": alphabet_size,
         "max_usable_byte": max_usable - 1,

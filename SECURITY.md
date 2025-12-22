@@ -72,6 +72,9 @@ Bastion assumes:
 - **Restrictive permissions**: 0o600 for files, 0o700 for directories
 - **Input sanitization**: All 1Password CLI arguments are sanitized
 
+## AI Assistance & Verification
+This project includes AI‑assisted code and documentation. All integrations and cryptographic test vectors are human‑reviewed and verified before release. AI outputs are treated as drafts; human verification is required for correctness and security.
+
 ## Disclaimer
 
 Bastion is provided as-is for personal use. While designed with security in mind, it has not undergone formal security audit. Use at your own risk for managing sensitive credentials.

@@ -2,21 +2,21 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Annotated, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated
 
 import typer
 
 from ..config import get_password_rotation_db_path
 
 if TYPE_CHECKING:
-    from ..db import DatabaseManager, BastionCacheManager
+    from ..db import BastionCacheManager, DatabaseManager
 
 
 # Common type annotations for CLI options
 DbPathOption = Annotated[
-    Optional[Path],
+    Path | None,
     typer.Option(
         "--db",
         help="Database file path",
@@ -25,7 +25,7 @@ DbPathOption = Annotated[
 ]
 
 
-def get_db_manager(db_path: Path | None = None) -> "DatabaseManager":
+def get_db_manager(db_path: Path | None = None) -> DatabaseManager:
     """Get database manager with default path (LEGACY - plaintext).
     
     DEPRECATED: Use get_encrypted_db_manager() for new code.
@@ -37,13 +37,13 @@ def get_db_manager(db_path: Path | None = None) -> "DatabaseManager":
         DatabaseManager instance
     """
     from ..db import DatabaseManager
-    
+
     if db_path is None:
         db_path = get_password_rotation_db_path()
     return DatabaseManager(db_path)
 
 
-def get_encrypted_db_manager() -> "BastionCacheManager":
+def get_encrypted_db_manager() -> BastionCacheManager:
     """Get encrypted cache manager.
     
     Returns BastionCacheManager which stores encrypted data at ~/.bsec/cache/db.enc
@@ -94,22 +94,22 @@ def utc_now() -> datetime:
     Returns:
         Current datetime in UTC timezone
     """
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
-def get_yubikey_service() -> "YubiKeyService":
+def get_yubikey_service() -> YubiKeyService:
     """Get YubiKey service for querying 1Password as source of truth.
     
     Returns:
         YubiKeyService instance
     """
     from ..yubikey_service import YubiKeyService
-    
+
     cache_mgr = get_encrypted_db_manager()
     return YubiKeyService(cache_mgr)
 
 
-def get_yubikey_cache() -> "YubiKeyCache":
+def get_yubikey_cache() -> YubiKeyCache:
     """Get YubiKey cache from encrypted storage.
     
     DEPRECATED: Use get_yubikey_service() for new code. This wrapper
@@ -125,11 +125,11 @@ def get_yubikey_cache() -> "YubiKeyCache":
         stacklevel=2,
     )
     from ..yubikey_cache import YubiKeyCache
-    
+
     cache_mgr = get_encrypted_db_manager()
     return YubiKeyCache.from_encrypted(cache_mgr)
 
 
 if TYPE_CHECKING:
-    from ..yubikey_service import YubiKeyService
     from ..yubikey_cache import YubiKeyCache
+    from ..yubikey_service import YubiKeyService

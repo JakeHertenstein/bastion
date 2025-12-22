@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "bastion-core"
-version = "0.3.0"
+dynamic = ["version"]
 description = "Shared core utilities for the Bastion security toolchain"
 readme = "README.md"
 license = {text = "PolyForm Noncommercial 1.0.0"}
@@ -21,9 +21,11 @@ keywords = [
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "Operating System :: OS Independent",
+    "Operating System :: MacOS :: MacOS X",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Security",
     "Typing :: Typed",
 ]
@@ -36,3 +38,7 @@ network = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/bastion_core"]
+
+[tool.hatch.version]
+path = "../../VERSION"
+pattern = "(?P<version>.*)"

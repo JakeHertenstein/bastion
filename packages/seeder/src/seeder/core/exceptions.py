@@ -75,7 +75,7 @@ class VerificationError(SeedCardError):
 def format_bip39_error(e: Exception) -> str:
     """Format BIP-39 related errors with helpful context."""
     error_msg = str(e).lower()
-    
+
     if "invalid" in error_msg and "word" in error_msg:
         return (
             "Invalid BIP-39 mnemonic word detected. "
@@ -93,7 +93,7 @@ def format_bip39_error(e: Exception) -> str:
 def format_slip39_error(e: Exception) -> str:
     """Format SLIP-39 related errors with helpful context."""
     error_msg = str(e).lower()
-    
+
     if "share" in error_msg and "invalid" in error_msg:
         return (
             "Invalid SLIP-39 share format. "
@@ -111,7 +111,7 @@ def format_slip39_error(e: Exception) -> str:
 def format_crypto_error(e: Exception) -> str:
     """Format cryptographic errors with helpful context."""
     error_msg = str(e).lower()
-    
+
     if "entropy" in error_msg:
         return (
             "Insufficient entropy for token generation. "

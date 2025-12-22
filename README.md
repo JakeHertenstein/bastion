@@ -170,7 +170,6 @@ flowchart LR
 - **Tag Taxonomy** — Hierarchical `Bastion/*` tags: Type, Capability, 2FA, Dependency, Security
 - **Related Items Linking** — Traceability between accounts, devices, and backups in 1Password
 - **Seeder Offline Memory Aid** — Deterministic token grids for offline use without a manager
-- **Seeder Offline Memory Aid** — Deterministic token grids for high‑entropy offline passwords without a manager; validated by entropy and attack‑cost analysis
 
 ## How It Works Together
 

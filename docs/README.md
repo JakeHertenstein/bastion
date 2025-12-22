@@ -37,6 +37,7 @@ Bastion is a security management CLI for 1Password that provides:
 
 | Document | Description |
 |----------|-------------|
+| [YubiKey-TOTP-Provisioning](features/YUBIKEY-TOTP-PROVISIONING.md) | **Profile-based provisioning** — populate different YubiKeys with different account sets using tags |
 | [YubiKey-Sync-Guide](features/yubikey/YUBIKEY-SYNC-GUIDE.md) | Multi-key TOTP synchronization and 1Password linking |
 | [ICON-MANAGEMENT.md](features/yubikey/ICON-MANAGEMENT.md) | Icon matching and attachment for OATH accounts |
 
@@ -84,8 +85,10 @@ Outcome: high‑entropy offline passwords without a manager — deterministic se
 
 | Document | Description |
 |----------|-------------|
+| [CLI-COMMAND-REFERENCE.md](reference/CLI-COMMAND-REFERENCE.md) | **Command reference** with examples for all `bsec` commands |
 | [LABEL-FORMAT-SPECIFICATION.md](reference/LABEL-FORMAT-SPECIFICATION.md) | Bastion label format for metadata encoding |
 | [CRYPTO-FUNCTION-MATRIX.md](reference/CRYPTO-FUNCTION-MATRIX.md) | Cryptographic standards and algorithm reference |
+| [SIGCHAIN-GUIDE.md](reference/SIGCHAIN-GUIDE.md) | Signature chain (audit trail) design and usage |
 
 ## Troubleshooting
 

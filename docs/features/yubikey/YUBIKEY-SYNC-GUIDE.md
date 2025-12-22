@@ -1,7 +1,19 @@
 # YubiKey TOTP Sync Guide
 
 **Date**: 2025-11-21  
+**Updated**: 2025-12-22 (see Provisioning alternative below)  
 **Purpose**: Complete guide for syncing TOTP accounts between YubiKeys
+
+---
+
+## Quick Note: Profile-Based Provisioning (New)
+
+**Version 0.3.2+** introduced **profile-based provisioning** as an alternative to manual syncing:
+
+- **Use `bsec 1p yubikey provision`** when you want to populate different YubiKeys with *different* account sets
+- **Use `bsec sync yubikey`** when you want to copy all accounts from one YubiKey to another
+
+See [YubiKey TOTP Provisioning Guide](../YUBIKEY-TOTP-PROVISIONING.md) for profile-based setup with tag-based account filtering.
 
 ---
 

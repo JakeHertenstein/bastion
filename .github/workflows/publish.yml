@@ -62,7 +62,7 @@ jobs:
       - name: Check bastion-core package
         run: twine check dist/*
       - name: Upload core artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: dist-core
           path: dist/
@@ -87,7 +87,7 @@ jobs:
       - name: Check bastion-security package
         run: twine check dist/*
       - name: Upload security artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: dist-security
           path: dist/
